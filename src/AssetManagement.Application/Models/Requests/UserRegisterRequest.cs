@@ -1,24 +1,28 @@
 ﻿using AssetManagement.Domain.Constants;
+using AssetManagement.Domain.Enums;
+using System;
 using System.ComponentModel.DataAnnotations;
 
 namespace AssetManagement.Application.Models.Requests
 {
     public class UserRegisterRequest
     {
-        [EmailAddress]
         [Required]
-        public string Email { get; set; } = string.Empty;
+        public string FirstName { get; set; } = string.Empty;
 
         [Required]
-        [RegularExpression(RegexConstants.PASSWORD, ErrorMessage = ErrorMessage.ERROR_PASSWORD)]
-        public string Password { get; set; } = string.Empty;
+        public string LastName { get; set; } = string.Empty;
 
         [Required]
-        [Compare("Password", ErrorMessage = ErrorMessage.ERROR_CONFIRM_PASSWORD)]
-        public string ConfirmPassword { get; set; } = string.Empty;
+        public DateOnly DateOfBirth { get; set; }
 
         [Required]
-        [Range(1, 2)]
-        public int RoleId { get; set; }
+        public DateOnly DateJoined { get; set; }
+
+        [Required]
+        public EnumGender Gender { get; set; }
+
+        [Required]
+        public Guid RoleId { get; set; }
     }
 }
