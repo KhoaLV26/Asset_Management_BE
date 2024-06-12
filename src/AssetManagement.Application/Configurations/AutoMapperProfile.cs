@@ -1,4 +1,6 @@
-﻿using AutoMapper;
+﻿using AssetManagement.Application.Models.Responses;
+using AssetManagement.Domain.Entities;
+using AutoMapper;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,6 +12,15 @@ namespace AssetManagement.Application.Configurations
     public class AutoMapperProfile : Profile
     {
         public AutoMapperProfile()
-        { }
+        {
+            CreateMap<User, UserRegisterResponse>()
+                .ForMember(dest => dest.LocationName, opt => opt.MapFrom(src => src.Location.Name))
+                .ForMember(dest => dest.RoleName, opt => opt.MapFrom(src => src.Role.Name));
+            CreateMap<User, GetUserResponse>()
+                .ForMember(dest => dest.LocationName, opt => opt.MapFrom(src => src.Location.Name))
+                .ForMember(dest => dest.RoleName, opt => opt.MapFrom(src => src.Role.Name));
+            CreateMap<Role, RoleResponse>();
+        }
+
     }
 }

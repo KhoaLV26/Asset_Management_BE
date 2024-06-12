@@ -86,5 +86,15 @@ namespace AssetManagement.Infrastructure.Repositories
         {
             _context.Set<T>().RemoveRange(entities);
         }
+
+        public async Task<int> CountAsync(Expression<Func<T, bool>> expression = null)
+        {
+            IQueryable<T> query = _context.Set<T>();
+            if (expression != null)
+            {
+                query = query.Where(expression);
+            }
+            return await query.CountAsync();
+        }
     }
 }

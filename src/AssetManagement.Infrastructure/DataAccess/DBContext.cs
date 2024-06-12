@@ -64,13 +64,13 @@ namespace AssetManagement.Infrastructure.DataAccess
 
             modelBuilder.Entity<Assignment>()
                 .HasOne(a => a.Asset)
-                .WithOne(ast => ast.Assignment)
-                .HasForeignKey<Assignment>(a => a.AssetId);
+                .WithMany(ast => ast.Assignments)
+                .HasForeignKey(a => a.AssetId);
 
             modelBuilder.Entity<ReturnRequest>()
                 .HasOne(rr => rr.Assignment)
-                .WithOne(a => a.ReturnRequest)
-                .HasForeignKey<ReturnRequest>(rr => rr.AssignmentId);
+                .WithMany(a => a.ReturnRequests)
+                .HasForeignKey(rr => rr.AssignmentId);
 
             modelBuilder.Entity<ReturnRequest>()
                 .HasOne(rr => rr.UserAccept)
