@@ -1,8 +1,10 @@
 ﻿using AssetManagement.Domain.Interfaces;
 using AssetManagement.Infrastructure.DataAccess;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Conventions;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection.Metadata;
@@ -27,7 +29,10 @@ namespace AssetManagement.Infrastructure.Repositories
 
         public void Delete(T entity)
         {
-            _context.Set<T>().Remove(entity);
+            //_context.Set<T>().Remove(entity);
+            PropertyInfo propertyInfo = entity.GetType().GetProperty("IsDeleted");
+            propertyInfo.SetValue(entity, true);
+            _context.Set<T>().Update(entity);
         }
 
         public async Task<IEnumerable<T>> GetAllAsync()
@@ -35,21 +40,28 @@ namespace AssetManagement.Infrastructure.Repositories
             return await _context.Set<T>().ToListAsync();
         }
 
-        public async Task<IEnumerable<T>> GetAllAsync(Expression<Func<T, bool>> expression, params Expression<Func<T, object>>[] includeProperties)
+        public async Task<IEnumerable<T>> Get(int page = 1, Expression<Func<T, bool>>? filter = null, Func<IQueryable<T>, IOrderedQueryable<T>>? orderBy = null, string includeProperties = "")
         {
             IQueryable<T> query = _context.Set<T>();
-            if (includeProperties != null)
-            {
-                foreach (var includeProperty in includeProperties)
-                {
-                    query = query.Include(includeProperty);
-                }
-            }
-            if (expression != null)
-            {
-                query = query.Where(expression);
-            }
-            return await query.ToListAsync();
+            //if (filter != null)
+            //{
+            //    query = query.Where(filter);
+            //}
+
+            //var total = query.ToList();
+            //query = query.Skip((page - 1) * 15).Take(15);
+            //foreach (var includeProperty in includeProperties.Split
+            //             (new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
+            //{
+            //    query = query.Include(includeProperty);
+            //}
+
+            //if (orderBy != null)
+            //{
+            //    return orderBy(query).ToList();
+            //}
+
+            return await GetAllAsync();
         }
 
         public async Task<(IEnumerable<T> items,int totalCount)> GetAllAsync(int page = 1, Expression<Func<T, bool>>? filter = null,
@@ -94,20 +106,20 @@ namespace AssetManagement.Infrastructure.Repositories
             return await query.FirstOrDefaultAsync();
         }
 
-        public async Task<T> GetAsync(Expression<Func<T, bool>> expression)
+    public async Task<T> GetAsync(Expression<Func<T, bool>> expression)
+    {
+        IQueryable<T> query = _context.Set<T>();
+        if (expression != null)
         {
-            IQueryable<T> query = _context.Set<T>();
-            if (expression != null)
-            {
-                query = query.Where(expression);
-            }
-            return await query.FirstOrDefaultAsync();
+            query = query.Where(expression);
         }
+        return await query.FirstOrDefaultAsync();
+    }
 
-        public void Update(T entity)
-        {
-            _context.Set<T>().Update(entity);
-        }
+    public void Update(T entity)
+    {
+        _context.Set<T>().Update(entity);
+    }
 
         public void RemoveRange(IEnumerable<T> entities)
         {
