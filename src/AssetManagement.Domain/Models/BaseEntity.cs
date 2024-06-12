@@ -11,7 +11,6 @@ namespace AssetManagement.Domain.Models
     {
         [Key]
         public Guid Id { get; set; } = Guid.NewGuid();
-
         public DateTime CreatedAt { get; set; } = DateTime.Now;
         public Guid? CreatedBy { get; set; } = Guid.Empty;
         public DateTime? LastUpdatedAt { get; set; } = null;
