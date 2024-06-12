@@ -23,4 +23,8 @@
     <ProjectReference Include="..\..\src\AssetManagement.WebAPI\AssetManagement.WebAPI.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="UserControllerTest\" />
+  </ItemGroup>
+
 </Project>
