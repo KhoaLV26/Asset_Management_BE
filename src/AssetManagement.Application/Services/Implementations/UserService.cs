@@ -16,6 +16,7 @@ using AssetManagement.Application.Models.Responses;
 using AssetManagement.Domain.Constants;
 
 
+
 namespace AssetManagement.Application.Services.Implementations
 {
     public class UserService : IUserService
@@ -107,6 +108,7 @@ namespace AssetManagement.Application.Services.Implementations
             {
                 return _mapper.Map<UserRegisterResponse>(user);
             }
+
         }
 
         private async Task<string> GenerateNewStaffCode()
@@ -115,6 +117,7 @@ namespace AssetManagement.Application.Services.Implementations
             var lastStaffCode = lastUser.OrderByDescending(u => u.StaffCode).FirstOrDefault()?.StaffCode ?? StaffCode.DEFAULT_STAFF_CODE;
             var newStaffCode = $"SD{(int.Parse(lastStaffCode.Substring(2)) + 1):D4}";
             return  newStaffCode;
+
         }
     }
 }
