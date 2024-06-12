@@ -1,4 +1,5 @@
 ﻿using AssetManagement.Application.Models.Requests;
+using AssetManagement.Domain.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,6 +10,6 @@ namespace AssetManagement.Application.Services
 {
     public interface IUserService
     {
-        Task AddUserAsync(UserRegisterRequest userRegisterRequest);
+        Task <User> AddUserAsync(UserRegisterRequest userRegisterRequest);
     }
 }
