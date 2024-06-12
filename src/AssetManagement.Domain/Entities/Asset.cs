@@ -21,8 +21,8 @@ namespace AssetManagement.Domain.Entities
         public Category Category { get; set; }
         public EnumAssetStatus Status { get; set; } = EnumAssetStatus.Available;
         public DateOnly InstallDate { get; set; }
-        public Guid AssignmentId { get; set; }
-        public Assignment Assignment { get; set; }
+        public Guid? AssignmentId { get; set; }
+        public Assignment? Assignment { get; set; }
 
         [MaxLength(255)]
         public string Specification { get; set; } = string.Empty;
