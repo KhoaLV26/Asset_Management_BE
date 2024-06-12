@@ -58,16 +58,10 @@ namespace AssetManagement.Application.Services.Implementations
             var lastName = userRegisterRequest.LastName.ToLower();
             var username = _helper.GetUsername(firstName, lastName);
 
-            var existingUser = await _unitOfWork.UserRepository.GetAsync(u => u.Username == username);
-            if (existingUser != null)
+            var existingUserCount = await _unitOfWork.UserRepository.CountAsync(u => u.Username.StartsWith(username));
+            if (existingUserCount > 0)
             {
-                int count = 1;
-                while (existingUser != null)
-                {
-                    username = $"{username}{count}";
-                    existingUser = await _unitOfWork.UserRepository.GetAsync(u => u.Username == username);
-                    count++;
-                }
+                username = $"{username}{++existingUserCount}";
             }
 
             var password = $"{username}@{userRegisterRequest.DateOfBirth:ddMMyyyy}";
@@ -75,7 +69,7 @@ namespace AssetManagement.Application.Services.Implementations
             var hashedPassword = _cryptographyHelper.HashPassword(password, salt);
             var adminUser = await _unitOfWork.UserRepository.GetAsync(u => u.Id == userRegisterRequest.CreateBy,
                 u => u.Location);
-            var CreateBy = userRegisterRequest.CreateBy;
+            var createByAdmin = userRegisterRequest.CreateBy;
 
             var role = await _unitOfWork.RoleRepository.GetAsync(r => r.Id == userRegisterRequest.RoleId);
 
@@ -95,7 +89,7 @@ namespace AssetManagement.Application.Services.Implementations
                 RoleId = userRegisterRequest.RoleId,
                 IsFirstLogin = true,
                 CreatedAt = DateTime.UtcNow,
-                CreatedBy = CreateBy,
+                CreatedBy = createByAdmin,
                 Role = role
             };
 

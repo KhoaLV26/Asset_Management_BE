@@ -10,7 +10,7 @@ namespace AssetManagement.Infrastructure.Helpers
     {
         public string GetUsername(string Firstname, string Lastname)
         {
-            var username = $"{Firstname}{string.Join("", Lastname.Split(' ').Select(x => x.Substring(0, 1)))}";
+            var username = $"{Firstname.Replace(" ", "")}{string.Join("", Lastname.Split(' ').Select(x => x.Substring(0, 1)))}";
             return username ;
         }
     }
