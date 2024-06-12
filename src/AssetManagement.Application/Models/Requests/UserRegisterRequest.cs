@@ -8,9 +8,11 @@ namespace AssetManagement.Application.Models.Requests
     public class UserRegisterRequest
     {
         [Required]
+        [RegularExpression(@"^[a-zA-Z]+([a-zA-Z ]*[a-zA-Z])?$", ErrorMessage = "First name can only contain letters and spaces, and cannot start or end with a space.")]
         public string FirstName { get; set; } = string.Empty;
 
         [Required]
+        [RegularExpression(@"^[a-zA-Z]+([a-zA-Z ]*[a-zA-Z])?$", ErrorMessage = "First name can only contain letters and spaces, and cannot start or end with a space.")]
         public string LastName { get; set; } = string.Empty;
 
         [Required]

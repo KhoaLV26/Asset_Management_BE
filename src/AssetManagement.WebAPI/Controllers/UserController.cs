@@ -38,10 +38,10 @@ namespace AssetManagement.WebAPI.Controllers
             {
                 return BadRequest(ex.Message);
             }
-            catch (Exception)
-            {
-                return StatusCode(500, "An error occurred while registering the user.");
-            }
+            //catch (Exception)
+            //{
+            //    return StatusCode(500, "An error occurred while registering the user.");
+            //}
         }
     }
 }

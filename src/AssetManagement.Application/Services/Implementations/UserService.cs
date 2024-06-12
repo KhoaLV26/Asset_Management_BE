@@ -12,17 +12,20 @@ using System.Threading.Tasks;
 using BCrypt.Net;
 using AssetManagement.Infrastructure.Helpers;
 
+
 namespace AssetManagement.Application.Services.Implementations
 {
     public class UserService : IUserService
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly ICryptographyHelper _cryptographyHelper;
+        private readonly IHelper _helper;
 
-        public UserService (IUnitOfWork unitOfWork, ICryptographyHelper cryptographyHelper)
+        public UserService (IUnitOfWork unitOfWork, ICryptographyHelper cryptographyHelper, IHelper helper)
         {
             _unitOfWork = unitOfWork;
             _cryptographyHelper = cryptographyHelper;
+            _helper = helper;
         }
 
         public async Task<User> AddUserAsync(UserRegisterRequest userRegisterRequest)
@@ -49,11 +52,18 @@ namespace AssetManagement.Application.Services.Implementations
 
             var firstName = userRegisterRequest.FirstName.ToLower();
             var lastName = userRegisterRequest.LastName.ToLower();
-            var username = $"{firstName}{lastName.Substring(0, 1)}";
-            var usernameCount = await _unitOfWork.UserRepository.CountAsync(u => u.Username.Equals(username));
-            if (usernameCount > 0)
+            var username = _helper.GetUsername(firstName, lastName);
+
+            var existingUser = await _unitOfWork.UserRepository.GetAsync(u => u.Username == username);
+            if (existingUser != null)
             {
-                username += usernameCount;
+                int count = 1;
+                while (existingUser != null)
+                {
+                    username = $"{username}{count}";
+                    existingUser = await _unitOfWork.UserRepository.GetAsync(u => u.Username == username);
+                    count++;
+                }
             }
 
             var password = $"{username}@{userRegisterRequest.DateOfBirth:ddMMyyyy}";
@@ -61,8 +71,6 @@ namespace AssetManagement.Application.Services.Implementations
             var hashedPassword = _cryptographyHelper.HashPassword(password, salt);
             var adminUser = await _unitOfWork.UserRepository.GetAsync(u => u.Id == userRegisterRequest.CreateBy);
             var CreateBy = userRegisterRequest.CreateBy;
-            Console.WriteLine(password);
-            Console.WriteLine(username);
             var user = new User
             {
                 StaffCode = newStaffCode,
