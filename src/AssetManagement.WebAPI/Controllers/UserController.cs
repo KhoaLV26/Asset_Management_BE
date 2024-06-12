@@ -66,8 +66,6 @@ namespace AssetManagement.WebAPI.Controllers
                         Message = "An error occurred while registering the user.",
                     });
                 }
-
-
             }
         }
 
