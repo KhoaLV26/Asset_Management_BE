@@ -24,5 +24,7 @@ namespace AssetManagement.Application.Models.Requests
 
         [Required]
         public Guid RoleId { get; set; }
+
+        public Guid CreateBy { get; set; }
     }
 }
