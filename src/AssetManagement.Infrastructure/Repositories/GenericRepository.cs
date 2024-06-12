@@ -1,15 +1,13 @@
-﻿using AssetManagement.Domain.Interfaces;
+﻿using AssetManagement.Domain.Constants;
+using AssetManagement.Domain.Interfaces;
 using AssetManagement.Infrastructure.DataAccess;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata.Conventions;
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
 using System.Linq.Expressions;
-using System.Reflection.Metadata;
+using System.Reflection;
 using System.Threading.Tasks;
-using AssetManagement.Domain.Constants;
 
 namespace AssetManagement.Infrastructure.Repositories
 {
@@ -40,28 +38,21 @@ namespace AssetManagement.Infrastructure.Repositories
             return await _context.Set<T>().ToListAsync();
         }
 
-        public async Task<IEnumerable<T>> Get(int page = 1, Expression<Func<T, bool>>? filter = null, Func<IQueryable<T>, IOrderedQueryable<T>>? orderBy = null, string includeProperties = "")
+        public async Task<IEnumerable<T>> GetAllAsync(Expression<Func<T, bool>> expression, params Expression<Func<T, object>>[] includeProperties)
         {
             IQueryable<T> query = _context.Set<T>();
-            //if (filter != null)
-            //{
-            //    query = query.Where(filter);
-            //}
-
-            //var total = query.ToList();
-            //query = query.Skip((page - 1) * 15).Take(15);
-            //foreach (var includeProperty in includeProperties.Split
-            //             (new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
-            //{
-            //    query = query.Include(includeProperty);
-            //}
-
-            //if (orderBy != null)
-            //{
-            //    return orderBy(query).ToList();
-            //}
-
-            return await GetAllAsync();
+            if (includeProperties != null)
+            {
+                foreach (var includeProperty in includeProperties)
+                {
+                    query = query.Include(includeProperty);
+                }
+            }
+            if (expression != null)
+            {
+                query = query.Where(expression);
+            }
+            return await query.ToListAsync();
         }
 
         public async Task<(IEnumerable<T> items,int totalCount)> GetAllAsync(int page = 1, Expression<Func<T, bool>>? filter = null,
