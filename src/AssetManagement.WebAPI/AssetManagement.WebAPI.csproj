@@ -12,7 +12,6 @@
 		<NoWarn>$(NoWarn);1591</NoWarn>
 	</PropertyGroup>
 
-	<PropertyGroup Condition=" '$(RunConfiguration)' == 'http' " />
 	<ItemGroup>
 	  <Content Remove="appsettings.Development.json" />
 	</ItemGroup>

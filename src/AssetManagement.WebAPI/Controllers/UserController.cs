@@ -67,7 +67,6 @@ namespace AssetManagement.WebAPI.Controllers
                     });
                 }
 
-
             }
         }
 

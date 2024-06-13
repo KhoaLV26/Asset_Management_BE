@@ -9,6 +9,7 @@ using System.Data;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using BCrypt.Net;
 using AssetManagement.Infrastructure.Helpers;
 using AutoMapper;
 using AssetManagement.Application.Models.Responses;
