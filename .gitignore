@@ -370,3 +370,5 @@ FodyWeavers.xsd
 /src/AssetManagement.Infrastructure/appsettings.json
 /src/AssetManagement.WebAPI/appsettings.Development.json
 /src/AssetManagement.WebAPI/appsettings.json
+/src/AssetManagement.Application/appsettings.Development.json
+/src/AssetManagement.Application/appsettings.json
