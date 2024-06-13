@@ -13,7 +13,7 @@ using System.Threading.Tasks;
 
 namespace AssetManagement.WebAPI.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/categories")]
     [ApiController]
     public class CategoryController:ControllerBase
     {

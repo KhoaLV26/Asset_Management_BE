@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace AssetManagement.WebAPI.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/assets")]
     [ApiController]
     public class AssetsController : ControllerBase
     {
