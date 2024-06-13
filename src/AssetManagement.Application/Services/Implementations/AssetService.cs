@@ -37,9 +37,10 @@ namespace AssetManagement.Application.Services.Implementations
 
             return (assets.items.Select(a => new AssetResponse
             {
+                Id = a.Id,
                 AssetCode = a.AssetCode,
                 AssetName = a.AssetName,
-                CategoryId = a.CategoryId,
+                CategoryName = a.Category.Name,
                 Status = a.Status
             }),assets.totalCount);
         }

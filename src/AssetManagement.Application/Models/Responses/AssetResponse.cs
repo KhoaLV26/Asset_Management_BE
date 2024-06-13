@@ -7,10 +7,10 @@ namespace AssetManagement.Application.Models.Responses
 {
     public class AssetResponse 
     {
-        public string AssetCode { get; set; }
-        public string AssetName { get; set; }
-        public Guid CategoryId { get; set; }
+        public Guid Id { get; set; } = Guid.NewGuid();
+        public string AssetCode { get; set; } = string.Empty;
+        public string AssetName { get; set; } = string.Empty;
         public string CategoryName { get; set; }
-        public EnumAssetStatus Status { get; set; }
+        public EnumAssetStatus Status { get; set; } = EnumAssetStatus.Available;
     }
 }
