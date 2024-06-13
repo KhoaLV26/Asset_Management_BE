@@ -94,6 +94,10 @@ namespace AssetManagement.Infrastructure.DataAccess
                 .HasIndex(c => c.Name)
                 .IsUnique();
 
+            modelBuilder.Entity<Category>()
+                .HasIndex(c => c.Code)
+                .IsUnique();
+
             modelBuilder.Entity<Location>()
                 .HasIndex(l => l.Name)
                 .IsUnique();
