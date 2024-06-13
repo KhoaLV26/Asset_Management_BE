@@ -9,9 +9,8 @@ using System.Threading.Tasks;
 
 namespace AssetManagement.Application.Services
 {
-    internal interface ICategoryService
+    public interface ICategoryService
     {
-        Task<(IEnumerable<CategoryResponse> data, int totalCount)> GetAllCategoryAsync(int page = 1, Expression<Func<Category, bool>>? filter = null, Func<IQueryable<Category>, IOrderedQueryable<Category>>? orderBy = null, string includeProperties = "");
-
+        Task<IEnumerable<CategoryResponse>> GetAllCategoriesAsync();
     }
 }
