@@ -68,52 +68,5 @@ namespace AssetManagement.WebAPI.Controllers
                 }
             }
         }
-
-        [HttpGet("search")]
-        public async Task<IActionResult> GetFilteredUsers(
-            [FromQuery] string location,
-            [FromQuery] string? searchTerm,
-            [FromQuery] string? role,
-            [FromQuery] string sortBy = "StaffCode",
-            [FromQuery] string sortDirection = "asc",
-            [FromQuery] int pageNumber = 1,
-            [FromQuery] int pageSize = 15)
-        {
-            try
-            {
-                var users = await _userService.GetFilteredUsersAsync(location, searchTerm, role, sortBy, sortDirection, pageNumber, pageSize);
-                return Ok(new GeneralGetsResponse
-                {
-                    Success = true,
-                    Message = "Successfully.",
-                    Data = users.Items,
-                    TotalCount = users.TotalCount
-                });
-            }
-            catch (ArgumentException ex)
-            {
-                return Conflict(new GeneralGetsResponse
-                {
-                    Success = false,
-                    Message = ex.Message
-                });
-            }
-            catch (InvalidOperationException ex)
-            {
-                return Conflict(new GeneralGetsResponse
-                {
-                    Success = false,
-                    Message = ex.Message
-                });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new GeneralGetsResponse
-                {
-                    Success = false,
-                    Message = ex.Message,
-                });
-            }
-        }
     }
 }
