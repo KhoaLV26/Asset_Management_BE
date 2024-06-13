@@ -59,13 +59,12 @@ namespace AssetManagement.Application.Services.Implementations
             var lastName = userRegisterRequest.LastName.ToLower();
             var username = _helper.GetUsername(firstName, lastName);
 
-
-            var usernames = await _unitOfWork.UserRepository.GetAllAsync(u => u.Username.StartsWith(username));
-            var usernameStrings = usernames.Select(u => u.Username).ToList();
-            var existingUserCount = usernameStrings.Count(u => u.Length > username.Length && char.IsDigit(u[username.Length]));
-            if (existingUserCount > 0)
+            var usernames = await _unitOfWork.UserRepository.GetAllAsync(u => true);
+            var existingUserCount = usernames.Count(u => u.Username.StartsWith(username) && (u.Username.Length > username.Length && Char.IsDigit(u.Username[username.Length])));
+            var existingUserCount2 = usernames.Count(u => u.Username == username);
+            if (existingUserCount > 0 || existingUserCount2 > 0)
             {
-                username = $"{username}{++existingUserCount}";
+                username += ++existingUserCount;
             }
 
             var password = $"{username}@{userRegisterRequest.DateOfBirth:ddMMyyyy}";
