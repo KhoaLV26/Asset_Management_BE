@@ -14,6 +14,7 @@ using AssetManagement.Infrastructure.Helpers;
 using AutoMapper;
 using AssetManagement.Application.Models.Responses;
 using AssetManagement.Domain.Constants;
+using System.Text.RegularExpressions;
 
 
 
@@ -58,7 +59,10 @@ namespace AssetManagement.Application.Services.Implementations
             var lastName = userRegisterRequest.LastName.ToLower();
             var username = _helper.GetUsername(firstName, lastName);
 
-            var existingUserCount = await _unitOfWork.UserRepository.CountAsync(u => u.Username.StartsWith(username));
+
+            var usernames = await _unitOfWork.UserRepository.GetAllAsync(u => u.Username.StartsWith(username));
+            var usernameStrings = usernames.Select(u => u.Username).ToList();
+            var existingUserCount = usernameStrings.Count(u => u.Length > username.Length && char.IsDigit(u[username.Length]));
             if (existingUserCount > 0)
             {
                 username = $"{username}{++existingUserCount}";
@@ -94,7 +98,7 @@ namespace AssetManagement.Application.Services.Implementations
             };
 
             await _unitOfWork.UserRepository.AddAsync(user);
-            if(await _unitOfWork.CommitAsync() < 1)
+            if (await _unitOfWork.CommitAsync() < 1)
             {
                 throw new InvalidOperationException("An error occurred while registering the user.");
             }
