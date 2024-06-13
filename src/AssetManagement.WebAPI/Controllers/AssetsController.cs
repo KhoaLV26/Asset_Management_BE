@@ -51,39 +51,39 @@ namespace AssetManagement.WebAPI.Controllers
             }
         }
 
-        //[HttpGet("{id}")]
-        //public async Task<IActionResult> GetAssetId(Guid id)
-        //{
-        //    try
-        //    {
-        //        var asset = await _assetService.GetAssetByIdAsync(id);
-        //        if (asset != null)
-        //        {
-        //            return Ok(new GeneralGetResponse
-        //            {
-        //                Success = true,
-        //                Message = "Asset retrived successfully.",
-        //                Data = asset
-        //            });
-        //        }
-        //        else
-        //        {
-        //            return NotFound(new GeneralGetResponse
-        //            {
-        //                Success = false,
-        //                Message = "Asset not found."
-        //            });
-        //        }
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        return Conflict(new GeneralGetResponse
-        //        {
-        //            Success = false,
-        //            Message = "Asset retrieved failed."
-        //        }); 
-        //    }
-        //}
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetAssetId(Guid id)
+        {
+            try
+            {
+                var asset = await _assetService.GetAssetByIdAsync(id);
+                if (asset != null)
+                {
+                    return Ok(new GeneralGetResponse
+                    {
+                        Success = true,
+                        Message = "Asset retrived successfully.",
+                        Data = asset
+                    });
+                }
+                else
+                {
+                    return Conflict(new GeneralBoolResponse
+                    {
+                        Success = false,
+                        Message = "Asset not found."
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                return Conflict(new GeneralGetResponse
+                {
+                    Success = false,
+                    Message = "Asset retrieved failed."
+                });
+            }
+        }
 
         private Func<IQueryable<Asset>, IOrderedQueryable<Asset>>? GetOrderQuery(string? sortOrder, string? sortBy)
         {

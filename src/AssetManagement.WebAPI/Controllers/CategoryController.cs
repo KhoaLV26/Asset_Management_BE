@@ -28,12 +28,23 @@ namespace AssetManagement.WebAPI.Controllers
             try
             {
                 var categories = await _categoryService.GetAllCategoriesAsync();
-                return Ok(new GeneralGetsResponse
+                if (categories != null && categories.Any())
                 {
-                    Success = true,
-                    Message = "Assets retrieved successfully.",
-                    Data = categories,
-                });
+                    return Ok(new GeneralGetsResponse
+                    {
+                        Success = true,
+                        Message = "Categories retrieved successfully.",
+                        Data = categories,
+                    });
+                }
+                else
+                {
+                    return Conflict(new GeneralBoolResponse 
+                    {
+                        Success = false , 
+                        Message = "No category."
+                    });
+                }
             }
             catch (Exception ex)
             {
