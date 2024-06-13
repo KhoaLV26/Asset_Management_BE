@@ -81,7 +81,7 @@ namespace AssetManagement.WebAPI.Controllers
                 {
                     Success = false,
                     Message = "Asset retrieved failed."
-                });
+                }); 
             }
         }
 

@@ -1,14 +1,14 @@
-﻿using AssetManagement.Domain.Enums;
-using AssetManagement.Domain.Models;
+﻿using AssetManagement.Domain.Entities;
+using AssetManagement.Domain.Enums;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace AssetManagement.Domain.Entities
+namespace AssetManagement.Application.Models.Responses
 {
-    public class Assignment : BaseEntity
+    public class AssignmentResponse
     {
         public Guid Id { get; set; }
         public Guid AssignedTo { get; set; }

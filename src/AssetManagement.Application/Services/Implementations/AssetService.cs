@@ -34,6 +34,7 @@ namespace AssetManagement.Application.Services.Implementations
         public async Task<(IEnumerable<AssetResponse> data, int totalCount)> GetAllAssetAsync(int page = 1, Expression<Func<Asset, bool>>? filter = null, Func<IQueryable<Asset>, IOrderedQueryable<Asset>>? orderBy = null, string includeProperties = "")
         {
             var assets = await _unitOfWork.AssetRepository.GetAllAsync(page, filter, orderBy, includeProperties);
+
             return (assets.items.Select(a => new AssetResponse
             {
                 Id = a.Id,
@@ -44,20 +45,40 @@ namespace AssetManagement.Application.Services.Implementations
             }),assets.totalCount);
         }
 
-        public async Task<AssetResponse> GetAssetByIdAsync(Guid id)
+        public async Task<AssetDetailResponse> GetAssetByIdAsync(Guid id)
         {
-            var asset = await _unitOfWork.AssetRepository.GetAsync(a => a.Id == id);
+            var asset = await _unitOfWork.AssetRepository.GetAsync(a => a.Id == id, a => a.Assignments);
             if (asset == null)
             {
                 return null;
             }
-            return new AssetResponse
+            var assignmentResponses = asset.Assignments.Select(a => new AssignmentResponse
+            {
+                Id = a.Id,
+                AssetId = a.AssetId,
+                AssignedBy = a.AssignedBy,
+                AssignedTo = a.AssignedTo,
+                AssignedDate = a.AssignedDate,
+                Status = a.Status
+            }).ToList();
+
+            return new AssetDetailResponse
             {
                 AssetName = asset.AssetName,
                 AssetCode = asset.AssetCode,
-                CategoryName = asset.Category.Name,
-                Status = asset.Status
+                CategoryId = asset.CategoryId,
+                Status = asset.Status,
+                AssignmentResponses = assignmentResponses.Select(a => new AssignmentResponse
+                {
+                    Id = a.Id,
+                    AssetId = a.AssetId,
+                    AssignedBy = a.AssignedBy,
+                    AssignedTo = a.AssignedTo,
+                    AssignedDate = a.AssignedDate,
+                    Status = a.Status
+                }).ToList()
             };
+
     }
 
         public Task<AssetResponse> UpdateAssetByIdAsync(Guid id, AssetRequest assetRequest)
