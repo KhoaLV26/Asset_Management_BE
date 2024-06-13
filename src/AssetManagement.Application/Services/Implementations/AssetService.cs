@@ -48,7 +48,7 @@ namespace AssetManagement.Application.Services.Implementations
 
         public async Task<AssetDetailResponse> GetAssetByIdAsync(Guid id)
         {
-            var asset = await _unitOfWork.AssetRepository.GetAsync(a => a.Id == id, a => a.Assignments);
+            var asset = await _unitOfWork.AssetRepository.GetAssetDetail(id);
             if (asset == null)
             {
                 return null;
@@ -60,7 +60,9 @@ namespace AssetManagement.Application.Services.Implementations
                 AssignedBy = a.AssignedBy,
                 AssignedTo = a.AssignedTo,
                 AssignedDate = a.AssignedDate,
-                Status = a.Status
+                Status = a.Status,
+                By = a.UserBy.Username,
+                To = a.UserTo.Username
             }).ToList();
 
             return new AssetDetailResponse
@@ -76,7 +78,9 @@ namespace AssetManagement.Application.Services.Implementations
                     AssignedBy = a.AssignedBy,
                     AssignedTo = a.AssignedTo,
                     AssignedDate = a.AssignedDate,
-                    Status = a.Status
+                    Status = a.Status,
+                    By = a.By,
+                    To = a.To
                 }).ToList()
             };
         }

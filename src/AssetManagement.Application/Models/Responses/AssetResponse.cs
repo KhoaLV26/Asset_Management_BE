@@ -18,3 +18,4 @@ namespace AssetManagement.Application.Models.Responses
         public Guid LocationId { get; set; }
         public string LocationName { get; set; } = string.Empty;
     }
+}

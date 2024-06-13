@@ -1,11 +1,6 @@
-﻿using AssetManagement.Application.Models.Responses;
-using AssetManagement.Application.Services;
-using AssetManagement.Application.Services.Implementations;
-using AssetManagement.Domain.Entities;
+﻿using AssetManagement.Application.Services;
 using AssetManagement.Domain.Models;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Identity.Client;
-using NuGet.ContentModel;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
@@ -15,10 +10,10 @@ namespace AssetManagement.WebAPI.Controllers
 {
     [Route("api/categories")]
     [ApiController]
-    public class CategoryController:ControllerBase
+    public class CategoriesController:ControllerBase
     {
         private readonly ICategoryService _categoryService;
-        public CategoryController(ICategoryService categoryService)
+        public CategoriesController(ICategoryService categoryService)
         {
             _categoryService = categoryService;
         }

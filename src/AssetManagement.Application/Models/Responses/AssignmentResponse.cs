@@ -12,9 +12,9 @@ namespace AssetManagement.Application.Models.Responses
     {
         public Guid Id { get; set; }
         public Guid AssignedTo { get; set; }
-        public User UserTo { get; set; }
+        public string To { get; set; }
         public Guid AssignedBy { get; set; }
-        public User UserBy { get; set; }
+        public string By { get; set; }
         public DateTime AssignedDate { get; set; }
         public Guid AssetId { get; set; }
         public Asset Asset { get; set; }

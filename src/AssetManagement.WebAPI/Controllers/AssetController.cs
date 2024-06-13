@@ -147,7 +147,31 @@ namespace AssetManagement.WebAPI.Controllers
                     throw new InvalidCastException("Invalid status value");
                 }
             }
+            else
+            {
+                // Default states: Available, NotAvailable, Assigned
+                var availableCondition = Expression.Equal(
+                    Expression.Property(parameter, nameof(Asset.Status)),
+                    Expression.Constant(EnumAssetStatus.Available)
+                );
 
+                var notAvailableCondition = Expression.Equal(
+                    Expression.Property(parameter, nameof(Asset.Status)),
+                    Expression.Constant(EnumAssetStatus.NotAvailable)
+                );
+
+                var assignedCondition = Expression.Equal(
+                    Expression.Property(parameter, nameof(Asset.Status)),
+                    Expression.Constant(EnumAssetStatus.Assigned)
+                );
+
+                var defaultStateCondition = Expression.OrElse(
+                    Expression.OrElse(availableCondition, notAvailableCondition),
+                    assignedCondition
+                );
+
+                conditions.Add(defaultStateCondition);
+            }
             // Add search conditions
             if (!string.IsNullOrEmpty(search))
             {
