@@ -1,0 +1,32 @@
+name: AssetManagement
+
+on:
+  workflow_dispatch:
+  push:
+     branches: 
+     - main
+
+jobs:
+   publish : 
+     runs-on: windows-lastest
+
+     steps:
+        - uses: actions/checkout@v3
+
+        - name: Setup .Net Core
+          uses: actions/setup-dotnet@v3
+          with:
+             dotnet-version: '8.0.x'
+
+        - name: Restore
+          run: dotnet restore ./AssetManagement.WebAPI/AssetManagement.WebAPI.csproj
+
+        - name: Build
+          run: dotnet rebuild ./AssetManagement.WebAPI/AssetManagement.WebAPI.csproj --configuration Release --no-restore
+
+        - name: Publish
+          run: dotnet publish ./AssetManagement.WebAPI/AssetManagement.WebAPI.csproj --configuration Release --no-build 
+           
+          
+          
+        
