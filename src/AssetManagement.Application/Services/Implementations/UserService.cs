@@ -9,12 +9,11 @@ using System.Data;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using BCrypt.Net;
 using AssetManagement.Infrastructure.Helpers;
 using AutoMapper;
 using AssetManagement.Application.Models.Responses;
 using AssetManagement.Domain.Constants;
-
+using System.Linq.Expressions;
 
 
 namespace AssetManagement.Application.Services.Implementations
@@ -112,6 +111,52 @@ namespace AssetManagement.Application.Services.Implementations
             var newStaffCode = $"SD{(int.Parse(lastStaffCode.Substring(2)) + 1):D4}";
             return  newStaffCode;
 
+        }
+
+        public async Task<(IEnumerable<GetUserResponse> Items, int TotalCount)> GetFilteredUsersAsync(
+            string location,
+            string? searchTerm,
+            string? role = null,
+            string sortBy = "StaffCode",
+            string sortDirection = "asc",
+            int pageNumber = 1,
+            int pageSize = 15)
+        {
+            Expression<Func<User, bool>> filter = null;
+
+            if (!string.IsNullOrEmpty(role))
+            {
+                filter = u => u.Role.Name == role;
+            }
+
+            Func<IQueryable<User>, IOrderedQueryable<User>> orderBy = null;
+
+            bool ascending = sortDirection.ToLower() == "asc";
+
+            switch (sortBy)
+            {
+                case "StaffCode":
+                    orderBy = q => ascending ? q.OrderBy(u => u.StaffCode) : q.OrderByDescending(u => u.StaffCode);
+                    break;
+                case "JoinedDate":
+                    orderBy = q => ascending ? q.OrderBy(u => u.DateJoined) : q.OrderByDescending(u => u.DateJoined);
+                    break;
+                case "Role":
+                    orderBy = q => ascending ? q.OrderBy(u => u.Role.Name) : q.OrderByDescending(u => u.Role.Name);
+                    break;
+                default:
+                    orderBy = q => ascending
+                        ? q.OrderBy(u => u.FirstName).ThenBy(u => u.LastName)
+                        : q.OrderByDescending(u => u.FirstName).ThenByDescending(u => u.LastName);
+                    break;
+            }
+
+            var getUsers = await _unitOfWork.UserRepository.GetFilteredAsync(location, filter, orderBy, "Role", searchTerm, pageNumber, pageSize);
+
+            var userResponses = _mapper.Map<IEnumerable<GetUserResponse>>(getUsers.Items);
+            var totalCount = getUsers.TotalCount;
+
+            return (userResponses, totalCount);
         }
     }
 }

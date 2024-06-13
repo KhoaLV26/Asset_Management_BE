@@ -17,8 +17,11 @@ namespace AssetManagement.Domain.Entities
         public DateTime AssignedDate { get; set; }
         public Guid AssetId { get; set; }
         public Asset Asset { get; set; }
+
         public Guid? ReturnRequestId { get; set; }
         public ReturnRequest? ReturnRequest { get; set; }
+
         public EnumAssignmentStatus Status { get; set; } = EnumAssignmentStatus.WaitingForAcceptance;
+        public ICollection<ReturnRequest> ReturnRequests { get; set; } = new List<ReturnRequest>();
     }
 }
