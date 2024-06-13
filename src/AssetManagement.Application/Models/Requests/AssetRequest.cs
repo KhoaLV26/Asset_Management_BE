@@ -11,11 +11,11 @@ namespace AssetManagement.Application.Models.Responses
 {
     public class AssetRequest
 	{
-        public string AssetCode { get; set; } = string.Empty;
-        public string AssetName { get; set; } = string.Empty;
+        public string AssetCode { get; set; }
+        public string AssetName { get; set; }
         public Guid CategoryId { get; set; }
-        public EnumAssetStatus Status { get; set; } = EnumAssetStatus.Available;
+        public EnumAssetStatus Status { get; set; }
         public DateOnly InstallDate { get; set; }
-        public string Specification { get; set; } = string.Empty;
+        public string Specification { get; set; }
     }
 }

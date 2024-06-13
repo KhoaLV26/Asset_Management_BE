@@ -50,13 +50,23 @@ namespace AssetManagement.Application.Services.Implementations
             {
                 return null;
             }
+            var assignment = await _unitOfWork.AssignmentRepository.GetAllAsync(a => a.AssetId == asset.Id, a => a.AssignedBy, a => a.AssignedTo, a => a.AssignedDate, a => a.Status);
             return new AssetResponse
             {
                 AssetName = asset.AssetName,
                 AssetCode = asset.AssetCode,
                 CategoryId = asset.CategoryId,
-                Status = asset.Status
+                Status = asset.Status,
+                AssignmentResponses = assignment.Select(a => new AssignmentResponse
+                {
+                    AssetId = a.AssetId,
+                    AssignedBy = a.AssignedBy,
+                    AssignedTo = a.AssignedTo,
+                    AssignedDate = a.AssignedDate,
+                    Status = a.Status
+                }).ToList()
             };
+
     }
 
         public Task<AssetResponse> UpdateAssetByIdAsync(Guid id, AssetRequest assetRequest)
