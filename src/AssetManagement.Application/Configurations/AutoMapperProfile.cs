@@ -20,7 +20,7 @@ namespace AssetManagement.Application.Configurations
                 .ForMember(dest => dest.RoleName, opt => opt.MapFrom(src => src.Role.Name));
             CreateMap<Role, RoleResponse>();
             CreateMap<Category, CategoryResponse>();
-            CreateMap<Asset, AssetCreateResponse>()
+            CreateMap<Asset, AssetResponse>()
                 .ForMember(dest => dest.CategoryName, opt => opt.MapFrom(src => src.Category.Name))
                 .ForMember(dest => dest.LocationName, opt => opt.MapFrom(src => src.Location.Name));
         }

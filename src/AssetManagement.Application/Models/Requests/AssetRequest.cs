@@ -1,4 +1,4 @@
-﻿using AssetManagement.Domain.Entities;
+using AssetManagement.Domain.Entities;
 using AssetManagement.Domain.Enums;
 using System;
 using System.Collections.Generic;
@@ -11,6 +11,7 @@ namespace AssetManagement.Application.Models.Requests
 {
     public class AssetRequest
     {
+        public Guid CreatedBy { get; set; }
         public string AssetName { get; set; } = string.Empty;
         public Guid CategoryId { get; set; }
         public string Specification { get; set; } = string.Empty;
