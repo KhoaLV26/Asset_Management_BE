@@ -16,7 +16,6 @@ namespace AssetManagement.Domain.Entities
 
         [MaxLength(100)]
         public string AssetName { get; set; } = string.Empty;
-
         public Guid CategoryId { get; set; }
         public Category Category { get; set; }
         public EnumAssetStatus Status { get; set; } = EnumAssetStatus.Available;

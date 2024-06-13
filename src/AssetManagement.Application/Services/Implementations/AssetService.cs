@@ -16,20 +16,20 @@ namespace AssetManagement.Application.Services.Implementations
         {
             _unitOfWork = unitOfWork;
         }
-        public Task<AssetResponse> CreateAssetAsync(AssetRequest assetRequest)
-        {
-            throw new NotImplementedException();
-        }
+        //public Task<AssetResponse> CreateAssetAsync(AssetRequest assetRequest)
+        //{
+        //    throw new NotImplementedException();
+        //}
 
-        public async void DeleteAssetByIdAsync(Guid id)
-        {
-            var asset = await _unitOfWork.AssetRepository.GetAsync(a => a.Id == id);
-            if (asset != null)
-            {
-                throw new KeyNotFoundException();
-            }
-            _unitOfWork.AssetRepository.Delete(asset);
-        }
+        //public async void DeleteAssetByIdAsync(Guid id)
+        //{
+        //    var asset = await _unitOfWork.AssetRepository.GetAsync(a => a.Id == id);
+        //    if (asset != null)
+        //    {
+        //        throw new KeyNotFoundException();
+        //    }
+        //    _unitOfWork.AssetRepository.Delete(asset);
+        //}
 
         public async Task<(IEnumerable<AssetResponse> data, int totalCount)> GetAllAssetAsync(int page = 1, Expression<Func<Asset, bool>>? filter = null, Func<IQueryable<Asset>, IOrderedQueryable<Asset>>? orderBy = null, string includeProperties = "")
         {
@@ -40,6 +40,7 @@ namespace AssetManagement.Application.Services.Implementations
                 Id = a.Id,
                 AssetCode = a.AssetCode,
                 AssetName = a.AssetName,
+                CategoryId = a.CategoryId,
                 CategoryName = a.Category.Name,
                 Status = a.Status
             }),assets.totalCount);
@@ -78,12 +79,11 @@ namespace AssetManagement.Application.Services.Implementations
                     Status = a.Status
                 }).ToList()
             };
-
-    }
-
-        public Task<AssetResponse> UpdateAssetByIdAsync(Guid id, AssetRequest assetRequest)
-        {
-            throw new NotImplementedException();
         }
+
+        //public Task<AssetResponse> UpdateAssetByIdAsync(Guid id, AssetRequest assetRequest)
+        //{
+        //    throw new NotImplementedException();
+        //}
     }
 }
