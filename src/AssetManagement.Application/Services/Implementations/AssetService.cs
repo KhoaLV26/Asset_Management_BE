@@ -44,7 +44,7 @@ namespace AssetManagement.Application.Services.Implementations
             }),assets.totalCount);
         }
 
-        public async Task<AssetResponse> GetAssetByIdAsync(Guid id)
+        public async Task<AssetDetailResponse> GetAssetByIdAsync(Guid id)
         {
             var asset = await _unitOfWork.AssetRepository.GetAsync(a => a.Id == id, a => a.Assignments);
             if (asset == null)
@@ -61,7 +61,7 @@ namespace AssetManagement.Application.Services.Implementations
                 Status = a.Status
             }).ToList();
 
-            return new AssetResponse
+            return new AssetDetailResponse
             {
                 AssetName = asset.AssetName,
                 AssetCode = asset.AssetCode,
