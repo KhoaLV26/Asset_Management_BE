@@ -26,5 +26,8 @@ namespace AssetManagement.Domain.Entities
 
         [MaxLength(255)]
         public string Specification { get; set; } = string.Empty;
+
+        public Guid? LocationId { get; set; }
+        public Location? Location { get; set; }
     }
 }
