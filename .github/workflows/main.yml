@@ -23,10 +23,10 @@ jobs:
           dotnet-version: 8.0.x
           
       - name: Restore
-        run: dotnet restore ./AssetManagement.WebAPI/AssetManagement.WebAPI.csproj
+        run: dotnet restore ./src/AssetManagement.WebAPI/AssetManagement.WebAPI.csproj
         
       - name: Build
-        run: dotnet build ./AssetManagement.WebAPI/AssetManagement.WebAPI.csproj --configuration Release --no-restore
+        run: dotnet build ./src/AssetManagement.WebAPI/AssetManagement.WebAPI.csproj --configuration Release --no-restore
         
       # - name: Publish
       #   run: dotnet publish ./AssetManagement.WebAPI/AssetManagement.WebAPI.csproj --configuration Release --no-build 
