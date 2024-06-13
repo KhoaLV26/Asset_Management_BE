@@ -64,8 +64,8 @@ namespace AssetManagement.Infrastructure.DataAccess
 
             modelBuilder.Entity<Assignment>()
                 .HasOne(a => a.Asset)
-                .WithOne(ast => ast.Assignment)
-                .HasForeignKey<Assignment>(a => a.AssetId);
+                .WithMany(a => a.Assignments)
+                .HasForeignKey(a => a.AssetId);
 
             modelBuilder.Entity<ReturnRequest>()
                 .HasOne(rr => rr.Assignment)
