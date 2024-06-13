@@ -14,7 +14,8 @@ using AssetManagement.Infrastructure.Helpers;
 using AutoMapper;
 using AssetManagement.Application.Models.Responses;
 using AssetManagement.Domain.Constants;
-using System.Linq.Expressions;
+using System.Text.RegularExpressions;
+
 
 
 namespace AssetManagement.Application.Services.Implementations
@@ -58,10 +59,12 @@ namespace AssetManagement.Application.Services.Implementations
             var lastName = userRegisterRequest.LastName.ToLower();
             var username = _helper.GetUsername(firstName, lastName);
 
-            var existingUserCount = await _unitOfWork.UserRepository.CountAsync(u => u.Username.StartsWith(username));
-            if (existingUserCount > 0)
+            var usernames = await _unitOfWork.UserRepository.GetAllAsync(u => true);
+            var existingUserCount = usernames.Count(u => u.Username.StartsWith(username) && (u.Username.Length > username.Length && Char.IsDigit(u.Username[username.Length])));
+            var existingUserCount2 = usernames.Count(u => u.Username == username);
+            if (existingUserCount > 0 || existingUserCount2 > 0)
             {
-                username = $"{username}{++existingUserCount}";
+                username += ++existingUserCount;
             }
 
             var password = $"{username}@{userRegisterRequest.DateOfBirth:ddMMyyyy}";
@@ -94,7 +97,7 @@ namespace AssetManagement.Application.Services.Implementations
             };
 
             await _unitOfWork.UserRepository.AddAsync(user);
-            if(await _unitOfWork.CommitAsync() < 1)
+            if (await _unitOfWork.CommitAsync() < 1)
             {
                 throw new InvalidOperationException("An error occurred while registering the user.");
             }
@@ -112,52 +115,6 @@ namespace AssetManagement.Application.Services.Implementations
             var newStaffCode = $"SD{(int.Parse(lastStaffCode.Substring(2)) + 1):D4}";
             return  newStaffCode;
 
-        }
-
-        public async Task<(IEnumerable<GetUserResponse> Items, int TotalCount)> GetFilteredUsersAsync(
-            string location,
-            string? searchTerm,
-            string? role = null,
-            string sortBy = "StaffCode",
-            string sortDirection = "asc",
-            int pageNumber = 1,
-            int pageSize = 15)
-        {
-            Expression<Func<User, bool>> filter = null;
-
-            if (!string.IsNullOrEmpty(role))
-            {
-                filter = u => u.Role.Name == role;
-            }
-
-            Func<IQueryable<User>, IOrderedQueryable<User>> orderBy = null;
-
-            bool ascending = sortDirection.ToLower() == "asc";
-
-            switch (sortBy)
-            {
-                case "StaffCode":
-                    orderBy = q => ascending ? q.OrderBy(u => u.StaffCode) : q.OrderByDescending(u => u.StaffCode);
-                    break;
-                case "JoinedDate":
-                    orderBy = q => ascending ? q.OrderBy(u => u.DateJoined) : q.OrderByDescending(u => u.DateJoined);
-                    break;
-                case "Role":
-                    orderBy = q => ascending ? q.OrderBy(u => u.Role.Name) : q.OrderByDescending(u => u.Role.Name);
-                    break;
-                default:
-                    orderBy = q => ascending
-                        ? q.OrderBy(u => u.FirstName).ThenBy(u => u.LastName)
-                        : q.OrderByDescending(u => u.FirstName).ThenByDescending(u => u.LastName);
-                    break;
-            }
-
-            var getUsers = await _unitOfWork.UserRepository.GetFilteredAsync(location, filter, orderBy, "Role", searchTerm, pageNumber, pageSize);
-
-            var userResponses = _mapper.Map<IEnumerable<GetUserResponse>>(getUsers.Items);
-            var totalCount = getUsers.TotalCount;
-
-            return (userResponses, totalCount);
         }
     }
 }

@@ -15,8 +15,5 @@
   <ItemGroup>
     <ProjectReference Include="..\AssetManagement.Infrastructure\AssetManagement.Infrastructure.csproj" />
   </ItemGroup>
-      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
-    </Content>
-  </ItemGroup>
->>>>>>>>> Temporary merge branch 2
+
 </Project>
