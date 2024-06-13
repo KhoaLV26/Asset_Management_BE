@@ -16,9 +16,6 @@ namespace AssetManagement.Application.Configurations
             CreateMap<User, UserRegisterResponse>()
                 .ForMember(dest => dest.LocationName, opt => opt.MapFrom(src => src.Location.Name))
                 .ForMember(dest => dest.RoleName, opt => opt.MapFrom(src => src.Role.Name));
-            CreateMap<User, GetUserResponse>()
-                .ForMember(dest => dest.LocationName, opt => opt.MapFrom(src => src.Location.Name))
-                .ForMember(dest => dest.RoleName, opt => opt.MapFrom(src => src.Role.Name));
             CreateMap<Role, RoleResponse>();
         }
 
