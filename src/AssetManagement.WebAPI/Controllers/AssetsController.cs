@@ -16,10 +16,12 @@ namespace AssetManagement.WebAPI.Controllers
     public class AssetsController : ControllerBase
     {
         private readonly IAssetService _assetService;
+        private readonly IUserService _userService;
 
-        public AssetsController(IAssetService assetService)
+        public AssetsController(IAssetService assetService, IUserService userService)
         {
             _assetService = assetService;
+            _userService = userService;
         }
 
         [HttpGet]
@@ -27,18 +29,27 @@ namespace AssetManagement.WebAPI.Controllers
         {
             try
             {
+                Guid adminId = Guid.Parse("CFF14216-AC4D-4D5D-9222-C951287E51C6");
                 Func<IQueryable<Asset>, IOrderedQueryable<Asset>>? orderBy = GetOrderQuery(sortOrder, sortBy);
-                Expression<Func<Asset, bool>>? filter = GetFilterQuery(category, state, search);
+                Expression<Func<Asset, bool>>? filter = await GetFilterQuery(adminId,category, state, search);
                 var assets = await _assetService.GetAllAssetAsync(page: currentPage == 0 ? 1 : currentPage,
                     filter: filter,
                     orderBy: String.IsNullOrEmpty(sortBy) ? null : orderBy,
-                    includeProperties:"Category");
-                return Ok(new GeneralGetsResponse
+                    includeProperties: "Category");
+                if (assets.data.Any())
                 {
-                    Success = true,
-                    Message = "Assets retrieved successfully.",
-                    Data = assets.data,
-                    TotalCount = assets.totalCount
+                    return Ok(new GeneralGetsResponse
+                    {
+                        Success = true,
+                        Message = "Assets retrieved successfully.",
+                        Data = assets.data,
+                        TotalCount = assets.totalCount
+                    });
+                }
+                return Conflict(new GeneralGetsResponse
+                {
+                    Success = false,
+                    Message = "No data.",
                 });
             }
             catch (Exception ex)
@@ -46,7 +57,7 @@ namespace AssetManagement.WebAPI.Controllers
                 return Conflict(new GeneralGetsResponse
                 {
                     Success = false,
-                    Message = "Assets retrieved failed.",
+                    Message = ex.Message,
                 });
             }
         }
@@ -109,13 +120,17 @@ namespace AssetManagement.WebAPI.Controllers
             return orderBy;
         }
 
-        private Expression<Func<Asset, bool>>? GetFilterQuery(Guid? category, string? state, string? search)
+        private async Task<Expression<Func<Asset, bool>>>? GetFilterQuery(Guid adminId, Guid? category, string? state, string? search)
         {
+            var locationId = await _userService.GetLocation(adminId);
+            var nullableLocationId = (Guid?)locationId;
             // Determine the filtering criteria
             Expression<Func<Asset, bool>>? filter = null;
             var parameter = Expression.Parameter(typeof(Asset), "x");
             var conditions = new List<Expression>();
-
+            var locationCondition = Expression.Equal(Expression.Property(parameter, nameof(Asset.LocationId)),
+                Expression.Constant(nullableLocationId, typeof(Guid?)));
+            conditions.Add(locationCondition);
             // Parse state parameter to enum
             if (!string.IsNullOrEmpty(state))
             {

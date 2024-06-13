@@ -108,6 +108,12 @@ namespace AssetManagement.Application.Services.Implementations
 
         }
 
+        public async Task<Guid> GetLocation(Guid id)
+        {
+            var user =  await _unitOfWork.UserRepository.GetAsync(x => x.Id == id);
+            return user.LocationId;
+        }
+
         private async Task<string> GenerateNewStaffCode()
         {
             var lastUser = await _unitOfWork.UserRepository.GetAllAsync();

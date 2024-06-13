@@ -12,5 +12,6 @@ namespace AssetManagement.Application.Services
     public interface IUserService
     {
         Task <UserRegisterResponse> AddUserAsync(UserRegisterRequest userRegisterRequest);
+        Task<Guid> GetLocation(Guid id);
     }
 }
