@@ -55,8 +55,7 @@ namespace AssetManagement.Application.Services.Implementations
                 AssetName = asset.AssetName,
                 AssetCode = asset.AssetCode,
                 CategoryId = asset.CategoryId,
-                Status = asset.Status,
-                
+                Status = asset.Status
             };
     }
 

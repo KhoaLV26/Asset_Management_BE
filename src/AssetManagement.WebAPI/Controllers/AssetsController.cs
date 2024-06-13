@@ -2,6 +2,7 @@
 using AssetManagement.Domain.Entities;
 using AssetManagement.Domain.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Identity.Client;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
@@ -19,9 +20,9 @@ namespace AssetManagement.WebAPI.Controllers
             _assetService = assetService;
         }
 
-    [HttpGet]
-    public async Task<IActionResult> GetAllAssetAsync(int currentPage, string? search, string? sortBy, string? sortOrder)   
-    {
+        [HttpGet]
+        public async Task<IActionResult> GetAllAssetAsync(int currentPage, string? search, string? sortBy, string? sortOrder)
+        {
             try
             {
                 Func<IQueryable<Asset>, IOrderedQueryable<Asset>>? orderBy;
@@ -65,6 +66,39 @@ namespace AssetManagement.WebAPI.Controllers
                     Message = "Assets retrieved failed.",
                 });
             }
-    }
+        }
+
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetAssetId(Guid id)
+        {
+            try
+            {
+                var asset = await _assetService.GetAssetByIdAsync(id);
+                if (asset != null)
+                {
+                    return Ok(new GeneralGetResponse { 
+                     Success = true,
+                     Message = "Asset retrived successfully.",
+                     Data = asset
+                    });
+                }
+                else
+                {
+                    return NotFound(new GeneralGetResponse
+                    {
+                        Success = false,
+                        Message = "Asset not found."
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                return Conflict(new GeneralGetResponse
+                {
+                    Success = false,
+                    Message = "Asset retrieved failed."
+                });
+            }
+        }       
     }
 }
