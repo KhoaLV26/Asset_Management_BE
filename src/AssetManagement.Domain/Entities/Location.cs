@@ -14,5 +14,6 @@ namespace AssetManagement.Domain.Entities
         public string Name { get; set; } = string.Empty;
 
         public ICollection<User> Users { get; set; } = new List<User>();
+        public ICollection<Asset> Assets { get; set; } = new List<Asset>();
     }
 }
