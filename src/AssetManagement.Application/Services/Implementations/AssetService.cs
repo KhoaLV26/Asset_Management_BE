@@ -36,9 +36,10 @@ namespace AssetManagement.Application.Services.Implementations
             var assets = await _unitOfWork.AssetRepository.GetAllAsync(page, filter, orderBy, includeProperties);
             return (assets.items.Select(a => new AssetResponse
             {
+                Id = a.Id,
                 AssetCode = a.AssetCode,
                 AssetName = a.AssetName,
-                CategoryId = a.CategoryId,
+                CategoryName = a.Category.Name,
                 Status = a.Status
             }),assets.totalCount);
         }
@@ -54,7 +55,7 @@ namespace AssetManagement.Application.Services.Implementations
             {
                 AssetName = asset.AssetName,
                 AssetCode = asset.AssetCode,
-                CategoryId = asset.CategoryId,
+                CategoryName = asset.Category.Name,
                 Status = asset.Status
             };
     }
