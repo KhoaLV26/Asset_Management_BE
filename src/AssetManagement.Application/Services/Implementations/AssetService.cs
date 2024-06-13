@@ -46,20 +46,30 @@ namespace AssetManagement.Application.Services.Implementations
 
         public async Task<AssetResponse> GetAssetByIdAsync(Guid id)
         {
-            var asset = await _unitOfWork.AssetRepository.GetAsync(a => a.Id == id);
+            var asset = await _unitOfWork.AssetRepository.GetAsync(a => a.Id == id, a => a.Assignments);
             if (asset == null)
             {
                 return null;
             }
-            var assignment = await _unitOfWork.AssignmentRepository.GetAllAsync(a => a.AssetId == asset.Id, a => a.AssignedBy, a => a.AssignedTo, a => a.AssignedDate, a => a.Status);
+            var assignmentResponses = asset.Assignments.Select(a => new AssignmentResponse
+            {
+                Id = a.Id,
+                AssetId = a.AssetId,
+                AssignedBy = a.AssignedBy,
+                AssignedTo = a.AssignedTo,
+                AssignedDate = a.AssignedDate,
+                Status = a.Status
+            }).ToList();
+
             return new AssetResponse
             {
                 AssetName = asset.AssetName,
                 AssetCode = asset.AssetCode,
                 CategoryId = asset.CategoryId,
                 Status = asset.Status,
-                AssignmentResponses = assignment.Select(a => new AssignmentResponse
+                AssignmentResponses = assignmentResponses.Select(a => new AssignmentResponse
                 {
+                    Id = a.Id,
                     AssetId = a.AssetId,
                     AssignedBy = a.AssignedBy,
                     AssignedTo = a.AssignedTo,

@@ -10,6 +10,7 @@ namespace AssetManagement.Application.Models.Responses
 {
     public class AssignmentResponse
     {
+        public Guid Id { get; set; }
         public Guid AssignedTo { get; set; }
         public User UserTo { get; set; }
         public Guid AssignedBy { get; set; }
