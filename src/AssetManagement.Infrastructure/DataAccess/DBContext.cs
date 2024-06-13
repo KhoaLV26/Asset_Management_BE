@@ -64,13 +64,13 @@ namespace AssetManagement.Infrastructure.DataAccess
 
             modelBuilder.Entity<Assignment>()
                 .HasOne(a => a.Asset)
-                .WithMany(ast => ast.Assignments)
-                .HasForeignKey(a => a.AssetId);
+                .WithOne(ast => ast.Assignment)
+                .HasForeignKey<Assignment>(a => a.AssetId);
 
             modelBuilder.Entity<ReturnRequest>()
                 .HasOne(rr => rr.Assignment)
-                .WithMany(a => a.ReturnRequests)
-                .HasForeignKey(rr => rr.AssignmentId);
+                .WithOne(a => a.ReturnRequest)
+                .HasForeignKey<ReturnRequest>(rr => rr.AssignmentId);
 
             modelBuilder.Entity<ReturnRequest>()
                 .HasOne(rr => rr.UserAccept)
@@ -92,6 +92,10 @@ namespace AssetManagement.Infrastructure.DataAccess
 
             modelBuilder.Entity<Category>()
                 .HasIndex(c => c.Name)
+                .IsUnique();
+
+            modelBuilder.Entity<Category>()
+                .HasIndex(c => c.Code)
                 .IsUnique();
 
             modelBuilder.Entity<Location>()
