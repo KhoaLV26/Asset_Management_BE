@@ -10,6 +10,7 @@ namespace AssetManagement.Application.Models.Responses
         public string AssetCode { get; set; }
         public string AssetName { get; set; }
         public Guid CategoryId { get; set; }
+        public string CategoryName { get; set; }
         public EnumAssetStatus Status { get; set; }
         public IEnumerable<AssignmentResponse>? AssignmentResponses { get; set; }
     }

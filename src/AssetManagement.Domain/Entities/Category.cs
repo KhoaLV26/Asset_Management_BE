@@ -13,6 +13,9 @@ namespace AssetManagement.Domain.Entities
         [MaxLength(100)]
         public string Name { get; set; } = string.Empty;
 
+        [MaxLength(5)]
+        public string Code { get; set; } = string.Empty;
+
         public ICollection<Asset> Assets { get; set; } = new List<Asset>();
     }
 }

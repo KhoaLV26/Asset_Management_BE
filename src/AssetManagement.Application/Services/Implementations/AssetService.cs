@@ -34,6 +34,7 @@ namespace AssetManagement.Application.Services.Implementations
         public async Task<(IEnumerable<AssetResponse> data, int totalCount)> GetAllAssetAsync(int page = 1, Expression<Func<Asset, bool>>? filter = null, Func<IQueryable<Asset>, IOrderedQueryable<Asset>>? orderBy = null, string includeProperties = "")
         {
             var assets = await _unitOfWork.AssetRepository.GetAllAsync(page, filter, orderBy, includeProperties);
+
             return (assets.items.Select(a => new AssetResponse
             {
                 AssetCode = a.AssetCode,
