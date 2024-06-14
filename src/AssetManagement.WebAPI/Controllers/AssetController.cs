@@ -1,4 +1,5 @@
 ﻿using AssetManagement.Application.Models.Responses;
+using AssetManagement.Application.Models.Requests;
 using AssetManagement.Application.Services;
 using AssetManagement.Domain.Entities;
 using AssetManagement.Domain.Enums;
@@ -14,12 +15,12 @@ namespace AssetManagement.WebAPI.Controllers
 {
     [Route("api/assets")]
     [ApiController]
-    public class AssetsController : ControllerBase
+    public class AssetController : ControllerBase
     {
         private readonly IAssetService _assetService;
         private readonly IUserService _userService;
 
-        public AssetsController(IAssetService assetService, IUserService userService)
+        public AssetController(IAssetService assetService, IUserService userService)
         {
             _assetService = assetService;
             _userService = userService;
