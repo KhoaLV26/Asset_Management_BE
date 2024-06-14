@@ -83,6 +83,69 @@ namespace AssetManagement.Test.Unit.UserServiceTest
             _unitOfWorkMock.Verify(u => u.CommitAsync(), Times.Once);
         }
 
-        // Add more test methods for other scenarios, such as invalid requests, edge cases, etc.
+        [Fact]
+        public async Task AddUserAsync_UserUnder18_ThrowsArgumentException()
+        {
+            // Arrange
+            var userRegisterRequest = new UserRegisterRequest
+            {
+                FirstName = "John",
+                LastName = "Doe",
+                DateOfBirth = DateOnly.FromDateTime(DateTime.Now.AddYears(-17)), // User is 17 years old
+                DateJoined = DateOnly.FromDateTime(DateTime.Now),
+                Gender = EnumGender.Male,
+                RoleId = Guid.NewGuid(),
+                CreateBy = Guid.NewGuid()
+            };
+
+            // Act & Assert
+            await Assert.ThrowsAsync<ArgumentException>(() => _userService.AddUserAsync(userRegisterRequest));
+        }
+
+        [Fact]
+        public async Task AddUserAsync_JoinedDateBeforeDateOfBirth_ThrowsArgumentException()
+        {
+            // Arrange
+            var userRegisterRequest = new UserRegisterRequest
+            {
+                FirstName = "John",
+                LastName = "Doe",
+                DateOfBirth = DateOnly.FromDateTime(DateTime.Now.AddYears(-20)),
+                DateJoined = DateOnly.FromDateTime(DateTime.Now.AddYears(-21)), // Joined date is before date of birth
+                Gender = EnumGender.Male,
+                RoleId = Guid.NewGuid(),
+                CreateBy = Guid.NewGuid()
+            };
+
+            // Act & Assert
+            await Assert.ThrowsAsync<ArgumentException>(() => _userService.AddUserAsync(userRegisterRequest));
+        }
+
+        [Theory]
+        [InlineData(DayOfWeek.Saturday)]
+        [InlineData(DayOfWeek.Sunday)]
+        public async Task AddUserAsync_JoinedDateOnWeekend_ThrowsArgumentException(DayOfWeek dayOfWeek)
+        {
+            // Arrange
+            var userRegisterRequest = new UserRegisterRequest
+            {
+                FirstName = "John",
+                LastName = "Doe",
+                DateOfBirth = DateOnly.FromDateTime(DateTime.Now.AddYears(-20)),
+                DateJoined = DateOnly.FromDateTime(GetNextWeekday(DateTime.Now, dayOfWeek)), // Joined date is on the specified weekend day
+                Gender = EnumGender.Male,
+                RoleId = Guid.NewGuid(),
+                CreateBy = Guid.NewGuid()
+            };
+
+            // Act & Assert
+            await Assert.ThrowsAsync<ArgumentException>(() => _userService.AddUserAsync(userRegisterRequest));
+        }
+
+        private DateTime GetNextWeekday(DateTime startDate, DayOfWeek dayOfWeek)
+        {
+            int daysToAdd = ((int)dayOfWeek - (int)startDate.DayOfWeek + 7) % 7;
+            return startDate.AddDays(daysToAdd);
+        }
     }
 }
