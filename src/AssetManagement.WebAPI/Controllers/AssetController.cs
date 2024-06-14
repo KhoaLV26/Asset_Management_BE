@@ -57,7 +57,7 @@ namespace AssetManagement.WebAPI.Controllers
         //}
 
         [HttpGet]
-        public async Task<IActionResult> GetAllAssetAsync(int currentPage, string? state, Guid? category, string? search, string? sortBy, string? sortOrder)
+        public async Task<IActionResult> GetAllAssetAsync(int currentPage, string? state, Guid? category, string? search, string? sortOrder, string? sortBy = "assetCode")
         {
             try
             {
