@@ -20,5 +20,6 @@ namespace AssetManagement.Application.Services
             string sortDirection = "asc",
             int pageNumber = 1,
             int pageSize = 15);
+        Task<Guid> GetLocation(Guid id);
     }
 }
