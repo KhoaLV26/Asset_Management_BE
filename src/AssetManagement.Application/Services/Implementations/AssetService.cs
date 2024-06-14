@@ -78,5 +78,59 @@ namespace AssetManagement.Application.Services.Implementations
 
             return assetNumber;
         }
+
+        public async Task<(IEnumerable<AssetResponse> data, int totalCount)> GetAllAssetAsync(int page = 1, Expression<Func<Asset, bool>>? filter = null, Func<IQueryable<Asset>, IOrderedQueryable<Asset>>? orderBy = null, string includeProperties = "")
+        {
+            var assets = await _unitOfWork.AssetRepository.GetAllAsync(page, filter, orderBy, includeProperties);
+
+            return (assets.items.Select(a => new AssetResponse
+            {
+                Id = a.Id,
+                AssetCode = a.AssetCode,
+                AssetName = a.AssetName,
+                CategoryId = a.CategoryId,
+                CategoryName = a.Category.Name,
+                Status = a.Status
+            }), assets.totalCount);
+        }
+
+        public async Task<AssetDetailResponse> GetAssetByIdAsync(Guid id)
+        {
+            var asset = await _unitOfWork.AssetRepository.GetAssetDetail(id);
+            if (asset == null)
+            {
+                return null;
+            }
+            var assignmentResponses = asset.Assignments.Select(a => new AssignmentResponse
+            {
+                Id = a.Id,
+                AssetId = a.AssetId,
+                AssignedBy = a.AssignedBy,
+                AssignedTo = a.AssignedTo,
+                AssignedDate = a.AssignedDate,
+                Status = a.Status,
+                By = a.UserBy.Username,
+                To = a.UserTo.Username
+            }).ToList();
+
+            return new AssetDetailResponse
+            {
+                AssetName = asset.AssetName,
+                AssetCode = asset.AssetCode,
+                CategoryId = asset.CategoryId,
+                Status = asset.Status,
+                AssignmentResponses = assignmentResponses.Select(a => new AssignmentResponse
+                {
+                    Id = a.Id,
+                    AssetId = a.AssetId,
+                    AssignedBy = a.AssignedBy,
+                    AssignedTo = a.AssignedTo,
+                    AssignedDate = a.AssignedDate,
+                    Status = a.Status,
+                    By = a.By,
+                    To = a.To
+                }).ToList()
+            };
+        }
     }
 }
