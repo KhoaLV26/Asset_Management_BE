@@ -1,4 +1,5 @@
-﻿using AssetManagement.Application.Services;
+﻿using AssetManagement.Application.Models.Responses;
+using AssetManagement.Application.Services;
 using AssetManagement.Domain.Entities;
 using AssetManagement.Domain.Enums;
 using AssetManagement.Domain.Models;
@@ -24,6 +25,37 @@ namespace AssetManagement.WebAPI.Controllers
             _userService = userService;
         }
 
+        [HttpPost]
+        public async Task<IActionResult> CreateAssetAsync([FromBody] AssetRequest assetRequest)
+        {
+            try
+            {
+                var asset = await _assetService.CreateAssetAsync(assetRequest);
+                if (asset == null)
+                {
+                    return Conflict(new GeneralBoolResponse
+                    {
+                        Success = false,
+                        Message = "Asset creation failed."
+                    });
+                }
+                return Ok(new GeneralCreateResponse
+                {
+                    Success = true,
+                    Message = "Asset created successfully.",
+                    Data = asset
+                });
+            }
+            catch (Exception ex)
+            {
+                return Conflict(new GeneralBoolResponse
+                {
+                    Success = false,
+                    Message = ex.Message
+                });
+            }
+        }
+
         [HttpGet]
         public async Task<IActionResult> GetAllAssetAsync(int currentPage, string? state, Guid? category, string? search, string? sortBy, string? sortOrder)
         {
@@ -31,7 +63,7 @@ namespace AssetManagement.WebAPI.Controllers
             {
                 Guid adminId = Guid.Parse("CFF14216-AC4D-4D5D-9222-C951287E51C6");
                 Func<IQueryable<Asset>, IOrderedQueryable<Asset>>? orderBy = GetOrderQuery(sortOrder, sortBy);
-                Expression<Func<Asset, bool>>? filter = await GetFilterQuery(adminId,category, state, search);
+                Expression<Func<Asset, bool>>? filter = await GetFilterQuery(adminId, category, state, search);
                 var assets = await _assetService.GetAllAssetAsync(page: currentPage == 0 ? 1 : currentPage,
                     filter: filter,
                     orderBy: String.IsNullOrEmpty(sortBy) ? null : orderBy,
@@ -104,15 +136,19 @@ namespace AssetManagement.WebAPI.Controllers
                 case "assetcode":
                     orderBy = x => sortOrder != "desc" ? x.OrderBy(a => a.AssetCode) : x.OrderByDescending(a => a.AssetCode);
                     break;
+
                 case "assetname":
                     orderBy = x => sortOrder != "desc" ? x.OrderBy(a => a.AssetName) : x.OrderByDescending(a => a.AssetName);
                     break;
+
                 case "category":
                     orderBy = x => sortOrder != "desc" ? x.OrderBy(a => a.CategoryId) : x.OrderByDescending(a => a.CategoryId);
                     break;
+
                 case "state":
                     orderBy = x => sortOrder != "desc" ? x.OrderBy(a => a.Status) : x.OrderByDescending(a => a.Status);
                     break;
+
                 default:
                     orderBy = null;
                     break;

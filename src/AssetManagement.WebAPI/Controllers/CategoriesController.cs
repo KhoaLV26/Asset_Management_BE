@@ -1,22 +1,24 @@
-﻿using AssetManagement.Application.Services;
+﻿using AssetManagement.Application.Models.Requests;
+using AssetManagement.Application.Services;
 using AssetManagement.Domain.Models;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
 
-
 namespace AssetManagement.WebAPI.Controllers
 {
     [Route("api/categories")]
     [ApiController]
-    public class CategoriesController:ControllerBase
+    public class CategoriesController : ControllerBase
     {
         private readonly ICategoryService _categoryService;
+
         public CategoriesController(ICategoryService categoryService)
         {
             _categoryService = categoryService;
         }
+
         [HttpGet]
         public async Task<IActionResult> GetAllCategoriesAsync()
         {
@@ -34,9 +36,9 @@ namespace AssetManagement.WebAPI.Controllers
                 }
                 else
                 {
-                    return Conflict(new GeneralBoolResponse 
+                    return Conflict(new GeneralBoolResponse
                     {
-                        Success = false , 
+                        Success = false,
                         Message = "No category."
                     });
                 }
@@ -46,7 +48,41 @@ namespace AssetManagement.WebAPI.Controllers
                 return Conflict(new GeneralGetsResponse
                 {
                     Success = false,
-                    Message = "Categories retrieved failed.",
+                    Message = ex.Message,
+                });
+            }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> AddCategoryAsync([FromBody] CategoryRequest request)
+        {
+            try
+            {
+                var result = await _categoryService.CreateCategoryAsync(request);
+                if (result != null)
+                {
+                    return Ok(new GeneralGetResponse
+                    {
+                        Success = true,
+                        Message = "Category added successfully.",
+                        Data = result,
+                    });
+                }
+                else
+                {
+                    return Conflict(new GeneralBoolResponse
+                    {
+                        Success = false,
+                        Message = "Category added failed."
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                return Conflict(new GeneralBoolResponse
+                {
+                    Success = false,
+                    Message = ex.Message,
                 });
             }
         }

@@ -4,11 +4,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace AssetManagement.Application.Models.Responses
+namespace AssetManagement.Application.Models.Requests
 {
-    public class CategoryResponse
+    public class CategoryRequest
     {
-        public Guid Id { get; set; }
+        public Guid CreatedBy { get; set; }
         public string Name { get; set; } = string.Empty;
         public string Code { get; set; } = string.Empty;
     }

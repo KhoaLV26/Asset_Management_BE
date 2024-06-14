@@ -10,12 +10,12 @@ using System.Threading.Tasks;
 namespace AssetManagement.Application.Models.Responses
 {
     public class AssetRequest
-	{
-        public string AssetCode { get; set; }
-        public string AssetName { get; set; }
+    {
+        public Guid CreatedBy { get; set; }
+        public string AssetName { get; set; } = string.Empty;
         public Guid CategoryId { get; set; }
-        public EnumAssetStatus Status { get; set; }
+        public string Specification { get; set; } = string.Empty;
         public DateOnly InstallDate { get; set; }
-        public string Specification { get; set; }
+        public EnumAssetStatus Status { get; set; } = EnumAssetStatus.Available;
     }
 }
