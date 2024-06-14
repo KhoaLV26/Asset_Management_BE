@@ -36,7 +36,7 @@ namespace AssetManagement.Application.Services.Implementations
                 throw new KeyNotFoundException("Category not found");
             }
 
-            var prefix = category.Code;
+            var prefix = category.Code.ToUpper();
             var assetNumber = await GenerateAssetCodeAsync(prefix);
 
             var newAsset = new Asset

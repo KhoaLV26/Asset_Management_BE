@@ -49,7 +49,7 @@ namespace AssetManagement.Application.Services.Implementations
             var newCategory = new Category
             {
                 Name = categoryRequest.Name,
-                Code = categoryRequest.Code,
+                Code = categoryRequest.Code.ToUpper(),
                 CreatedBy = categoryRequest.CreatedBy,
             };
 
