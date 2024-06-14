@@ -10,7 +10,6 @@ namespace AssetManagement.Domain.Entities
 {
     public class Assignment : BaseEntity
     {
-        public Guid Id { get; set; }
         public Guid AssignedTo { get; set; }
         public User UserTo { get; set; }
         public Guid AssignedBy { get; set; }

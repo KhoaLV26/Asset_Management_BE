@@ -7,7 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace AssetManagement.Application.Models.Responses
+namespace AssetManagement.Application.Models.Requests
 {
     public class AssetRequest
     {

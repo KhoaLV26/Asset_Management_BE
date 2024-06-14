@@ -1,4 +1,4 @@
-﻿using AssetManagement.Domain.Entities;
+using AssetManagement.Domain.Entities;
 using AssetManagement.Domain.Enums;
 using System;
 using System.Collections.Generic;

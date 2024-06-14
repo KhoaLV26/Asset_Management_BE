@@ -55,7 +55,7 @@ namespace AssetManagement.Infrastructure.Repositories
             return await query.ToListAsync();
         }
 
-        public async Task<(IEnumerable<T> items,int totalCount)> GetAllAsync(int page = 1, Expression<Func<T, bool>>? filter = null,
+        public async Task<(IEnumerable<T> items, int totalCount)> GetAllAsync(int page = 1, Expression<Func<T, bool>>? filter = null,
             Func<IQueryable<T>, IOrderedQueryable<T>>? orderBy = null, string includeProperties = "")
         {
             IQueryable<T> query = _context.Set<T>();
@@ -74,10 +74,10 @@ namespace AssetManagement.Infrastructure.Repositories
 
             if (orderBy != null)
             {
-                return (await orderBy(query).ToListAsync(),totalCount);
+                return (await orderBy(query).ToListAsync(), totalCount);
             }
 
-            return (await query.ToListAsync(),totalCount);
+            return (await query.ToListAsync(), totalCount);
         }
 
         public async Task<T> GetAsync(Expression<Func<T, bool>> expression, params Expression<Func<T, object>>[] includeProperties)
@@ -97,20 +97,20 @@ namespace AssetManagement.Infrastructure.Repositories
             return await query.FirstOrDefaultAsync();
         }
 
-    public async Task<T> GetAsync(Expression<Func<T, bool>> expression)
-    {
-        IQueryable<T> query = _context.Set<T>();
-        if (expression != null)
+        public async Task<T> GetAsync(Expression<Func<T, bool>> expression)
         {
-            query = query.Where(expression);
+            IQueryable<T> query = _context.Set<T>();
+            if (expression != null)
+            {
+                query = query.Where(expression);
+            }
+            return await query.FirstOrDefaultAsync();
         }
-        return await query.FirstOrDefaultAsync();
-    }
 
-    public void Update(T entity)
-    {
-        _context.Set<T>().Update(entity);
-    }
+        public void Update(T entity)
+        {
+            _context.Set<T>().Update(entity);
+        }
 
         public void RemoveRange(IEnumerable<T> entities)
         {
