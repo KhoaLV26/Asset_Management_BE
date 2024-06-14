@@ -143,7 +143,7 @@ namespace AssetManagement.WebAPI.Controllers
                     break;
 
                 case "category":
-                    orderBy = x => sortOrder != "desc" ? x.OrderBy(a => a.CategoryId) : x.OrderByDescending(a => a.CategoryId);
+                    orderBy = x => sortOrder != "desc" ? x.OrderBy(a => a.Category.Name) : x.OrderByDescending(a => a.Category.Name);
                     break;
 
                 case "state":
