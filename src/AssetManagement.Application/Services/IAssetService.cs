@@ -15,5 +15,6 @@ namespace AssetManagement.Application.Services
         Task<AssetDetailResponse> GetAssetByIdAsync(Guid id);
 
         Task<AssetResponse> CreateAssetAsync(AssetRequest assetRequest);
+        
     }
 }

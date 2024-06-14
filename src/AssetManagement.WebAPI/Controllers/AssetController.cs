@@ -25,36 +25,36 @@ namespace AssetManagement.WebAPI.Controllers
             _userService = userService;
         }
 
-        [HttpPost]
-        public async Task<IActionResult> CreateAssetAsync([FromBody] AssetRequest assetRequest)
-        {
-            try
-            {
-                var asset = await _assetService.CreateAssetAsync(assetRequest);
-                if (asset == null)
-                {
-                    return Conflict(new GeneralBoolResponse
-                    {
-                        Success = false,
-                        Message = "Asset creation failed."
-                    });
-                }
-                return Ok(new GeneralCreateResponse
-                {
-                    Success = true,
-                    Message = "Asset created successfully.",
-                    Data = asset
-                });
-            }
-            catch (Exception ex)
-            {
-                return Conflict(new GeneralBoolResponse
-                {
-                    Success = false,
-                    Message = ex.Message
-                });
-            }
-        }
+        //[HttpPost]
+        //public async Task<IActionResult> CreateAssetAsync([FromBody] AssetRequest assetRequest)
+        //{
+        //    try
+        //    {
+        //        var asset = await _assetService.CreateAssetAsync(assetRequest);
+        //        if (asset == null)
+        //        {
+        //            return Conflict(new GeneralBoolResponse
+        //            {
+        //                Success = false,
+        //                Message = "Asset creation failed."
+        //            });
+        //        }
+        //        return Ok(new GeneralCreateResponse
+        //        {
+        //            Success = true,
+        //            Message = "Asset created successfully.",
+        //            Data = asset
+        //        });
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return Conflict(new GeneralBoolResponse
+        //        {
+        //            Success = false,
+        //            Message = ex.Message
+        //        });
+        //    }
+        //}
 
         [HttpGet]
         public async Task<IActionResult> GetAllAssetAsync(int currentPage, string? state, Guid? category, string? search, string? sortBy, string? sortOrder)
@@ -123,7 +123,7 @@ namespace AssetManagement.WebAPI.Controllers
                 return Conflict(new GeneralGetResponse
                 {
                     Success = false,
-                    Message = "Asset retrieved failed."
+                    Message = ex.Message
                 });
             }
         }

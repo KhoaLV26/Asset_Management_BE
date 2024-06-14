@@ -3,6 +3,7 @@ using AssetManagement.Application.Services.Implementations;
 using AssetManagement.Domain.Entities;
 using AssetManagement.Domain.Enums;
 using AssetManagement.Domain.Interfaces;
+using AutoMapper;
 using Moq;
 using System;
 using System.Collections.Generic;
@@ -18,14 +19,16 @@ namespace AssetManagement.Tests.Services
         private readonly Mock<IUnitOfWork> _mockUnitOfWork;
         private readonly Mock<IAssetRepository> _mockAssetRepository;
         private readonly AssetService _assetService;
+        private readonly Mock<IMapper> _mockMapper;
+
 
         public AssetServiceTests()
         {
             _mockUnitOfWork = new Mock<IUnitOfWork>();
             _mockAssetRepository = new Mock<IAssetRepository>();
             _mockUnitOfWork.Setup(u => u.AssetRepository).Returns(_mockAssetRepository.Object);
-
-            _assetService = new AssetService(_mockUnitOfWork.Object);
+            _mockMapper = new Mock<IMapper>();
+            _assetService = new AssetService(_mockUnitOfWork.Object, _mockMapper.Object);
         }
 
         [Fact]
