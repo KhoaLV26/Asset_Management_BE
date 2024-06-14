@@ -53,7 +53,8 @@ namespace AssetManagement.Infrastructure.Repositories
             if (!string.IsNullOrEmpty(searchTerm))
             {
                 query = query.Where(e => EF.Functions.Like(EF.Property<string>(e, "FirstName") + " " + EF.Property<string>(e, "LastName"), $"%{searchTerm}%")
-                                          || EF.Functions.Like(EF.Property<string>(e, "StaffCode"), $"%{searchTerm}%"));
+                                          || EF.Functions.Like(EF.Property<string>(e, "StaffCode"), $"%{searchTerm}%") 
+                                          || EF.Functions.Like(EF.Property<string>(e, "Username"), $"%{searchTerm}%"));
             }
 
             // Calculate the total count before applying pagination
