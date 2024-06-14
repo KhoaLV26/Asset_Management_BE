@@ -24,7 +24,7 @@ namespace AssetManagement.Infrastructure.Repositories
             IQueryable<Asset> query = _context.Set<Asset>();
             if (filter != null)
             {
-                query = query.Where(filter);
+                query = query.Where(asset => !asset.IsDeleted).Where(filter);
             }
 
             foreach (var includeProperty in includeProperties.Split
