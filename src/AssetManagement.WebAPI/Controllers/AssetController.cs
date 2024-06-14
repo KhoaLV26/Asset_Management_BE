@@ -58,14 +58,14 @@ namespace AssetManagement.WebAPI.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAllAssetAsync(int currentPage, string? state, Guid? category, string? search, string? sortOrder, string? sortBy = "assetCode")
+        public async Task<IActionResult> GetAllAssetAsync(int pageNumber, string? state, Guid? category, string? search, string? sortOrder, string? sortBy = "assetCode")
         {
             try
             {
                 Guid adminId = Guid.Parse("CFF14216-AC4D-4D5D-9222-C951287E51C6");
                 Func<IQueryable<Asset>, IOrderedQueryable<Asset>>? orderBy = GetOrderQuery(sortOrder, sortBy);
                 Expression<Func<Asset, bool>>? filter = await GetFilterQuery(adminId, category, state, search);
-                var assets = await _assetService.GetAllAssetAsync(page: currentPage == 0 ? 1 : currentPage,
+                var assets = await _assetService.GetAllAssetAsync(page: pageNumber == 0 ? 1 : pageNumber,
                     filter: filter,
                     orderBy: String.IsNullOrEmpty(sortBy) ? null : orderBy,
                     includeProperties: "Category");
@@ -171,17 +171,20 @@ namespace AssetManagement.WebAPI.Controllers
             // Parse state parameter to enum
             if (!string.IsNullOrEmpty(state))
             {
-                if (Enum.TryParse<EnumAssetStatus>(state, true, out var parsedStatus))
+                if (state.ToLower() != "all")
                 {
-                    var stateCondition = Expression.Equal(
-                        Expression.Property(parameter, nameof(Asset.Status)),
-                        Expression.Constant(parsedStatus)
-                    );
-                    conditions.Add(stateCondition);
-                }
-                else
-                {
-                    throw new InvalidCastException("Invalid status value");
+                    if (Enum.TryParse<EnumAssetStatus>(state, true, out var parsedStatus))
+                    {
+                        var stateCondition = Expression.Equal(
+                            Expression.Property(parameter, nameof(Asset.Status)),
+                            Expression.Constant(parsedStatus)
+                        );
+                        conditions.Add(stateCondition);
+                    }
+                    else
+                    {
+                        throw new InvalidCastException("Invalid status value");
+                    }
                 }
             }
             else
