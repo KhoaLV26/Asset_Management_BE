@@ -71,17 +71,17 @@ namespace AssetManagement.WebAPI.Controllers
 
         [HttpGet("search")]
         public async Task<IActionResult> GetFilteredUsers(
-            [FromQuery] string location,
-            [FromQuery] string? searchTerm,
-            [FromQuery] string? role,
+            [FromQuery] string adminId = "CFF14216-AC4D-4D5D-9222-C951287E51C6",
+            [FromQuery] string? searchTerm  = "",
+            [FromQuery] string? role = "",
             [FromQuery] string sortBy = "StaffCode",
             [FromQuery] string sortDirection = "asc",
             [FromQuery] int pageNumber = 1,
-            [FromQuery] int pageSize = 15)
+            [FromQuery] string? newStaffCode = "")
         {
             try
             {
-                var users = await _userService.GetFilteredUsersAsync(location, searchTerm, role, sortBy, sortDirection, pageNumber, pageSize);
+                var users = await _userService.GetFilteredUsersAsync(adminId, searchTerm, role, sortBy, sortDirection, pageNumber, newStaffCode);
                 return Ok(new GeneralGetsResponse
                 {
                     Success = true,
