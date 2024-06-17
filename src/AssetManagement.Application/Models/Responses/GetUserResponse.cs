@@ -29,5 +29,6 @@ namespace AssetManagement.Application.Models.Responses
         public Guid RoleId { get; set; }
         public string LocationName { get; set; } = string.Empty;
         public string RoleName { get; set; } = string.Empty;
+        public bool IsFirstLogin { get; set; }
     }
 }

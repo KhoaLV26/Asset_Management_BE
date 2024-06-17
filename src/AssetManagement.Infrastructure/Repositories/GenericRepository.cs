@@ -1,10 +1,12 @@
-﻿using AssetManagement.Domain.Interfaces;
+﻿using AssetManagement.Domain.Constants;
+using AssetManagement.Domain.Interfaces;
 using AssetManagement.Infrastructure.DataAccess;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Reflection;
 using System.Threading.Tasks;
 
 namespace AssetManagement.Infrastructure.Repositories
@@ -25,7 +27,10 @@ namespace AssetManagement.Infrastructure.Repositories
 
         public void Delete(T entity)
         {
-            _context.Set<T>().Remove(entity);
+            //_context.Set<T>().Remove(entity);
+            PropertyInfo propertyInfo = entity.GetType().GetProperty("IsDeleted");
+            propertyInfo.SetValue(entity, true);
+            _context.Set<T>().Update(entity);
         }
 
         public async Task<IEnumerable<T>> GetAllAsync()
@@ -50,27 +55,16 @@ namespace AssetManagement.Infrastructure.Repositories
             return await query.ToListAsync();
         }
 
-        public async Task<(IEnumerable<T> items, int totalCount)>GetByCondition(
-            int page = 1,
-            Expression<Func<T, bool>>? filter = null,
-            Func<IQueryable<T>, IOrderedQueryable<T>>? orderBy = null,
-            string includeProperties = "",
-            Expression<Func<T, bool>>? prioritizeCondition = null)
+        public async Task<(IEnumerable<T> items, int totalCount)> GetAllAsync(int page = 1, Expression<Func<T, bool>>? filter = null,
+            Func<IQueryable<T>, IOrderedQueryable<T>>? orderBy = null, string includeProperties = "", Expression<Func<T, bool>>? prioritizeCondition = null)
         {
             IQueryable<T> query = _context.Set<T>();
-
             if (filter != null)
             {
                 query = query.Where(filter);
             }
 
-            foreach (var includeProperty in includeProperties.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
-            {
-                query = query.Include(includeProperty);
-            }
-
-            var totalCount = await query.CountAsync();
-
+            var totalCount = query.Count();
             List<T> prioritizedItems = new List<T>();
             List<T> nonPrioritizedItems = new List<T>();
 
@@ -99,11 +93,19 @@ namespace AssetManagement.Infrastructure.Repositories
             }
 
             var items = prioritizedItems.Concat(nonPrioritizedItems).ToList();
+            query = query.Skip((page - 1) * PageSizeConstant.PAGE_SIZE).Take(PageSizeConstant.PAGE_SIZE);
+            foreach (var includeProperty in includeProperties.Split
+                         (new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
+            {
+                query = query.Include(includeProperty);
+            }
 
-            int pageSize = 15;
-            var paginatedItems = items.Skip((page - 1) * pageSize).Take(pageSize).ToList();
+            if (orderBy != null)
+            {
+                return (await orderBy(query).ToListAsync(), totalCount);
+            }
 
-            return (paginatedItems, totalCount);
+            return (await query.ToListAsync(), totalCount);
         }
 
         public async Task<T> GetAsync(Expression<Func<T, bool>> expression, params Expression<Func<T, object>>[] includeProperties)

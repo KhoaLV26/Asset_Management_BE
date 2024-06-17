@@ -28,8 +28,10 @@ namespace AssetManagement.Application.Services.Implementations
         {
             var claims = new List<Claim>
         {
-            new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-            new Claim(ClaimTypes.Role, user.Role?.Name)
+            new Claim(ClaimTypes.NameIdentifier, user.Username),
+            new Claim(ClaimTypes.Role, user.Role?.Name),
+            new Claim(ClaimTypes.Locality, user.LocationId.ToString()),
+            new Claim(ClaimTypes.Actor, user.Id.ToString())
         };
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));
