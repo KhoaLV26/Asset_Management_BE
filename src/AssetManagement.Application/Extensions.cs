@@ -29,6 +29,7 @@ namespace AssetManagement.Application
             services.AddScoped<IRoleService, RoleService>();
             services.AddScoped<IAssetService, AssetService>();
             services.AddScoped<ICategoryService, CategoryService>();
+            services.AddScoped<IAssignmentService, AssignmentService>();
         }
     }
 }
