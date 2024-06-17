@@ -108,12 +108,6 @@ namespace AssetManagement.Application.Services.Implementations
 
         }
 
-        public async Task<Guid> GetLocation(Guid id)
-        {
-            var user =  await _unitOfWork.UserRepository.GetAsync(x => x.Id == id);
-            return user.LocationId;
-        }
-
         private async Task<string> GenerateNewStaffCode()
         {
             var lastUser = await _unitOfWork.UserRepository.GetAllAsync(u => true);
@@ -169,7 +163,7 @@ namespace AssetManagement.Application.Services.Implementations
                     break;
             }
 
-            var getUsers = await _unitOfWork.UserRepository.GetByCondition(pageNumber, filter, orderBy, "Role", prioritizeCondition);
+            var getUsers = await _unitOfWork.UserRepository.GetAllAsync(pageNumber, filter, orderBy, "Role", prioritizeCondition);
 
             var userResponses = _mapper.Map<IEnumerable<GetUserResponse>>(getUsers.items);
             var totalCount = getUsers.totalCount;
