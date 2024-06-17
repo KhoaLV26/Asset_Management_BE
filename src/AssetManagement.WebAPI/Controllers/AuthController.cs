@@ -6,6 +6,8 @@ using AssetManagement.Domain.Models;
 using AssetManagement.Infrastructure.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System;
+using System.Threading.Tasks;
 
 namespace AssetManagement.WebAPI.Controllers
 {
@@ -41,24 +43,29 @@ namespace AssetManagement.WebAPI.Controllers
         //    }
         //}
 
-        //[HttpPost("login")]
-        //public async Task<IActionResult> LoginAsync([FromBody] UserLoginRequest request)
-        //{
-        //    try
-        //    {
-        //        var (token, refreshToken, role, userId) = await _authService.LoginAsync(request.Email, request.Password);
-        //        var response = new GeneralGetResponse
-        //        {
-        //            Message = "User logged in successfully",
-        //            Data = new { token, refreshToken, role, userId }
-        //        };
-        //        return Ok(response);
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        return Conflict(ex.Message);
-        //    }
-        //}
+        [HttpPost("login")]
+        public async Task<IActionResult> LoginAsync([FromBody] UserLoginRequest request)
+        {
+            try
+            {
+                var (token, refreshToken, user) = await _authService.LoginAsync(request.Username, request.Password);
+                var response = new GeneralGetResponse
+                {
+                    Message = "User logged in successfully",
+                    Data = new { token, refreshToken, user }
+                };
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                var response = new GeneralBoolResponse
+                {
+                    Success = false,
+                    Message = ex.Message
+                };
+                return Conflict(response);
+            }
+        }
 
         //[Authorize]
         //[HttpGet("logout")]
@@ -109,28 +116,28 @@ namespace AssetManagement.WebAPI.Controllers
         //    }
         //}
 
-        //[HttpPost("reset-password")]
-        //public async Task<IActionResult> ResetPasswordAsync([FromBody] UserResetPasswordRequest request)
-        //{
-        //    try
-        //    {
-        //        await _authService.ResetPasswordAsync(request.Email, request.Password, request.ConfirmPassword);
-        //        var response = new GeneralBoolResponse
-        //        {
-        //            Message = "Password reset successfully",
-        //        };
-        //        return Ok(response);
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        var response = new GeneralBoolResponse
-        //        {
-        //            Success = false,
-        //            Message = ex.Message
-        //        };
-        //        return Conflict(response);
-        //    }
-        //}
+        [HttpPost("reset-password")]
+        public async Task<IActionResult> ResetPasswordAsync([FromBody] UserResetPasswordRequest request)
+        {
+            try
+            {
+                await _authService.ResetPasswordAsync(request.Username, request.Password);
+                var response = new GeneralBoolResponse
+                {
+                    Message = "Password reset successfully",
+                };
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                var response = new GeneralBoolResponse
+                {
+                    Success = false,
+                    Message = ex.Message
+                };
+                return Conflict(response);
+            }
+        }
 
         //[HttpGet("request-active-account/{email}")]
         //public async Task<IActionResult> RequestActiveAccountAsync(string email)
