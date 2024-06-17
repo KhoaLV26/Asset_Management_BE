@@ -55,8 +55,8 @@ namespace AssetManagement.Infrastructure.Repositories
             return await query.ToListAsync();
         }
 
-        public async Task<(IEnumerable<T> items, int totalCount)> GetAllAsync(int page = 1, Expression<Func<T, bool>>? filter = null,
-            Func<IQueryable<T>, IOrderedQueryable<T>>? orderBy = null, string includeProperties = "")
+        public async Task<(IEnumerable<T> items, int totalCount)> GetAllAsync(int page = 1, Expression<Func<T, bool>> filter = null,
+            Func<IQueryable<T>, IOrderedQueryable<T>>? orderBy = null, string includeProperties = "", Expression<Func<T, bool>>? prioritizeCondition = null)
         {
             IQueryable<T> query = _context.Set<T>();
             if (filter != null)
@@ -64,20 +64,46 @@ namespace AssetManagement.Infrastructure.Repositories
                 query = query.Where(filter);
             }
 
-            var totalCount = query.Count();
-            query = query.Skip((page - 1) * PageSizeConstant.PAGE_SIZE).Take(PageSizeConstant.PAGE_SIZE);
             foreach (var includeProperty in includeProperties.Split
                          (new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
             {
                 query = query.Include(includeProperty);
             }
 
-            if (orderBy != null)
+            var totalCount = query.Count();
+            List<T> prioritizedItems = new List<T>();
+            List<T> nonPrioritizedItems = new List<T>();
+
+            if (prioritizeCondition != null)
             {
-                return (await orderBy(query).ToListAsync(), totalCount);
+                var prioritizedQuery = query.Where(prioritizeCondition);
+                var nonPrioritizedQuery = query.Where(Expression.Lambda<Func<T, bool>>(
+                    Expression.Not(prioritizeCondition.Body), prioritizeCondition.Parameters));
+
+                if (orderBy != null)
+                {
+                    nonPrioritizedQuery = orderBy(nonPrioritizedQuery);
+                }
+
+                prioritizedItems = await prioritizedQuery.ToListAsync();
+                nonPrioritizedItems = await nonPrioritizedQuery.ToListAsync();
+            }
+            else
+            {
+                if (orderBy != null)
+                {
+                    query = orderBy(query);
+                }
+                nonPrioritizedItems = await query.ToListAsync();
             }
 
-            return (await query.ToListAsync(), totalCount);
+            var items = prioritizedItems.Concat(nonPrioritizedItems).ToList();
+
+            var paginatedItems = items.Skip((page - 1) * PageSizeConstant.PAGE_SIZE).Take(PageSizeConstant.PAGE_SIZE).ToList();
+
+            
+
+            return (paginatedItems, totalCount);
         }
 
         public async Task<T> GetAsync(Expression<Func<T, bool>> expression, params Expression<Func<T, object>>[] includeProperties)

@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
 using BCrypt.Net;
@@ -15,9 +16,7 @@ using AutoMapper;
 using AssetManagement.Application.Models.Responses;
 using AssetManagement.Domain.Constants;
 using System.Text.RegularExpressions;
-using System.Linq.Expressions;
-
-
+using Microsoft.EntityFrameworkCore;
 
 namespace AssetManagement.Application.Services.Implementations
 {
@@ -60,7 +59,7 @@ namespace AssetManagement.Application.Services.Implementations
             var lastName = userRegisterRequest.LastName.ToLower();
             var username = _helper.GetUsername(firstName, lastName);
 
-            var usernames = await _unitOfWork.UserRepository.GetAllAsync(u => true);
+            var usernames = await _unitOfWork.UserRepository.GetAllAsync();
             var existingUserCount = usernames.Count(u => u.Username.StartsWith(username) && (u.Username.Length > username.Length && Char.IsDigit(u.Username[username.Length])));
             var existingUserCount2 = usernames.Count(u => u.Username == username);
             if (existingUserCount > 0 || existingUserCount2 > 0)
@@ -109,15 +108,9 @@ namespace AssetManagement.Application.Services.Implementations
 
         }
 
-        public async Task<Guid> GetLocation(Guid id)
-        {
-            var user =  await _unitOfWork.UserRepository.GetAsync(x => x.Id == id);
-            return user.LocationId;
-        }
-
         private async Task<string> GenerateNewStaffCode()
         {
-            var lastUser = await _unitOfWork.UserRepository.GetAllAsync();
+            var lastUser = await _unitOfWork.UserRepository.GetAllAsync(u => true);
             var lastStaffCode = lastUser.OrderByDescending(u => u.StaffCode).FirstOrDefault()?.StaffCode ?? StaffCode.DEFAULT_STAFF_CODE;
             var newStaffCode = $"SD{(int.Parse(lastStaffCode.Substring(2)) + 1):D4}";
             return  newStaffCode;
@@ -125,19 +118,24 @@ namespace AssetManagement.Application.Services.Implementations
         }
 
         public async Task<(IEnumerable<GetUserResponse> Items, int TotalCount)> GetFilteredUsersAsync(
-            string location,
+            string adminId,
             string? searchTerm,
             string? role = null,
             string sortBy = "StaffCode",
             string sortDirection = "asc",
             int pageNumber = 1,
-            int pageSize = 15)
+            string? newStaffCode = "")
         {
             Expression<Func<User, bool>> filter = null;
+            Guid adminGuid = Guid.Parse(adminId);
 
-            if (!string.IsNullOrEmpty(role))
+            filter = await GetUserFilterQuery(adminGuid, role, searchTerm);
+
+            Expression<Func<User, bool>> prioritizeCondition = null;
+
+            if (!string.IsNullOrEmpty(newStaffCode))
             {
-                filter = u => u.Role.Name == role;
+                prioritizeCondition = u => u.StaffCode == newStaffCode;
             }
 
             Func<IQueryable<User>, IOrderedQueryable<User>> orderBy = null;
@@ -155,6 +153,9 @@ namespace AssetManagement.Application.Services.Implementations
                 case "Role":
                     orderBy = q => ascending ? q.OrderBy(u => u.Role.Name) : q.OrderByDescending(u => u.Role.Name);
                     break;
+                case "Username":
+                    orderBy = q => ascending ? q.OrderBy(u => u.Username) : q.OrderByDescending(u => u.Username);
+                    break;
                 default:
                     orderBy = q => ascending
                         ? q.OrderBy(u => u.FirstName).ThenBy(u => u.LastName)
@@ -162,12 +163,120 @@ namespace AssetManagement.Application.Services.Implementations
                     break;
             }
 
-            var getUsers = await _unitOfWork.UserRepository.GetFilteredAsync(location, filter, orderBy, "Role", searchTerm, pageNumber, pageSize);
+            var getUsers = await _unitOfWork.UserRepository.GetAllAsync(pageNumber, filter, orderBy, "Role", prioritizeCondition);
 
-            var userResponses = _mapper.Map<IEnumerable<GetUserResponse>>(getUsers.Items);
-            var totalCount = getUsers.TotalCount;
+            var userResponses = _mapper.Map<IEnumerable<GetUserResponse>>(getUsers.items);
+            var totalCount = getUsers.totalCount;
 
             return (userResponses, totalCount);
         }
+
+        private async Task<Expression<Func<User, bool>>>? GetUserFilterQuery(Guid adminId, string? role, string? search)
+        {
+            var locationId = await GetLocation(adminId);
+            var nullableLocationId = (Guid)locationId;
+
+            Expression<Func<User, bool>>? filter = null;
+            var parameter = Expression.Parameter(typeof(User), "x");
+            var conditions = new List<Expression>();
+
+            var locationCondition = Expression.Equal(Expression.Property(parameter, nameof(User.LocationId)),
+                Expression.Constant(nullableLocationId, typeof(Guid)));
+            conditions.Add(locationCondition);
+
+            // Add role condition
+            if (!string.IsNullOrEmpty(role))
+            {
+                if (role.ToLower() != "all")
+                {
+                    var roleProperty = Expression.Property(parameter, nameof(User.Role));
+                    var roleNameProperty = Expression.Property(roleProperty, nameof(Role.Name));
+                    var roleCondition = Expression.Equal(
+                        roleNameProperty,
+                        Expression.Constant(role, typeof(string))
+                    );
+                    conditions.Add(roleCondition);
+                }
+            }
+
+            var isDeletedCondition = Expression.Equal(Expression.Property(parameter, nameof(User.IsDeleted)),
+                Expression.Constant(false));
+            conditions.Add(isDeletedCondition);
+
+            // Add search condition
+            if (!string.IsNullOrEmpty(search))
+            {
+                // Combine FirstName and LastName
+                var firstNameProperty = Expression.Property(parameter, nameof(User.FirstName));
+                var lastNameProperty = Expression.Property(parameter, nameof(User.LastName));
+                var fullNameExpression = Expression.Call(
+                    typeof(string).GetMethod("Concat", new[] { typeof(string), typeof(string) }),
+                    Expression.Call(
+                        typeof(string).GetMethod("Concat", new[] { typeof(string), typeof(string) }),
+                        firstNameProperty,
+                        Expression.Constant(" ")
+                    ),
+                    lastNameProperty
+                );
+
+                // MethodInfo for EF.Functions.Like
+                var likeMethod = typeof(DbFunctionsExtensions).GetMethod(
+                    nameof(DbFunctionsExtensions.Like),
+                    new[] { typeof(DbFunctions), typeof(string), typeof(string) }
+                );
+
+                // Ensure the method is not null
+                if (likeMethod == null)
+                {
+                    throw new InvalidOperationException("EF.Functions.Like method not found.");
+                }
+
+                var efFunctionsProperty = Expression.Constant(EF.Functions);
+
+                var staffCodeLike = Expression.Call(
+                    likeMethod,
+                    efFunctionsProperty,
+                    Expression.Property(parameter, nameof(User.StaffCode)),
+                    Expression.Constant($"%{search}%")
+                );
+
+                var fullNameLike = Expression.Call(
+                    likeMethod,
+                    efFunctionsProperty,
+                    fullNameExpression,
+                    Expression.Constant($"%{search}%")
+                );
+
+                var usernameLike = Expression.Call(
+                    likeMethod,
+                    efFunctionsProperty,
+                    Expression.Property(parameter, nameof(User.Username)),
+                    Expression.Constant($"%{search}%")
+                );
+
+                // Combine like expressions with OR
+                var searchCondition = Expression.OrElse(
+                    Expression.OrElse(staffCodeLike, fullNameLike),
+                    usernameLike
+                );
+                conditions.Add(searchCondition);
+            }
+
+            // Combine all conditions
+            if (conditions.Any())
+            {
+                var combinedCondition = conditions.Aggregate((left, right) => Expression.AndAlso(left, right));
+                filter = Expression.Lambda<Func<User, bool>>(combinedCondition, parameter);
+            }
+
+            return filter;
+        }
+
+        public async Task<Guid> GetLocation(Guid id)
+        {
+            var user = await _unitOfWork.UserRepository.GetAsync(x => x.Id == id);
+            return user.LocationId;
+        }
+
     }
 }

@@ -1,6 +1,7 @@
 using AssetManagement.Application.Models.Requests;
 using AssetManagement.Application.Models.Responses;
 using AssetManagement.Domain.Entities;
+using AssetManagement.Domain.Enums;
 using AssetManagement.Domain.Interfaces;
 using AutoMapper;
 using System;
@@ -79,11 +80,37 @@ namespace AssetManagement.Application.Services.Implementations
             return assetNumber;
         }
 
-        public async Task<(IEnumerable<AssetResponse> data, int totalCount)> GetAllAssetAsync(int page = 1, Expression<Func<Asset, bool>>? filter = null, Func<IQueryable<Asset>, IOrderedQueryable<Asset>>? orderBy = null, string includeProperties = "")
+        public async Task<(IEnumerable<AssetResponse> data, int totalCount)> GetAllAssetAsync(int page = 1, Expression<Func<Asset, bool>>? filter = null, Func<IQueryable<Asset>, IOrderedQueryable<Asset>>? orderBy = null, string includeProperties = "", string? newAssetCode = "")
         {
             var assets = await _unitOfWork.AssetRepository.GetAllAsync(page, filter, orderBy, includeProperties);
 
             return (assets.items.Select(a => new AssetResponse
+            {
+                Id = a.Id,
+                AssetCode = a.AssetCode,
+                AssetName = a.AssetName,
+                CategoryId = a.CategoryId,
+                CategoryName = a.Category.Name,
+                Status = a.Status
+            }), assets.totalCount);
+        }
+
+        public async Task<(IEnumerable<AssetResponse> data, int totalCount)> GetAllAssetAsync(Guid adminId,int pageNumber, string? state, Guid? category, string? search, string? sortOrder,
+            string? sortBy = "assetCode", string includeProperties = "", string? newAssetCode = "")
+        {
+            Func<IQueryable<Asset>, IOrderedQueryable<Asset>>? orderBy = GetOrderQuery(sortOrder, sortBy);
+            Expression<Func<Asset, bool>> filter = await GetFilterQuery(adminId, category, state, search);
+            Expression<Func<Asset, bool>> prioritizeCondition = null;
+
+            if (!string.IsNullOrEmpty(newAssetCode))
+            {
+                prioritizeCondition = u => u.AssetCode == newAssetCode;
+            }
+
+            var assets = await _unitOfWork.AssetRepository.GetAllAsync(pageNumber, filter, orderBy, includeProperties,
+                prioritizeCondition);
+
+            return(assets.items.Select(a => new AssetResponse
             {
                 Id = a.Id,
                 AssetCode = a.AssetCode,
@@ -132,5 +159,130 @@ namespace AssetManagement.Application.Services.Implementations
                 }).ToList()
             };
         }
+
+        private async Task<Expression<Func<Asset, bool>>>? GetFilterQuery(Guid adminId, Guid? category, string? state, string? search)
+        {
+            var user = await _unitOfWork.UserRepository.GetAsync(x=>x.Id == adminId);
+            var locationId = user.LocationId;
+            var nullableLocationId = (Guid?)locationId;
+            // Determine the filtering criteria
+            Expression<Func<Asset, bool>>? filter = null;
+            var parameter = Expression.Parameter(typeof(Asset), "x");
+            var conditions = new List<Expression>();
+            var locationCondition = Expression.Equal(Expression.Property(parameter, nameof(Asset.LocationId)),
+                Expression.Constant(nullableLocationId, typeof(Guid?)));
+            conditions.Add(locationCondition);
+            // Parse state parameter to enum
+            if (!string.IsNullOrEmpty(state))
+            {
+                if (state.ToLower() != "all")
+                {
+                    if (Enum.TryParse<EnumAssetStatus>(state, true, out var parsedStatus))
+                    {
+                        var stateCondition = Expression.Equal(
+                            Expression.Property(parameter, nameof(Asset.Status)),
+                            Expression.Constant(parsedStatus)
+                        );
+                        conditions.Add(stateCondition);
+                    }
+                    else
+                    {
+                        throw new InvalidCastException("Invalid status value");
+                    }
+                }
+            }
+            else
+            {
+                // Default states: Available, NotAvailable, Assigned
+                var availableCondition = Expression.Equal(
+                    Expression.Property(parameter, nameof(Asset.Status)),
+                    Expression.Constant(EnumAssetStatus.Available)
+                );
+
+                var notAvailableCondition = Expression.Equal(
+                    Expression.Property(parameter, nameof(Asset.Status)),
+                    Expression.Constant(EnumAssetStatus.NotAvailable)
+                );
+
+                var assignedCondition = Expression.Equal(
+                    Expression.Property(parameter, nameof(Asset.Status)),
+                    Expression.Constant(EnumAssetStatus.Assigned)
+                );
+
+                var defaultStateCondition = Expression.OrElse(
+                    Expression.OrElse(availableCondition, notAvailableCondition),
+                    assignedCondition
+                );
+
+                conditions.Add(defaultStateCondition);
+            }
+            // Add search conditions
+            if (!string.IsNullOrEmpty(search))
+            {
+                var searchCondition = Expression.OrElse(
+                    Expression.Call(
+                        Expression.Property(parameter, nameof(Asset.AssetCode)),
+                        nameof(string.Contains),
+                        Type.EmptyTypes,
+                        Expression.Constant(search)
+                    ),
+                    Expression.Call(
+                        Expression.Property(parameter, nameof(Asset.AssetName)),
+                        nameof(string.Contains),
+                        Type.EmptyTypes,
+                        Expression.Constant(search)
+                    )
+                );
+                conditions.Add(searchCondition);
+            }
+
+            // Add category condition if necessary
+            if (category.HasValue)
+            {
+                var categoryCondition = Expression.Equal(
+                    Expression.Property(parameter, nameof(Asset.CategoryId)),
+                    Expression.Constant(category)
+                );
+                conditions.Add(categoryCondition);
+            }
+
+            // Combine all conditions with AndAlso
+            if (conditions.Any())
+            {
+                var combinedCondition = conditions.Aggregate((left, right) => Expression.AndAlso(left, right));
+                filter = Expression.Lambda<Func<Asset, bool>>(combinedCondition, parameter);
+            }
+
+            return filter;
+        }
+
+        private Func<IQueryable<Asset>, IOrderedQueryable<Asset>>? GetOrderQuery(string? sortOrder, string? sortBy)
+        {
+            Func<IQueryable<Asset>, IOrderedQueryable<Asset>>? orderBy;
+            switch (sortBy?.ToLower())
+            {
+                case "assetcode":
+                    orderBy = x => sortOrder != "desc" ? x.OrderBy(a => a.AssetCode) : x.OrderByDescending(a => a.AssetCode);
+                    break;
+
+                case "assetname":
+                    orderBy = x => sortOrder != "desc" ? x.OrderBy(a => a.AssetName) : x.OrderByDescending(a => a.AssetName);
+                    break;
+
+                case "category":
+                    orderBy = x => sortOrder != "desc" ? x.OrderBy(a => a.Category.Name) : x.OrderByDescending(a => a.Category.Name);
+                    break;
+
+                case "state":
+                    orderBy = x => sortOrder != "desc" ? x.OrderBy(a => a.Status) : x.OrderByDescending(a => a.Status);
+                    break;
+
+                default:
+                    orderBy = null;
+                    break;
+            }
+            return orderBy;
+        }
+
     }
 }
