@@ -11,10 +11,12 @@ namespace AssetManagement.Application.Services
 
         Task<(string token, string refreshToken, GetUserResponse userResponse)> LoginAsync(string email, string password);
 
-        //Task<(string token, string refreshToken, string role, string userId)> RefreshTokenAsync(string refreshToken);
+        Task<(string token, string refreshToken, GetUserResponse userResponse)> RefreshTokenAsync(string refreshToken);
 
-        //Task<int> LogoutAsync(Guid userId);
+        Task<int> LogoutAsync(Guid userId);
 
         Task<int> ResetPasswordAsync(string userName, string newPassword);
+
+        Task<int> ChangePasswordAsync(string userName, string oldPassword, string newPassword);
     }
 }

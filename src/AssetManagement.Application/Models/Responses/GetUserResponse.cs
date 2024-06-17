@@ -11,6 +11,7 @@ namespace AssetManagement.Application.Models.Responses
 {
     public class GetUserResponse
     {
+        public Guid Id { get; set; }
         public string StaffCode { get; set; } = string.Empty;
 
         public string Username { get; set; } = string.Empty;

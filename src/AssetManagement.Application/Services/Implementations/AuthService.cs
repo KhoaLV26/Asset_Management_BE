@@ -57,38 +57,31 @@ namespace AssetManagement.Application.Services.Implementations
             return (token, refreshToken.TokenHash, _mapper.Map<GetUserResponse>(user));
         }
 
-        //public async Task<(string token, string refreshToken, string role, string userId)> RefreshTokenAsync(string refreshToken)
-        //{
-        //    var token = await _unitOfWork.RefreshTokenRepository.GetAsync(rt => rt.TokenHash == refreshToken)
-        //        .ConfigureAwait(false);
-        //    if (token == null || token.ExpiredAt <= DateTime.UtcNow)
-        //    {
-        //        throw new SecurityTokenException("Invalid refresh token");
-        //    }
+        public async Task<(string token, string refreshToken, GetUserResponse userResponse)> RefreshTokenAsync(string refreshToken)
+        {
+            var token = await _unitOfWork.RefreshTokenRepository.GetAsync(rt => rt.TokenHash == refreshToken)
+                .ConfigureAwait(false);
+            if (token == null || token.ExpiredAt <= DateTime.UtcNow)
+            {
+                throw new SecurityTokenException("Invalid refresh token");
+            }
 
-        //    var user = await _unitOfWork.UserRepository.GetAsync(u => u.Id == token.UserId, u => u.Role);
-        //    if (user == null)
-        //    {
-        //        throw new KeyNotFoundException("User not found");
-        //    }
+            var user = await _unitOfWork.UserRepository.GetAsync(u => u.Id == token.UserId, u => u.Role, u => u.Location);
+            if (user == null)
+            {
+                throw new KeyNotFoundException("User not found");
+            }
 
-        //    var newJwtToken = _tokenService.GenerateToken(user);
-        //    var newRefreshToken = _tokenService.GenerateRefreshToken();
-        //    newRefreshToken.UserId = user.Id;
+            var newJwtToken = _tokenService.GenerateToken(user);
+            var newRefreshToken = _tokenService.GenerateRefreshToken();
+            newRefreshToken.UserId = user.Id;
 
-        //    _unitOfWork.RefreshTokenRepository.Delete(token);
-        //    await _unitOfWork.RefreshTokenRepository.AddAsync(newRefreshToken);
-        //    await _unitOfWork.CommitAsync();
+            _unitOfWork.RefreshTokenRepository.Delete(token);
+            await _unitOfWork.RefreshTokenRepository.AddAsync(newRefreshToken);
+            await _unitOfWork.CommitAsync();
 
-        //    return (newJwtToken, newRefreshToken.TokenHash, user.Role.Name, user.Id);
-        //}
-
-        //public async Task<int> LogoutAsync(string userId)
-        //{
-        //    var tokens = await _unitOfWork.RefreshTokenRepository.GetAllAsync(rt => rt.UserId == userId);
-        //    _unitOfWork.RefreshTokenRepository.RemoveRange(tokens);
-        //    return await _unitOfWork.CommitAsync();
-        //}
+            return (newJwtToken, newRefreshToken.TokenHash, _mapper.Map<GetUserResponse>(user));
+        }
 
         public async Task<int> ResetPasswordAsync(string userName, string newPassword)
         {
@@ -108,11 +101,34 @@ namespace AssetManagement.Application.Services.Implementations
             return await _unitOfWork.CommitAsync();
         }
 
-        //public async Task<int> LogoutAsync(Guid userId)
-        //{
-        //    var tokens = await _unitOfWork.RefreshTokenRepository.GetAllAsync(rt => rt.UserId == userId);
-        //    _unitOfWork.RefreshTokenRepository.RemoveRange(tokens);
-        //    return await _unitOfWork.CommitAsync();
-        //}
+        public async Task<int> ChangePasswordAsync(string userName, string oldPassword, string newPasswrod)
+        {
+            var user = await _unitOfWork.UserRepository.GetAsync(u => u.Username == userName);
+            if (user == null)
+            {
+                throw new KeyNotFoundException("User not found");
+            }
+
+            if (!_cryptographyHelper.VerifyPassword(oldPassword, user.HashPassword, user.SaltPassword))
+            {
+                throw new UnauthorizedAccessException("Password is incorrect");
+            }
+
+            var passwordSalt = _cryptographyHelper.GenerateSalt();
+            var passwordHash = _cryptographyHelper.HashPassword(newPasswrod, passwordSalt);
+
+            user.HashPassword = passwordHash;
+            user.SaltPassword = passwordSalt;
+            user.IsFirstLogin = false;
+            _unitOfWork.UserRepository.Update(user);
+            return await _unitOfWork.CommitAsync();
+        }
+
+        public async Task<int> LogoutAsync(Guid userId)
+        {
+            var tokens = await _unitOfWork.RefreshTokenRepository.GetAllAsync(rt => rt.UserId == userId);
+            _unitOfWork.RefreshTokenRepository.RemoveRange(tokens);
+            return await _unitOfWork.CommitAsync();
+        }
     }
 }
