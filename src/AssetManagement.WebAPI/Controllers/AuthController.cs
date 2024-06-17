@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 namespace AssetManagement.WebAPI.Controllers
 {
     [ApiController]
-    [Route("auths")]
+    [Route("api/auths")]
     public class AuthController : BaseApiController
     {
         private readonly IAuthService _authService;
