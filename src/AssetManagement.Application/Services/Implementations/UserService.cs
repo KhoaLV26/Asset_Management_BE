@@ -163,7 +163,7 @@ namespace AssetManagement.Application.Services.Implementations
                     break;
             }
 
-            var getUsers = await _unitOfWork.UserRepository.GetAllAsync(pageNumber, filter, orderBy, "Role", prioritizeCondition);
+            var getUsers = await _unitOfWork.UserRepository.GetAllAsync(pageNumber, filter, orderBy, "Role,Location", prioritizeCondition);
 
             var userResponses = _mapper.Map<IEnumerable<GetUserResponse>>(getUsers.items);
             var totalCount = getUsers.totalCount;
