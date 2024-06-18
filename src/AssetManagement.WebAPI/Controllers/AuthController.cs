@@ -67,8 +67,8 @@ namespace AssetManagement.WebAPI.Controllers
             }
         }
 
-        [Authorize]
         [HttpGet("logout")]
+        [Authorize]
         public async Task<IActionResult> LogoutAsync()
         {
             try
@@ -117,6 +117,7 @@ namespace AssetManagement.WebAPI.Controllers
         //}
 
         [HttpPost("reset-password")]
+        [Authorize]
         public async Task<IActionResult> ResetPasswordAsync([FromBody] UserResetPasswordRequest request)
         {
             try
@@ -140,6 +141,7 @@ namespace AssetManagement.WebAPI.Controllers
         }
 
         [HttpPost("change-password")]
+        [Authorize]
         public async Task<IActionResult> ChangePasswordAsync([FromBody] ChangePasswordRequest request)
         {
             try
