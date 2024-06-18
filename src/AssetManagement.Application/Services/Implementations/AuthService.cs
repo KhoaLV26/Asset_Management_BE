@@ -83,8 +83,12 @@ namespace AssetManagement.Application.Services.Implementations
             return (newJwtToken, newRefreshToken.TokenHash, _mapper.Map<GetUserResponse>(user));
         }
 
-        public async Task<int> ResetPasswordAsync(string userName, string newPassword)
+        public async Task<int> ResetPasswordAsync(string userName, string newPassword, string confirmPassword)
         {
+            if (newPassword != confirmPassword)
+            {
+                throw new DataException("Password and confirm password must be the same");
+            }
             var user = await _unitOfWork.UserRepository.GetAsync(u => u.Username == userName);
             if (user == null)
             {
@@ -101,8 +105,12 @@ namespace AssetManagement.Application.Services.Implementations
             return await _unitOfWork.CommitAsync();
         }
 
-        public async Task<int> ChangePasswordAsync(string userName, string oldPassword, string newPasswrod)
+        public async Task<int> ChangePasswordAsync(string userName, string oldPassword, string newPasswrod, string confirmPassword)
         {
+            if (newPasswrod != confirmPassword)
+            {
+                throw new DataException("Password and confirm password must be the same");
+            }
             var user = await _unitOfWork.UserRepository.GetAsync(u => u.Username == userName);
             if (user == null)
             {
