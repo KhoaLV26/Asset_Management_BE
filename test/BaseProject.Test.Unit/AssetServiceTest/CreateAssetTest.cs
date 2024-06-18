@@ -10,6 +10,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using Xunit;
@@ -30,40 +31,36 @@ namespace AssetManagement.Test.Unit.AssetServiceTest
         }
 
         [Fact]
-        public async Task CreateAssetAsync_ValidRequest_ReturnsAssetResponse()
+        public async Task CreateAssetAsync_WithValidRequest_ReturnsCreatedAssetResponse()
         {
             // Arrange
             var assetRequest = new AssetRequest
             {
-                AssetName = "Test Asset",
-                CategoryId = Guid.NewGuid(),
-                Status = EnumAssetStatus.Available,
                 CreatedBy = Guid.NewGuid(),
+                AssetName = "New Asset",
+                CategoryId = Guid.NewGuid(),
                 Specification = "Test Specification",
-                InstallDate = DateOnly.FromDateTime(DateTime.Now)
+                InstallDate = DateOnly.FromDateTime(DateTime.Now),
+                Status = EnumAssetStatus.Available
             };
 
-            var adminUser = new User { Id = assetRequest.CreatedBy, LocationId = Guid.NewGuid() };
-            var category = new Category { Id = assetRequest.CategoryId, Code = "TA" };
-            var newAsset = new Asset
+            var adminCreated = new User
             {
-                AssetCode = "TA000001",
-                AssetName = assetRequest.AssetName,
-                CategoryId = assetRequest.CategoryId,
-                Category = category,
-                Status = assetRequest.Status,
-                CreatedBy = assetRequest.CreatedBy,
-                LocationId = adminUser.LocationId,
-                Location = adminUser.Location,
-                Specification = assetRequest.Specification,
-                InstallDate = assetRequest.InstallDate
+                Id = assetRequest.CreatedBy,
+                LocationId = Guid.NewGuid(),
             };
-            var assetResponse = new AssetResponse();
+
+            var category = new Category
+            {
+                Id = assetRequest.CategoryId,
+                Code = "TEST",
+                Name = "Test Category"
+            };
 
             _unitOfWorkMock.Setup(uow => uow.UserRepository.GetAsync(
                 It.IsAny<Expression<Func<User, bool>>>(),
-                It.IsAny<Expression<Func<User, object>>[]>()
-            )).ReturnsAsync(adminUser);
+                It.IsAny<Expression<Func<User, object>>>()
+            )).ReturnsAsync(adminCreated);
 
             _unitOfWorkMock.Setup(uow => uow.CategoryRepository.GetAsync(
                 It.IsAny<Expression<Func<Category, bool>>>()
@@ -71,48 +68,60 @@ namespace AssetManagement.Test.Unit.AssetServiceTest
 
             _unitOfWorkMock.Setup(uow => uow.AssetRepository.GetAllAsync(
                 It.IsAny<Expression<Func<Asset, bool>>>(),
-                It.IsAny<Expression<Func<Asset, object>>[]>()
-            )).ReturnsAsync(new Asset[0]);
+                It.IsAny<Expression<Func<Asset, object>>>()
+            )).ReturnsAsync(new List<Asset>());
 
             _unitOfWorkMock.Setup(uow => uow.AssetRepository.AddAsync(It.IsAny<Asset>()))
-                .Callback<Asset>(asset => newAsset = asset);
+                .Returns(Task.CompletedTask)
+                .Verifiable();
 
-            _unitOfWorkMock.Setup(uow => uow.CommitAsync()).ReturnsAsync(1);
+            _unitOfWorkMock.Setup(uow => uow.CommitAsync())
+                .ReturnsAsync(1);
 
             _mapperMock.Setup(mapper => mapper.Map<AssetResponse>(It.IsAny<Asset>()))
-                .Returns(assetResponse);
+                .Returns((Asset asset) => new AssetResponse
+                {
+                    Id = asset.Id,
+                    AssetCode = asset.AssetCode,
+                    AssetName = asset.AssetName,
+                    CategoryId = asset.CategoryId,
+                    CategoryName = asset.Category.Name,
+                    Status = asset.Status
+                });
 
             // Act
             var result = await _assetService.CreateAssetAsync(assetRequest);
 
             // Assert
             Assert.NotNull(result);
-            Assert.Equal(assetResponse, result);
-            _unitOfWorkMock.Verify(uow => uow.UserRepository.GetAsync(
-                It.IsAny<Expression<Func<User, bool>>>(),
-                It.IsAny<Expression<Func<User, object>>[]>()
-            ), Times.Once);
-            _unitOfWorkMock.Verify(uow => uow.CategoryRepository.GetAsync(
-                It.IsAny<Expression<Func<Category, bool>>>()
-            ), Times.Once);
-            _unitOfWorkMock.Verify(uow => uow.AssetRepository.GetAllAsync(
-                It.IsAny<Expression<Func<Asset, bool>>>(),
-                It.IsAny<Expression<Func<Asset, object>>[]>()
-            ), Times.Once);
+            Assert.IsType<AssetResponse>(result);
+            Assert.Equal(assetRequest.AssetName, result.AssetName);
+            Assert.Equal(assetRequest.CategoryId, result.CategoryId);
+            Assert.Equal(category.Name, result.CategoryName);
+            Assert.Equal(assetRequest.Status, result.Status);
+            Assert.StartsWith(category.Code.ToUpper(), result.AssetCode);
+
             _unitOfWorkMock.Verify(uow => uow.AssetRepository.AddAsync(It.IsAny<Asset>()), Times.Once);
             _unitOfWorkMock.Verify(uow => uow.CommitAsync(), Times.Once);
-            _mapperMock.Verify(mapper => mapper.Map<AssetResponse>(It.IsAny<Asset>()), Times.Once);
         }
 
         [Fact]
-        public async Task CreateAssetAsync_AdminNotFound_ThrowsKeyNotFoundException()
+        public async Task CreateAssetAsync_WithNonExistingAdmin_ThrowsKeyNotFoundException()
         {
             // Arrange
-            var assetRequest = new AssetRequest { CreatedBy = Guid.NewGuid() };
+            var assetRequest = new AssetRequest
+            {
+                CreatedBy = Guid.NewGuid(),
+                AssetName = "New Asset",
+                CategoryId = Guid.NewGuid(),
+                Specification = "Test Specification",
+                InstallDate = DateOnly.FromDateTime(DateTime.Now),
+                Status = EnumAssetStatus.Available
+            };
 
             _unitOfWorkMock.Setup(uow => uow.UserRepository.GetAsync(
                 It.IsAny<Expression<Func<User, bool>>>(),
-                It.IsAny<Expression<Func<User, object>>[]>()
+                It.IsAny<Expression<Func<User, object>>>()
             )).ReturnsAsync((User)null);
 
             // Act & Assert
@@ -120,16 +129,29 @@ namespace AssetManagement.Test.Unit.AssetServiceTest
         }
 
         [Fact]
-        public async Task CreateAssetAsync_CategoryNotFound_ThrowsKeyNotFoundException()
+        public async Task CreateAssetAsync_WithNonExistingCategory_ThrowsKeyNotFoundException()
         {
             // Arrange
-            var assetRequest = new AssetRequest { CategoryId = Guid.NewGuid() };
-            var adminUser = new User { Id = assetRequest.CreatedBy, LocationId = Guid.NewGuid() };
+            var assetRequest = new AssetRequest
+            {
+                CreatedBy = Guid.NewGuid(),
+                AssetName = "New Asset",
+                CategoryId = Guid.NewGuid(),
+                Specification = "Test Specification",
+                InstallDate = DateOnly.FromDateTime(DateTime.Now),
+                Status = EnumAssetStatus.Available
+            };
+
+            var adminCreated = new User
+            {
+                Id = assetRequest.CreatedBy,
+                LocationId = Guid.NewGuid(),
+            };
 
             _unitOfWorkMock.Setup(uow => uow.UserRepository.GetAsync(
                 It.IsAny<Expression<Func<User, bool>>>(),
-                It.IsAny<Expression<Func<User, object>>[]>()
-            )).ReturnsAsync(adminUser);
+                It.IsAny<Expression<Func<User, object>>>()
+            )).ReturnsAsync(adminCreated);
 
             _unitOfWorkMock.Setup(uow => uow.CategoryRepository.GetAsync(
                 It.IsAny<Expression<Func<Category, bool>>>()
@@ -140,26 +162,36 @@ namespace AssetManagement.Test.Unit.AssetServiceTest
         }
 
         [Fact]
-        public async Task CreateAssetAsync_FailedToCreateAsset_ThrowsException()
+        public async Task CreateAssetAsync_WithFailedCommit_ThrowsException()
         {
             // Arrange
             var assetRequest = new AssetRequest
             {
-                AssetName = "Test Asset",
-                CategoryId = Guid.NewGuid(),
-                Status = EnumAssetStatus.Available,
                 CreatedBy = Guid.NewGuid(),
+                AssetName = "New Asset",
+                CategoryId = Guid.NewGuid(),
                 Specification = "Test Specification",
-                InstallDate = DateOnly.FromDateTime(DateTime.Now)
+                InstallDate = DateOnly.FromDateTime(DateTime.Now),
+                Status = EnumAssetStatus.Available
             };
 
-            var adminUser = new User { Id = assetRequest.CreatedBy, LocationId = Guid.NewGuid() };
-            var category = new Category { Id = assetRequest.CategoryId, Code = "TA" };
+            var adminCreated = new User
+            {
+                Id = assetRequest.CreatedBy,
+                LocationId = Guid.NewGuid(),
+            };
+
+            var category = new Category
+            {
+                Id = assetRequest.CategoryId,
+                Code = "TEST",
+                Name = "Test Category"
+            };
 
             _unitOfWorkMock.Setup(uow => uow.UserRepository.GetAsync(
                 It.IsAny<Expression<Func<User, bool>>>(),
-                It.IsAny<Expression<Func<User, object>>[]>()
-            )).ReturnsAsync(adminUser);
+                It.IsAny<Expression<Func<User, object>>>()
+            )).ReturnsAsync(adminCreated);
 
             _unitOfWorkMock.Setup(uow => uow.CategoryRepository.GetAsync(
                 It.IsAny<Expression<Func<Category, bool>>>()
@@ -167,13 +199,47 @@ namespace AssetManagement.Test.Unit.AssetServiceTest
 
             _unitOfWorkMock.Setup(uow => uow.AssetRepository.GetAllAsync(
                 It.IsAny<Expression<Func<Asset, bool>>>(),
-                It.IsAny<Expression<Func<Asset, object>>[]>()
-            )).ReturnsAsync(new Asset[0]);
+                It.IsAny<Expression<Func<Asset, object>>>()
+            )).ReturnsAsync(new List<Asset>());
 
-            _unitOfWorkMock.Setup(uow => uow.CommitAsync()).ReturnsAsync(0);
+            _unitOfWorkMock.Setup(uow => uow.AssetRepository.AddAsync(It.IsAny<Asset>()))
+                .Returns(Task.CompletedTask)
+                .Verifiable();
+
+            _unitOfWorkMock.Setup(uow => uow.CommitAsync())
+                .ReturnsAsync(0); // Simulate a failed commit
 
             // Act & Assert
             await Assert.ThrowsAsync<Exception>(() => _assetService.CreateAssetAsync(assetRequest));
+
+            _unitOfWorkMock.Verify(uow => uow.AssetRepository.AddAsync(It.IsAny<Asset>()), Times.Once);
+            _unitOfWorkMock.Verify(uow => uow.CommitAsync(), Times.Once);
+        }
+
+        [Fact]
+        public async Task GenerateAssetCodeAsync_WithExistingAssets_ReturnsNextAssetNumber()
+        {
+            // Arrange
+            var prefix = "TEST";
+            var existingAssets = new List<Asset>
+    {
+        new Asset { Id = Guid.NewGuid(), AssetCode = "TEST000001", Category = new Category { Code = "TEST" } },
+        new Asset { Id = Guid.NewGuid(), AssetCode = "TEST000002", Category = new Category { Code = "TEST" } },
+        new Asset { Id = Guid.NewGuid(), AssetCode = "TEST000003", Category = new Category { Code = "TEST" } }
+    };
+
+            _unitOfWorkMock.Setup(uow => uow.AssetRepository.GetAllAsync(
+                It.IsAny<Expression<Func<Asset, bool>>>(),
+                It.IsAny<Expression<Func<Asset, object>>>()
+            )).ReturnsAsync(existingAssets);
+
+            // Act
+            var generateAssetCodeAsyncMethod = typeof(AssetService)
+                .GetMethod("GenerateAssetCodeAsync", BindingFlags.NonPublic | BindingFlags.Instance);
+            var result = await (Task<int>)generateAssetCodeAsyncMethod.Invoke(_assetService, new object[] { prefix });
+
+            // Assert
+            Assert.Equal(4, result);
         }
     }
 }
