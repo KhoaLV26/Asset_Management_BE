@@ -27,6 +27,11 @@ namespace AssetManagement.Infrastructure.Repositories
 
         public void Delete(T entity)
         {
+            _context.Set<T>().Remove(entity);
+        }
+
+        public void SoftDelete(T entity)
+        {
             //_context.Set<T>().Remove(entity);
             PropertyInfo propertyInfo = entity.GetType().GetProperty("IsDeleted");
             propertyInfo.SetValue(entity, true);
@@ -100,8 +105,6 @@ namespace AssetManagement.Infrastructure.Repositories
             var items = prioritizedItems.Concat(nonPrioritizedItems).ToList();
 
             var paginatedItems = items.Skip((page - 1) * PageSizeConstant.PAGE_SIZE).Take(PageSizeConstant.PAGE_SIZE).ToList();
-
-            
 
             return (paginatedItems, totalCount);
         }
