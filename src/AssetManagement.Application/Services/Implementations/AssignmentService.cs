@@ -69,10 +69,10 @@ namespace AssetManagement.Application.Services.Implementations
         }
 
         public async Task<(IEnumerable<AssignmentResponse> data, int totalCount)> GetAllAssignmentAsync(Guid adminId, int pageNumber, string? state, string? search, string? sortOrder,
-         string? sortBy = "assetCode", string includeProperties = "", string? newAssetCode = "")
+         string? sortBy = "assetCode", string includeProperties = "", string? newAssetCode = "", DateTime? assignedDate = null)
         {
             Func<IQueryable<Assignment>, IOrderedQueryable<Assignment>>? orderBy = GetOrderQuery(sortOrder, sortBy);
-            Expression<Func<Assignment, bool>> filter = await GetFilterQuery(adminId, state, search);
+            Expression<Func<Assignment, bool>> filter = await GetFilterQuery(adminId, state, search, assignedDate);
             Expression<Func<Assignment, bool>> prioritizeCondition = null;
 
             if (!string.IsNullOrEmpty(newAssetCode))
@@ -100,7 +100,7 @@ namespace AssetManagement.Application.Services.Implementations
         }
 
 
-        private async Task<Expression<Func<Assignment, bool>>>? GetFilterQuery(Guid adminId, string? state, string? search)
+        private async Task<Expression<Func<Assignment, bool>>>? GetFilterQuery(Guid adminId, string? state, string? search, DateTime? assignedDate)
         {
             var user = await _unitOfWork.UserRepository.GetAsync(x => x.Id == adminId);
             // Determine the filtering criteria
@@ -162,8 +162,17 @@ namespace AssetManagement.Application.Services.Implementations
                         Type.EmptyTypes,
                         Expression.Constant(search)
                     )
+                    
                 );
                 conditions.Add(searchCondition);
+            }
+
+            if (assignedDate.HasValue)
+            {
+                var assignedDateCondition = Expression.Equal(
+                    Expression.Property(parameter, nameof(Assignment.AssignedDate)),
+                    Expression.Constant(assignedDate.Value, typeof(DateTime)));
+                conditions.Add(assignedDateCondition);
             }
 
             // Combine all conditions with AndAlso
