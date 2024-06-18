@@ -19,9 +19,5 @@ namespace AssetManagement.Application.Models.Requests
         [Required]
         [RegularExpression(RegexConstants.PASSWORD, ErrorMessage = ErrorMessage.ERROR_PASSWORD)]
         public string NewPassword { get; set; } = string.Empty;
-
-        [Required]
-        [Compare("NewPassword", ErrorMessage = "Confirm password must be same New Password")]
-        public string ConfirmPassword { get; set; } = string.Empty;
     }
 }
