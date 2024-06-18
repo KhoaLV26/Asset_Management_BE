@@ -1,6 +1,8 @@
 ﻿using AssetManagement.Application.Models.Requests;
 using AssetManagement.Application.Services;
+using AssetManagement.Domain.Constants;
 using AssetManagement.Domain.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Threading.Tasks;
@@ -12,12 +14,14 @@ namespace AssetManagement.WebAPI.Controllers
     public class UsersController : ControllerBase
     {
         private readonly IUserService _userService;
+
         public UsersController(IUserService userService)
         {
             _userService = userService;
         }
 
         [HttpPost]
+        [Authorize(Roles = RoleConstant.ADMIN)]
         public async Task<IActionResult> RegisterUser([FromBody] UserRegisterRequest request)
         {
             {
@@ -72,7 +76,7 @@ namespace AssetManagement.WebAPI.Controllers
         [HttpGet("search")]
         public async Task<IActionResult> GetFilteredUsers(
             [FromQuery] string adminId = "CFF14216-AC4D-4D5D-9222-C951287E51C6",
-            [FromQuery] string? searchTerm  = "",
+            [FromQuery] string? searchTerm = "",
             [FromQuery] string? role = "",
             [FromQuery] string sortBy = "StaffCode",
             [FromQuery] string sortDirection = "asc",
