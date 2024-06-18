@@ -11,6 +11,6 @@ namespace AssetManagement.Application.Services
     public interface IAssignmentService
     {
         Task<AssignmentResponse> AddAssignmentAsync(AssignmentRequest request);
-        Task<(IEnumerable<AssignmentResponse> data, int totalCount)> GetAllAssignmentAsync(Guid adminId, int pageNumber, string? state, string? search, string? sortOrder, string? sortBy = "assetCode", string includeProperties = "", string? newAssetCode = "");
+        Task<(IEnumerable<AssignmentResponse> data, int totalCount)> GetAllAssignmentAsync(Guid adminId, int pageNumber, string? state, DateTime? assignedDate, string? search, string? sortOrder, string? sortBy = "assetCode", string includeProperties = "", string? newAssetCode = "");
     }
 }

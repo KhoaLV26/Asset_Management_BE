@@ -68,13 +68,13 @@ namespace AssetManagement.WebAPI.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAllAssignmentAsync(int pageNumber, string? state, string? search, string? sortOrder, string? sortBy = "assetCode", string? newAssetCode = "")
+        public async Task<IActionResult> GetAllAssignmentAsync(int pageNumber, DateTime? assignedDate ,string? state, string? search, string? sortOrder, string? sortBy = "assetCode", string? newAssetCode = "")
         {
             try
             {
                 Guid adminId = Guid.Parse("CFF14216-AC4D-4D5D-9222-C951287E51C6");
 
-                var assignments = await _assignmentService.GetAllAssignmentAsync(adminId, pageNumber == 0 ? 1 : pageNumber, state: state, search, sortOrder, sortBy, "UserTo,UserBy,Asset", newAssetCode);
+                var assignments = await _assignmentService.GetAllAssignmentAsync(adminId, pageNumber == 0 ? 1 : pageNumber, state: state, assignedDate , search, sortOrder, sortBy, "UserTo,UserBy,Asset", newAssetCode);
                 if (assignments.data.Any())
                 {
                     return Ok(new GeneralGetsResponse
