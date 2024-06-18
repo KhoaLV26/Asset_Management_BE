@@ -35,8 +35,7 @@ namespace AssetManagement.Application.Services.Implementations
                 AssetId = request.AssetId,
                 Status = EnumAssignmentStatus.WaitingForAcceptance,
                 CreatedAt = DateTime.UtcNow,
-                CreatedBy = request.AssignedBy,
-
+                CreatedBy = request.AssignedBy
             };
             await _unitOfWork.AssignmentRepository.AddAsync(assignment);
             if (await _unitOfWork.CommitAsync() < 1)
@@ -64,6 +63,8 @@ namespace AssetManagement.Application.Services.Implementations
                 AssetId = a.AssetId,
                 AssetCode = a.Asset.AssetCode,
                 AssetName = a.Asset.AssetName,
+                Note = a.Note,
+                Status = a.Status
             }), assignments.totalCount);
         }
 
@@ -93,6 +94,8 @@ namespace AssetManagement.Application.Services.Implementations
                 AssetId = a.AssetId,
                 AssetCode = a.Asset.AssetCode,
                 AssetName = a.Asset.AssetName,
+                Note = a.Note,
+                Status = a.Status
             }), assignments.totalCount);
         }
 
