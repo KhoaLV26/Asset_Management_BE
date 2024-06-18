@@ -10,6 +10,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
+using AssetManagement.Domain.Constants;
+using Microsoft.AspNetCore.Authorization;
 
 namespace AssetManagement.WebAPI.Controllers
 {
@@ -27,6 +29,7 @@ namespace AssetManagement.WebAPI.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = RoleConstant.ADMIN)]
         public async Task<IActionResult> CreateAssetAsync([FromBody] AssetRequest assetRequest)
         {
             try
@@ -58,7 +61,8 @@ namespace AssetManagement.WebAPI.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAllAssetAsync(int pageNumber, string? state, Guid? category, string? search, string? sortOrder, string? sortBy = "assetCode", string? newAssetCode = "")
+        [Authorize(Roles = RoleConstant.ADMIN)]
+        public async Task<IActionResult> GetAllAssetAsync(int currentPage, string? state, Guid? category, string? search, string? sortOrder, string? sortBy = "assetCode")
         {
             try
             {

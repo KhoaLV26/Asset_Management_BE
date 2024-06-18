@@ -121,7 +121,7 @@ namespace AssetManagement.WebAPI.Controllers
         {
             try
             {
-                await _authService.ResetPasswordAsync(request.Username, request.Password);
+                await _authService.ResetPasswordAsync(request.Username, request.Password, request.ConfirmPassword);
                 var response = new GeneralBoolResponse
                 {
                     Message = "Password reset successfully",
@@ -144,7 +144,7 @@ namespace AssetManagement.WebAPI.Controllers
         {
             try
             {
-                await _authService.ChangePasswordAsync(request.Username, request.OldPassword, request.NewPassword);
+                await _authService.ChangePasswordAsync(request.Username, request.OldPassword, request.NewPassword, request.ConfirmPassword);
                 var response = new GeneralBoolResponse
                 {
                     Message = "Password changed successfully",
