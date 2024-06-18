@@ -6,15 +6,13 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace AssetManagement.Application.Models.Responses
+namespace AssetManagement.Application.Models.Requests
 {
-    public class AssignmentResponse
+    public class AssignmentRequest
     {
         public Guid Id { get; set; }
         public Guid AssignedTo { get; set; }
-        public string To { get; set; }
         public Guid AssignedBy { get; set; }
-        public string By { get; set; }
         public DateTime AssignedDate { get; set; }
         public Guid AssetId { get; set; }
         public EnumAssignmentStatus Status { get; set; } = EnumAssignmentStatus.WaitingForAcceptance;

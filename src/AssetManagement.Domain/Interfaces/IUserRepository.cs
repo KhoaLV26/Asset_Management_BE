@@ -9,13 +9,13 @@ namespace AssetManagement.Domain.Interfaces
 {
     public interface IUserRepository : IGenericRepository<User>
     {
-        Task<(IEnumerable<User> Items, int TotalCount)> GetFilteredAsync(
-            string location,
-            Expression<Func<User, bool>> filter = null,
-            Func<IQueryable<User>, IOrderedQueryable<User>> orderBy = null,
-            string includeProperties = "",
-            string? searchTerm = "",
-            int pageNumber = 1,
-            int pageSize = 15);
+        //Task<(IEnumerable<User> Items, int TotalCount)> GetFilteredAsync(
+        //    string location,
+        //    Expression<Func<User, bool>> filter = null,
+        //    Func<IQueryable<User>, IOrderedQueryable<User>> orderBy = null,
+        //    string includeProperties = "",
+        //    string? searchTerm = "",
+        //    int pageNumber = 1,
+        //    int pageSize = 15);
     }
 }
