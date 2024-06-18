@@ -20,5 +20,6 @@ namespace AssetManagement.Domain.Entities
         public Guid? ReturnRequestId { get; set; }
         public ReturnRequest? ReturnRequest { get; set; }
         public EnumAssignmentStatus Status { get; set; } = EnumAssignmentStatus.WaitingForAcceptance;
+        public string? Note { get; set; }
     }
 }
