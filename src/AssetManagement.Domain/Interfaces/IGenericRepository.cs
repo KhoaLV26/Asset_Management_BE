@@ -23,8 +23,6 @@ namespace AssetManagement.Domain.Interfaces
 
         void Delete(T entity);
 
-        void SoftDelete(T entity);
-
         void RemoveRange(IEnumerable<T> entities);
 
         Task<int> CountAsync(Expression<Func<T, bool>> expression = null);

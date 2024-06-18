@@ -10,8 +10,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
-using AssetManagement.Domain.Constants;
-using Microsoft.AspNetCore.Authorization;
 
 namespace AssetManagement.WebAPI.Controllers
 {
@@ -29,7 +27,6 @@ namespace AssetManagement.WebAPI.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = RoleConstant.ADMIN)]
         public async Task<IActionResult> CreateAssetAsync([FromBody] AssetRequest assetRequest)
         {
             try

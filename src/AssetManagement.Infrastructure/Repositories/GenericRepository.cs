@@ -27,11 +27,6 @@ namespace AssetManagement.Infrastructure.Repositories
 
         public void Delete(T entity)
         {
-            _context.Set<T>().Remove(entity);
-        }
-
-        public void SoftDelete(T entity)
-        {
             //_context.Set<T>().Remove(entity);
             PropertyInfo propertyInfo = entity.GetType().GetProperty("IsDeleted");
             propertyInfo.SetValue(entity, true);
