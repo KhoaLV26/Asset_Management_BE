@@ -80,47 +80,6 @@ namespace AssetManagement.Application.Services.Implementations
             return assetNumber;
         }
 
-        public async Task<(IEnumerable<AssetResponse> data, int totalCount)> GetAllAssetAsync(int page = 1, Expression<Func<Asset, bool>>? filter = null, Func<IQueryable<Asset>, IOrderedQueryable<Asset>>? orderBy = null, string includeProperties = "", string? newAssetCode = "")
-        {
-            var assets = await _unitOfWork.AssetRepository.GetAllAsync(page, filter, orderBy, includeProperties);
-
-            return (assets.items.Select(a => new AssetResponse
-            {
-                Id = a.Id,
-                AssetCode = a.AssetCode,
-                AssetName = a.AssetName,
-                CategoryId = a.CategoryId,
-                CategoryName = a.Category.Name,
-                Status = a.Status
-            }), assets.totalCount);
-        }
-
-        public async Task<(IEnumerable<AssetResponse> data, int totalCount)> GetAllAssetAsync(Guid adminId,int pageNumber, string? state, Guid? category, string? search, string? sortOrder,
-            string? sortBy = "assetCode", string includeProperties = "", string? newAssetCode = "")
-        {
-            Func<IQueryable<Asset>, IOrderedQueryable<Asset>>? orderBy = GetOrderQuery(sortOrder, sortBy);
-            Expression<Func<Asset, bool>> filter = await GetFilterQuery(adminId, category, state, search);
-            Expression<Func<Asset, bool>> prioritizeCondition = null;
-
-            if (!string.IsNullOrEmpty(newAssetCode))
-            {
-                prioritizeCondition = u => u.AssetCode == newAssetCode;
-            }
-
-            var assets = await _unitOfWork.AssetRepository.GetAllAsync(pageNumber, filter, orderBy, includeProperties,
-                prioritizeCondition);
-
-            return(assets.items.Select(a => new AssetResponse
-            {
-                Id = a.Id,
-                AssetCode = a.AssetCode,
-                AssetName = a.AssetName,
-                CategoryId = a.CategoryId,
-                CategoryName = a.Category.Name,
-                Status = a.Status
-            }), assets.totalCount);
-        }
-
         public async Task<AssetDetailResponse> GetAssetByIdAsync(Guid id)
         {
             var asset = await _unitOfWork.AssetRepository.GetAssetDetail(id);
@@ -158,6 +117,47 @@ namespace AssetManagement.Application.Services.Implementations
                     To = a.To
                 }).ToList()
             };
+        }
+
+        public async Task<(IEnumerable<AssetResponse> data, int totalCount)> GetAllAssetAsync(int page = 1, Expression<Func<Asset, bool>>? filter = null, Func<IQueryable<Asset>, IOrderedQueryable<Asset>>? orderBy = null, string includeProperties = "", string? newAssetCode = "")
+        {
+            var assets = await _unitOfWork.AssetRepository.GetAllAsync(page, filter, orderBy, includeProperties);
+
+            return (assets.items.Select(a => new AssetResponse
+            {
+                Id = a.Id,
+                AssetCode = a.AssetCode,
+                AssetName = a.AssetName,
+                CategoryId = a.CategoryId,
+                CategoryName = a.Category.Name,
+                Status = a.Status
+            }), assets.totalCount);
+        }
+
+        public async Task<(IEnumerable<AssetResponse> data, int totalCount)> GetAllAssetAsync(Guid adminId, int pageNumber, string? state, Guid? category, string? search, string? sortOrder,
+            string? sortBy = "assetCode", string includeProperties = "", string? newAssetCode = "")
+        {
+            Func<IQueryable<Asset>, IOrderedQueryable<Asset>>? orderBy = GetOrderQuery(sortOrder, sortBy);
+            Expression<Func<Asset, bool>> filter = await GetFilterQuery(adminId, category, state, search);
+            Expression<Func<Asset, bool>> prioritizeCondition = null;
+
+            if (!string.IsNullOrEmpty(newAssetCode))
+            {
+                prioritizeCondition = u => u.AssetCode == newAssetCode;
+            }
+
+            var assets = await _unitOfWork.AssetRepository.GetAllAsync(pageNumber, filter, orderBy, includeProperties,
+                prioritizeCondition);
+
+            return (assets.items.Select(a => new AssetResponse
+            {
+                Id = a.Id,
+                AssetCode = a.AssetCode,
+                AssetName = a.AssetName,
+                CategoryId = a.CategoryId,
+                CategoryName = a.Category.Name,
+                Status = a.Status
+            }), assets.totalCount);
         }
 
         private async Task<Expression<Func<Asset, bool>>>? GetFilterQuery(Guid adminId, Guid? category, string? state, string? search)
