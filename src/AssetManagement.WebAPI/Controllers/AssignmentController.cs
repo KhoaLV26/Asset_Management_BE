@@ -1,8 +1,11 @@
 ﻿using AssetManagement.Application.Models.Requests;
 using AssetManagement.Application.Services;
+using AssetManagement.Application.Services.Implementations;
+using AssetManagement.Domain.Entities;
 using AssetManagement.Domain.Models;
 using Microsoft.AspNetCore.Mvc;
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace AssetManagement.WebAPI.Controllers
@@ -60,6 +63,40 @@ namespace AssetManagement.WebAPI.Controllers
                 {
                     Success = false,
                     Message = "An error occurred while registering the user.",
+                });
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetAllAssignmentAsync(int pageNumber, string? state, string? search, string? sortOrder, string? sortBy = "assetCode", string? newAssetCode = "")
+        {
+            try
+            {
+                Guid adminId = Guid.Parse("CFF14216-AC4D-4D5D-9222-C951287E51C6");
+
+                var assignments = await _assignmentService.GetAllAssignmentAsync(adminId, pageNumber == 0 ? 1 : pageNumber, state: state, search, sortOrder, sortBy, "UserTo,UserBy,Asset", newAssetCode);
+                if (assignments.data.Any())
+                {
+                    return Ok(new GeneralGetsResponse
+                    {
+                        Success = true,
+                        Message = "Assignments retrieved successfully.",
+                        Data = assignments.data,
+                        TotalCount = assignments.totalCount
+                    });
+                }
+                return Conflict(new GeneralGetsResponse
+                {
+                    Success = false,
+                    Message = "No data.",
+                });
+            }
+            catch (Exception ex)
+            {
+                return Conflict(new GeneralGetsResponse
+                {
+                    Success = false,
+                    Message = ex.Message,
                 });
             }
         }

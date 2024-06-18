@@ -100,9 +100,6 @@ namespace AssetManagement.Infrastructure.Repositories
             var items = prioritizedItems.Concat(nonPrioritizedItems).ToList();
 
             var paginatedItems = items.Skip((page - 1) * PageSizeConstant.PAGE_SIZE).Take(PageSizeConstant.PAGE_SIZE).ToList();
-
-            
-
             return (paginatedItems, totalCount);
         }
 
