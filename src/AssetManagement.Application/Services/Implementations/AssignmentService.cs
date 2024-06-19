@@ -18,14 +18,14 @@ namespace AssetManagement.Application.Services.Implementations
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
-        
-        public AssignmentService (IUnitOfWork unitOfWork, IMapper mapper)
+
+        public AssignmentService(IUnitOfWork unitOfWork, IMapper mapper)
         {
             _unitOfWork = unitOfWork;
             _mapper = mapper;
         }
         public async Task<AssignmentResponse> AddAssignmentAsync(AssignmentRequest request)
-        {   
+        {
             var assignment = new Assignment
             {
                 Id = Guid.NewGuid(),
@@ -134,7 +134,7 @@ namespace AssetManagement.Application.Services.Implementations
 
         private async Task<Expression<Func<Assignment, bool>>>? GetFilterQuery(DateTime? assignedDate, Guid adminId, string? state, string? search)
         {
-            var user = await _unitOfWork.UserRepository.GetAsync(x => x.Id == adminId);
+            var f = await _unitOfWork.UserRepository.GetAsync(x => x.Id == adminId);
             // Determine the filtering criteria
             Expression<Func<Assignment, bool>>? filter = null;
             var parameter = Expression.Parameter(typeof(Assignment), "x");
@@ -158,26 +158,26 @@ namespace AssetManagement.Application.Services.Implementations
                     }
                 }
             }
-            else
-            {
-                // Default states: Accepted, Waiting for acceptance
-                var acceptedCondition = Expression.Equal(
-                    Expression.Property(parameter, nameof(Assignment.Status)),
-                    Expression.Constant(EnumAssignmentStatus.Accepted)
-                );
+            //else
+            //{
+            //    // Default states: Accepted, Waiting for acceptance
+            //    var acceptedCondition = Expression.Equal(
+            //        Expression.Property(parameter, nameof(Assignment.Status)),
+            //        Expression.Constant(EnumAssignmentStatus.Accepted)
+            //    );
 
-                var waitingForAcceptance = Expression.Equal(
-                    Expression.Property(parameter, nameof(Assignment.Status)),
-                    Expression.Constant(EnumAssignmentStatus.WaitingForAcceptance)
-                );
+            //    var waitingForAcceptance = Expression.Equal(
+            //        Expression.Property(parameter, nameof(Assignment.Status)),
+            //        Expression.Constant(EnumAssignmentStatus.WaitingForAcceptance)
+            //    );
 
-                var defaultStateCondition = Expression.OrElse(
-                    Expression.OrElse(acceptedCondition, waitingForAcceptance),
-                    waitingForAcceptance
-                );
+            //    var defaultStateCondition = Expression.OrElse(
+            //        Expression.OrElse(acceptedCondition, waitingForAcceptance),
+            //        waitingForAcceptance
+            //    );
 
-                conditions.Add(defaultStateCondition);
-            }
+            //    conditions.Add(defaultStateCondition);
+            //}
             // Add search conditions
             if (!string.IsNullOrEmpty(search))
             {
@@ -194,9 +194,15 @@ namespace AssetManagement.Application.Services.Implementations
                         Type.EmptyTypes,
                         Expression.Constant(search)
                     )
-                    
+
                 );
-                conditions.Add(searchCondition);
+                var userNameCondition = Expression.Call(
+                    Expression.Property(parameter, nameof(Assignment.UserTo.Username)),
+                    nameof(string.Contains),
+                    Type.EmptyTypes,
+                    Expression.Constant(search)
+                );
+                conditions.Add(Expression.OrElse(searchCondition, userNameCondition));
             }
             // Add date conditions
             if (assignedDate.HasValue)
@@ -235,6 +241,9 @@ namespace AssetManagement.Application.Services.Implementations
                     break;
                 case "assigneddate":
                     orderBy = x => sortOrder != "desc" ? x.OrderBy(a => a.AssignedDate) : x.OrderByDescending(a => a.AssignedDate);
+                    break;
+                case "state":
+                    orderBy = x => sortOrder != "desc" ? x.OrderBy(a => a.Status) : x.OrderByDescending(a => a.Status);
                     break;
                 default:
                     orderBy = null;
