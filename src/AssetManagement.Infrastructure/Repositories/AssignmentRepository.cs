@@ -2,6 +2,7 @@
 using AssetManagement.Domain.Interfaces;
 using AssetManagement.Infrastructure.DataAccess;
 using Microsoft.EntityFrameworkCore;
+using Org.BouncyCastle.Asn1.Cmp;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -28,6 +29,18 @@ namespace AssetManagement.Infrastructure.Repositories
                 .Include(a => a.UserBy)
                 .Include(a => a.UserTo)
                 .ToListAsync();
+        }
+
+        public async Task<Assignment?> GetAssignmentDetailAsync(Guid id)
+        {
+            return await _context.Assignments
+                .Include(a => a.Asset)
+                .ThenInclude(a => a.AssetCode)
+                .Include(a => a.Asset)
+                .ThenInclude(a => a.AssetName)
+                .Include(a => a.UserBy)
+                .Include(a => a.UserTo)
+                .FirstOrDefaultAsync(a => a.Id == id);
         }
     }
 }

@@ -48,7 +48,7 @@ namespace AssetManagement.Application.Services.Implementations
             }
         }
 
-        public async Task<(IEnumerable<AssignmentResponse> data, int totalCount)> GetAllAssignmentAsync(int page = 1, Expression<Func<Assignment, bool>>? filter = null, Func<IQueryable<Assignment>, IOrderedQueryable<Assignment>>? orderBy = null, string includeProperties = "", string? newAssetCode = "")
+        public async Task<(IEnumerable<AssignmentResponse> data, int totalCount)> GetAllAssignmentAsync(int page = 1, Expression<Func<Assignment, bool>>? filter = null, Func<IQueryable<Assignment>, IOrderedQueryable<Assignment>>? orderBy = null, string includeProperties = "")
         {
             var assignments = await _unitOfWork.AssignmentRepository.GetAllAsync(page:page, filter: filter, orderBy: orderBy,includeProperties: "Asset,UserTo,UserBy");
 
@@ -69,16 +69,17 @@ namespace AssetManagement.Application.Services.Implementations
         }
 
         public async Task<(IEnumerable<AssignmentResponse> data, int totalCount)> GetAllAssignmentAsync(Guid adminId, int pageNumber, string? state, DateTime? assignedDate, string? search, string? sortOrder,
-         string? sortBy = "assetCode", string includeProperties = "", string? newAssetCode = "")
+         string? sortBy = "assetCode", string includeProperties = "")
         {
             Func<IQueryable<Assignment>, IOrderedQueryable<Assignment>>? orderBy = GetOrderQuery(sortOrder, sortBy);
             Expression<Func<Assignment, bool>> filter = await GetFilterQuery(assignedDate,adminId, state, search);
             Expression<Func<Assignment, bool>> prioritizeCondition = null;
 
-            if (!string.IsNullOrEmpty(newAssetCode))
-            {
-                prioritizeCondition = u => u.Asset.AssetCode == newAssetCode;
-            }
+            //TRY REMOVING NEWASSETCODE
+            //if (!string.IsNullOrEmpty(newAssetCode))
+            //{
+            //    prioritizeCondition = u => u.Asset.AssetCode == newAssetCode;
+            //}
 
             var assignments = await _unitOfWork.AssignmentRepository.GetAllAsync(pageNumber, filter, orderBy, includeProperties,
                 prioritizeCondition);
@@ -99,6 +100,28 @@ namespace AssetManagement.Application.Services.Implementations
             }), assignments.totalCount);
         }
 
+        public async Task<AssignmentResponse> GetAssignmentDetailAsync(Guid id)
+        {
+            var assignment = await _unitOfWork.AssignmentRepository.GetAssignmentDetailAsync(id);
+            if (assignment == null)
+            {
+                return null;
+            }
+            return new AssignmentResponse
+            {
+                Id = assignment.Id,
+                AssignedTo = assignment.AssignedTo,
+                To = assignment.UserTo.Username,
+                AssignedBy = assignment.AssignedBy,
+                By = assignment.UserBy.Username,
+                AssignedDate = assignment.AssignedDate,
+                AssetId = assignment.AssetId,
+                AssetCode = assignment.Asset.AssetCode,
+                AssetName = assignment.Asset.AssetName,
+                Note = assignment.Note,
+                Status = assignment.Status
+            };
+        }
 
         private async Task<Expression<Func<Assignment, bool>>>? GetFilterQuery(DateTime? assignedDate, Guid adminId, string? state, string? search)
         {

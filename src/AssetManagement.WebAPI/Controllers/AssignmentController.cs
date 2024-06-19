@@ -68,13 +68,13 @@ namespace AssetManagement.WebAPI.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAllAssignmentAsync(int pageNumber, DateTime? assignedDate ,string? state, string? search, string? sortOrder, string? sortBy = "assetCode", string? newAssetCode = "")
+        public async Task<IActionResult> GetAllAssignmentAsync(int pageNumber, DateTime? assignedDate ,string? state, string? search, string? sortOrder, string? sortBy = "assetCode")
         {
             try
             {
                 Guid adminId = Guid.Parse("CFF14216-AC4D-4D5D-9222-C951287E51C6");
 
-                var assignments = await _assignmentService.GetAllAssignmentAsync(adminId, pageNumber == 0 ? 1 : pageNumber, state: state, assignedDate , search, sortOrder, sortBy, "UserTo,UserBy,Asset", newAssetCode);
+                var assignments = await _assignmentService.GetAllAssignmentAsync(adminId, pageNumber == 0 ? 1 : pageNumber, state: state, assignedDate , search, sortOrder, sortBy, "UserTo,UserBy,Asset");
                 if (assignments.data.Any())
                 {
                     return Ok(new GeneralGetsResponse
@@ -97,6 +97,40 @@ namespace AssetManagement.WebAPI.Controllers
                 {
                     Success = false,
                     Message = ex.Message,
+                });
+            }
+        }
+
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetAssignmentDetail(Guid id)
+        {
+            try
+            {
+                var assignment = await _assignmentService.GetAssignmentDetailAsync(id);
+                if (assignment != null)
+                {
+                    return Ok(new GeneralGetResponse
+                    {
+                        Success = true,
+                        Message = "Assignment retrived successfully.",
+                        Data = assignment
+                    });
+                }
+                else
+                {
+                    return Conflict(new GeneralBoolResponse
+                    {
+                        Success = false,
+                        Message = "Assignment not found."
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                return Conflict(new GeneralGetResponse
+                {
+                    Success = false,
+                    Message = ex.Message
                 });
             }
         }
