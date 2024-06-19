@@ -48,47 +48,42 @@ namespace AssetManagement.Application.Services.Implementations
             }
         }
 
-        public async Task<(IEnumerable<AssignmentResponse> data, int totalCount)> GetAllAssignmentAsync(int page = 1, Expression<Func<Assignment, bool>>? filter = null, Func<IQueryable<Assignment>, IOrderedQueryable<Assignment>>? orderBy = null, string includeProperties = "", Guid? newAssignmentId = null)
+        //public async Task<(IEnumerable<AssignmentResponse> data, int totalCount)> GetAllAssignmentAsync(int page = 1, Expression<Func<Assignment, bool>>? filter = null, Func<IQueryable<Assignment>, IOrderedQueryable<Assignment>>? orderBy = null, string includeProperties = "", Guid? newAssignmentId = null)
+        //{
+            
+            
+
+        //    var assets = await _unitOfWork.AssignmentRepository.GetAllAsync(page, filter, orderBy, includeProperties,
+        //        prioritizeCondition);
+
+        //    return (assignments.items.Select(a => new AssignmentResponse
+        //    {
+        //        Id = a.Id,
+        //        AssignedTo = a.AssignedTo,
+        //        To = a.UserTo.Username,
+        //        AssignedBy = a.AssignedBy,
+        //        By = a.UserBy.Username,
+        //        AssignedDate = DateOnly.FromDateTime(a.AssignedDate),
+        //        AssetId = a.AssetId,
+        //        AssetCode = a.Asset.AssetCode,
+        //        AssetName = a.Asset.AssetName,
+        //        Note = a.Note,
+        //        Status = a.Status
+        //    }), assignments.totalCount);
+        //}
+
+        public async Task<(IEnumerable<AssignmentResponse> data, int totalCount)> GetAllAssignmentAsync(int pageNumber, string? state, DateTime? assignedDate, string? search, string? sortOrder,
+         string? sortBy = "assetCode", string includeProperties = "", Guid? newAssignmentId = null)
         {
-            var assignments = await _unitOfWork.AssignmentRepository.GetAllAsync(page:page, filter: filter, orderBy: orderBy,includeProperties: "Asset,UserTo,UserBy");
+            Func<IQueryable<Assignment>, IOrderedQueryable<Assignment>>? orderBy = GetOrderQuery(sortOrder, sortBy);
+            Expression<Func<Assignment, bool>> filter = await GetFilterQuery(assignedDate, state, search);
             Expression<Func<Assignment, bool>> prioritizeCondition = null;
 
-            if (!string.IsNullOrEmpty(newAssignmentId.ToString()))
+       
+            if (newAssignmentId.HasValue)
             {
                 prioritizeCondition = u => u.Id == newAssignmentId;
             }
-
-            var assets = await _unitOfWork.AssignmentRepository.GetAllAsync(page, filter, orderBy, includeProperties,
-                prioritizeCondition);
-
-            return (assignments.items.Select(a => new AssignmentResponse
-            {
-                Id = a.Id,
-                AssignedTo = a.AssignedTo,
-                To = a.UserTo.Username,
-                AssignedBy = a.AssignedBy,
-                By = a.UserBy.Username,
-                AssignedDate = DateOnly.FromDateTime(a.AssignedDate),
-                AssetId = a.AssetId,
-                AssetCode = a.Asset.AssetCode,
-                AssetName = a.Asset.AssetName,
-                Note = a.Note,
-                Status = a.Status
-            }), assignments.totalCount);
-        }
-
-        public async Task<(IEnumerable<AssignmentResponse> data, int totalCount)> GetAllAssignmentAsync(Guid adminId, int pageNumber, string? state, DateTime? assignedDate, string? search, string? sortOrder,
-         string? sortBy = "assetCode", string includeProperties = "")
-        {
-            Func<IQueryable<Assignment>, IOrderedQueryable<Assignment>>? orderBy = GetOrderQuery(sortOrder, sortBy);
-            Expression<Func<Assignment, bool>> filter = await GetFilterQuery(assignedDate,adminId, state, search);
-            Expression<Func<Assignment, bool>> prioritizeCondition = null;
-
-            //TRY REMOVING NEWASSETCODE
-            //if (!string.IsNullOrEmpty(newAssetCode))
-            //{
-            //    prioritizeCondition = u => u.Asset.AssetCode == newAssetCode;
-            //}
 
             var assignments = await _unitOfWork.AssignmentRepository.GetAllAsync(pageNumber, filter, orderBy, includeProperties,
                 prioritizeCondition);
@@ -100,7 +95,7 @@ namespace AssetManagement.Application.Services.Implementations
                 To = a.UserTo.Username,
                 AssignedBy = a.AssignedBy,
                 By = a.UserBy.Username,
-                AssignedDate = DateOnly.FromDateTime(a.AssignedDate),
+                AssignedDate = a.AssignedDate,
                 AssetId = a.AssetId,
                 AssetCode = a.Asset.AssetCode,
                 AssetName = a.Asset.AssetName,
@@ -123,7 +118,7 @@ namespace AssetManagement.Application.Services.Implementations
                 To = assignment.UserTo.Username,
                 AssignedBy = assignment.AssignedBy,
                 By = assignment.UserBy.Username,
-                AssignedDate = DateOnly.FromDateTime(assignment.AssignedDate),
+                AssignedDate = assignment.AssignedDate,
                 AssetId = assignment.AssetId,
                 AssetCode = assignment.Asset.AssetCode,
                 AssetName = assignment.Asset.AssetName,
@@ -132,9 +127,8 @@ namespace AssetManagement.Application.Services.Implementations
             };
         }
 
-        private async Task<Expression<Func<Assignment, bool>>>? GetFilterQuery(DateTime? assignedDate, Guid adminId, string? state, string? search)
+        private async Task<Expression<Func<Assignment, bool>>>? GetFilterQuery(DateTime? assignedDate, string? state, string? search)
         {
-            var f = await _unitOfWork.UserRepository.GetAsync(x => x.Id == adminId);
             // Determine the filtering criteria
             Expression<Func<Assignment, bool>>? filter = null;
             var parameter = Expression.Parameter(typeof(Assignment), "x");
@@ -207,7 +201,10 @@ namespace AssetManagement.Application.Services.Implementations
             // Add date conditions
             if (assignedDate.HasValue)
             {
-                var dateCondition = Expression.Equal(Expression.Property(parameter, nameof(Assignment.AssignedDate)),Expression.Constant(assignedDate.Value));
+                var assignedDateValue = assignedDate.Value.Date;
+                var dateProperty = Expression.Property(parameter, nameof(Assignment.AssignedDate));
+                var datePropertyDate = Expression.Property(dateProperty, "Date");
+                var dateCondition = Expression.Equal(datePropertyDate, Expression.Constant(assignedDateValue));
                 conditions.Add(dateCondition);
             }
             // Combine all conditions with AndAlso

@@ -74,7 +74,7 @@ namespace AssetManagement.WebAPI.Controllers
             {
                 Guid adminId = Guid.Parse("CFF14216-AC4D-4D5D-9222-C951287E51C6");
 
-                var assignments = await _assignmentService.GetAllAssignmentAsync(adminId, pageNumber == 0 ? 1 : pageNumber, state: state, assignedDate , search, sortOrder, sortBy, "UserTo,UserBy,Asset");
+                var assignments = await _assignmentService.GetAllAssignmentAsync(pageNumber == 0 ? 1 : pageNumber, state: state, assignedDate , search, sortOrder, sortBy, "UserTo,UserBy,Asset");
                 if (assignments.data.Any())
                 {
                     return Ok(new GeneralGetsResponse

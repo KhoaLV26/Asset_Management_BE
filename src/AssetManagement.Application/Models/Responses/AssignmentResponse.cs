@@ -15,7 +15,7 @@ namespace AssetManagement.Application.Models.Responses
         public string To { get; set; }
         public Guid AssignedBy { get; set; }
         public string By { get; set; }
-        public DateOnly AssignedDate { get; set; }
+        public DateTime AssignedDate { get; set; }
         public Guid AssetId { get; set; }
         public string AssetName { get; set; }
         public string AssetCode { get; set; }
