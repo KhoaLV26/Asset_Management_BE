@@ -243,5 +243,65 @@ namespace AssetManagement.Test.Unit.AssetControlletTest
             Assert.False(response.Success);
             Assert.Equal(exceptionMessage, response.Message);
         }
+
+        [Fact]
+        public async Task CreateAssetAsync_ValidRequest_ReturnsOkResult()
+        {
+            // Arrange
+            var assetRequest = new AssetRequest();
+            var assetResponse = new AssetResponse();
+
+            _assetServiceMock.Setup(service => service.CreateAssetAsync(assetRequest))
+                .ReturnsAsync(assetResponse);
+
+            // Act
+            var result = await _controller.CreateAssetAsync(assetRequest);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            var response = Assert.IsType<GeneralCreateResponse>(okResult.Value);
+            Assert.True(response.Success);
+            Assert.Equal("Asset created successfully.", response.Message);
+            Assert.Equal(assetResponse, response.Data);
+        }
+
+        [Fact]
+        public async Task CreateAssetAsync_AssetCreationFailed_ReturnsConflictResult()
+        {
+            // Arrange
+            var assetRequest = new AssetRequest();
+
+            _assetServiceMock.Setup(service => service.CreateAssetAsync(assetRequest))
+                .ReturnsAsync((AssetResponse)null);
+
+            // Act
+            var result = await _controller.CreateAssetAsync(assetRequest);
+
+            // Assert
+            var conflictResult = Assert.IsType<ConflictObjectResult>(result);
+            var response = Assert.IsType<GeneralBoolResponse>(conflictResult.Value);
+            Assert.False(response.Success);
+            Assert.Equal("Asset creation failed.", response.Message);
+        }
+
+        [Fact]
+        public async Task CreateAssetAsync_Exception_ReturnsConflictResult()
+        {
+            // Arrange
+            var assetRequest = new AssetRequest();
+            var exceptionMessage = "Test exception";
+
+            _assetServiceMock.Setup(service => service.CreateAssetAsync(assetRequest))
+                .ThrowsAsync(new Exception(exceptionMessage));
+
+            // Act
+            var result = await _controller.CreateAssetAsync(assetRequest);
+
+            // Assert
+            var conflictResult = Assert.IsType<ConflictObjectResult>(result);
+            var response = Assert.IsType<GeneralBoolResponse>(conflictResult.Value);
+            Assert.False(response.Success);
+            Assert.Equal(exceptionMessage, response.Message);
+        }
     }
 }
