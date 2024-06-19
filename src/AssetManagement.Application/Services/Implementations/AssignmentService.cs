@@ -34,6 +34,7 @@ namespace AssetManagement.Application.Services.Implementations
                 Status = EnumAssignmentStatus.WaitingForAcceptance,
                 CreatedAt = DateTime.UtcNow,
                 CreatedBy = request.AssignedBy,
+                Note = request.Note,
 
             };
             await _unitOfWork.AssignmentRepository.AddAsync(assignment);

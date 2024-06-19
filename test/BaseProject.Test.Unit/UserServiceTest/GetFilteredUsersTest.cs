@@ -4,10 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace AssetManagement.Domain.Constants
+namespace AssetManagement.Test.Unit.UserServiceTest
 {
-    public static class PageSizeConstant
+    public class GetFilteredUsersTest
     {
-        public const int PAGE_SIZE = 10;
     }
 }
