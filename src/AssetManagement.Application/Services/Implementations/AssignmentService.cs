@@ -48,9 +48,18 @@ namespace AssetManagement.Application.Services.Implementations
             }
         }
 
-        public async Task<(IEnumerable<AssignmentResponse> data, int totalCount)> GetAllAssignmentAsync(int page = 1, Expression<Func<Assignment, bool>>? filter = null, Func<IQueryable<Assignment>, IOrderedQueryable<Assignment>>? orderBy = null, string includeProperties = "")
+        public async Task<(IEnumerable<AssignmentResponse> data, int totalCount)> GetAllAssignmentAsync(int page = 1, Expression<Func<Assignment, bool>>? filter = null, Func<IQueryable<Assignment>, IOrderedQueryable<Assignment>>? orderBy = null, string includeProperties = "", Guid? newAssignmentId = null)
         {
             var assignments = await _unitOfWork.AssignmentRepository.GetAllAsync(page:page, filter: filter, orderBy: orderBy,includeProperties: "Asset,UserTo,UserBy");
+            Expression<Func<Assignment, bool>> prioritizeCondition = null;
+
+            if (!string.IsNullOrEmpty(newAssignmentId.ToString()))
+            {
+                prioritizeCondition = u => u.Id == newAssignmentId;
+            }
+
+            var assets = await _unitOfWork.AssignmentRepository.GetAllAsync(page, filter, orderBy, includeProperties,
+                prioritizeCondition);
 
             return (assignments.items.Select(a => new AssignmentResponse
             {
@@ -59,7 +68,7 @@ namespace AssetManagement.Application.Services.Implementations
                 To = a.UserTo.Username,
                 AssignedBy = a.AssignedBy,
                 By = a.UserBy.Username,
-                AssignedDate = a.AssignedDate,
+                AssignedDate = DateOnly.FromDateTime(a.AssignedDate),
                 AssetId = a.AssetId,
                 AssetCode = a.Asset.AssetCode,
                 AssetName = a.Asset.AssetName,
@@ -91,7 +100,7 @@ namespace AssetManagement.Application.Services.Implementations
                 To = a.UserTo.Username,
                 AssignedBy = a.AssignedBy,
                 By = a.UserBy.Username,
-                AssignedDate = a.AssignedDate,
+                AssignedDate = DateOnly.FromDateTime(a.AssignedDate),
                 AssetId = a.AssetId,
                 AssetCode = a.Asset.AssetCode,
                 AssetName = a.Asset.AssetName,
@@ -114,7 +123,7 @@ namespace AssetManagement.Application.Services.Implementations
                 To = assignment.UserTo.Username,
                 AssignedBy = assignment.AssignedBy,
                 By = assignment.UserBy.Username,
-                AssignedDate = assignment.AssignedDate,
+                AssignedDate = DateOnly.FromDateTime(assignment.AssignedDate),
                 AssetId = assignment.AssetId,
                 AssetCode = assignment.Asset.AssetCode,
                 AssetName = assignment.Asset.AssetName,

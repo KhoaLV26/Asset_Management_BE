@@ -134,7 +134,7 @@ namespace AssetManagement.Application.Services.Implementations
                 AssetId = a.AssetId,
                 AssignedBy = a.AssignedBy,
                 AssignedTo = a.AssignedTo,
-                AssignedDate = a.AssignedDate,
+                AssignedDate = DateOnly.FromDateTime(a.AssignedDate),
                 Status = a.Status,
                 By = a.UserBy.Username,
                 To = a.UserTo.Username
