@@ -10,6 +10,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
+using AssetManagement.Domain.Constants;
+using Microsoft.AspNetCore.Authorization;
 
 namespace AssetManagement.WebAPI.Controllers
 {
@@ -27,6 +29,7 @@ namespace AssetManagement.WebAPI.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = RoleConstant.ADMIN)]
         public async Task<IActionResult> CreateAssetAsync([FromBody] AssetRequest assetRequest)
         {
             try
@@ -58,13 +61,14 @@ namespace AssetManagement.WebAPI.Controllers
         }
 
         [HttpGet]
+        [Authorize(Roles = RoleConstant.ADMIN)]
         public async Task<IActionResult> GetAllAssetAsync(int pageNumber, string? state, Guid? category, string? search, string? sortOrder, string? sortBy = "assetCode", string? newAssetCode = "")
         {
             try
             {
                 Guid adminId = Guid.Parse("CFF14216-AC4D-4D5D-9222-C951287E51C6");
-                
-                var assets = await _assetService.GetAllAssetAsync(adminId,pageNumber == 0 ? 1 : pageNumber, state:state,category,search,sortOrder,sortBy,"Category",newAssetCode);
+
+                var assets = await _assetService.GetAllAssetAsync(adminId, pageNumber == 0 ? 1 : pageNumber, state: state, category, search, sortOrder, sortBy, "Category", newAssetCode);
                 if (assets.data.Any())
                 {
                     return Ok(new GeneralGetsResponse
@@ -124,6 +128,5 @@ namespace AssetManagement.WebAPI.Controllers
                 });
             }
         }
-
     }
 }

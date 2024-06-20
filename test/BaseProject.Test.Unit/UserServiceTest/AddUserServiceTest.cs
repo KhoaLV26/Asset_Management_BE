@@ -147,5 +147,158 @@ namespace AssetManagement.Test.Unit.UserServiceTest
             int daysToAdd = ((int)dayOfWeek - (int)startDate.DayOfWeek + 7) % 7;
             return startDate.AddDays(daysToAdd);
         }
+        [Fact]
+        public async Task AddUserAsync_CommitFails_ThrowsInvalidOperationException()
+        {
+            // Arrange
+            var userRegisterRequest = new UserRegisterRequest
+            {
+                FirstName = "John",
+                LastName = "Doe",
+                DateOfBirth = DateOnly.FromDateTime(DateTime.Now.AddYears(-20)),
+                DateJoined = DateOnly.FromDateTime(DateTime.Now),
+                Gender = EnumGender.Male,
+                RoleId = Guid.NewGuid(),
+                CreateBy = Guid.NewGuid()
+            };
+
+            _unitOfWorkMock.Setup(u => u.UserRepository.GetAllAsync(It.IsAny<Expression<Func<User, bool>>>()))
+                .ReturnsAsync(new User[0]);
+            _unitOfWorkMock.Setup(u => u.UserRepository.GetAsync(It.IsAny<Expression<Func<User, bool>>>(), It.IsAny<Expression<Func<User, object>>>()))
+                .ReturnsAsync(new User { Id = Guid.NewGuid(), LocationId = Guid.NewGuid() });
+            _unitOfWorkMock.Setup(u => u.RoleRepository.GetAsync(It.IsAny<Expression<Func<Role, bool>>>()))
+                .ReturnsAsync(new Role { Id = Guid.NewGuid() });
+            _unitOfWorkMock.Setup(u => u.UserRepository.AddAsync(It.IsAny<User>()))
+                .Returns(Task.CompletedTask);
+            _unitOfWorkMock.Setup(u => u.CommitAsync())
+                .ReturnsAsync(0);
+
+            // Act & Assert
+            await Assert.ThrowsAsync<InvalidOperationException>(() => _userService.AddUserAsync(userRegisterRequest));
+            _unitOfWorkMock.Verify(u => u.UserRepository.AddAsync(It.IsAny<User>()), Times.Once);
+            _unitOfWorkMock.Verify(u => u.CommitAsync(), Times.Once);
+        }
+
+        [Fact]
+        public async Task AddUserAsync_UsernameExists_AppendsUniqueNumber()
+        {
+            // Arrange
+            var userRegisterRequest = new UserRegisterRequest
+            {
+                FirstName = "John",
+                LastName = "Doe",
+                DateOfBirth = DateOnly.FromDateTime(DateTime.Now.AddYears(-20)),
+                DateJoined = DateOnly.FromDateTime(DateTime.Now),
+                Gender = EnumGender.Male,
+                RoleId = Guid.NewGuid(),
+                CreateBy = Guid.NewGuid()
+            };
+
+            var existingUsers = new[]
+            {
+                new User { Username = "johnd" },
+                new User { Username = "johnd1" }
+            };
+
+            var adminUser = new User { Id = userRegisterRequest.CreateBy, LocationId = Guid.NewGuid() };
+            var role = new Role { Id = userRegisterRequest.RoleId };
+
+            _unitOfWorkMock.Setup(u => u.UserRepository.GetAllAsync())
+                .ReturnsAsync(existingUsers);
+            _unitOfWorkMock.Setup(u => u.UserRepository.GetAsync(It.IsAny<Expression<Func<User, bool>>>(), It.IsAny<Expression<Func<User, object>>>()))
+                .ReturnsAsync(adminUser);
+            _unitOfWorkMock.Setup(u => u.RoleRepository.GetAsync(It.IsAny<Expression<Func<Role, bool>>>()))
+                .ReturnsAsync(role);
+            _unitOfWorkMock.Setup(u => u.UserRepository.AddAsync(It.IsAny<User>()))
+                .Returns(Task.CompletedTask);
+            _unitOfWorkMock.Setup(u => u.CommitAsync())
+                .ReturnsAsync(1);
+
+            _helperMock.Setup(h => h.GetUsername(It.IsAny<string>(), It.IsAny<string>()))
+                .Returns("johnd");
+
+            _mapperMock.Setup(m => m.Map<UserRegisterResponse>(It.IsAny<User>()))
+                .Returns((User user) => new UserRegisterResponse { Username = user.Username });
+
+            // Act
+            var result = await _userService.AddUserAsync(userRegisterRequest);
+
+            // Assert
+            Assert.Equal("johnd2", result.Username);
+            _unitOfWorkMock.Verify(u => u.UserRepository.AddAsync(It.Is<User>(u => u.Username == "johnd2")), Times.Once);
+            _unitOfWorkMock.Verify(u => u.CommitAsync(), Times.Once);
+        }
+
+        [Fact]
+        public async Task GetFilteredUsersAsync_ReturnsFilteredUsers()
+        {
+            // Arrange
+            string adminId = Guid.NewGuid().ToString();
+            string searchTerm = "search";
+            Guid roleId = Guid.NewGuid();
+            string sortBy = "StaffCode";
+            string sortDirection = "asc";
+            int pageNumber = 1;
+            string newStaffCode = "NS001";
+
+            var expectedUsers = new List<User>
+            {
+                new User { Id = Guid.NewGuid(), StaffCode = "NS001", FirstName = "John", LastName = "Doe", Username = "johndoe", Role = new Role { Id = roleId, Name = "Admin" }, Location = new Location { Id = Guid.Parse(adminId) } },
+                new User { Id = Guid.NewGuid(), StaffCode = "NS002", FirstName = "Jane", LastName = "Doe", Username = "janedoe", Role = new Role { Id = roleId, Name = "User" }, Location = new Location { Id = Guid.Parse(adminId) } }
+            };
+
+            var expectedUserResponses = new List<GetUserResponse>
+            {
+                new GetUserResponse { StaffCode = "NS001", FirstName = "John", LastName = "Doe", Username = "johndoe", RoleName = "Admin" },
+                new GetUserResponse { StaffCode = "NS002", FirstName = "Jane", LastName = "Doe", Username = "janedoe", RoleName = "User" }
+            };
+
+            var userRepositoryMock = new Mock<IUserRepository>();
+            userRepositoryMock.Setup(r => r.GetAllAsync(
+                It.IsAny<int>(),
+                It.IsAny<Expression<Func<User, bool>>>(),
+                It.IsAny<Func<IQueryable<User>, IOrderedQueryable<User>>>(),
+                It.IsAny<string>(),
+                It.IsAny<Expression<Func<User, bool>>>()
+            )).ReturnsAsync((expectedUsers, expectedUsers.Count));
+
+            userRepositoryMock.Setup(r => r.GetAsync(It.IsAny<Expression<Func<User, bool>>>()))
+                .ReturnsAsync(expectedUsers.First());
+
+            var unitOfWorkMock = new Mock<IUnitOfWork>();
+            unitOfWorkMock.Setup(u => u.UserRepository).Returns(userRepositoryMock.Object);
+
+            var mapperMock = new Mock<IMapper>();
+            mapperMock.Setup(m => m.Map<IEnumerable<GetUserResponse>>(expectedUsers))
+                .Returns(expectedUserResponses);
+
+            var userService = new UserService(unitOfWorkMock.Object, null, null, mapperMock.Object);
+
+            // Act
+            var result = await userService.GetFilteredUsersAsync(adminId, searchTerm, roleId.ToString(), sortBy, sortDirection, pageNumber, newStaffCode);
+
+            // Assert
+            Assert.Equal(expectedUserResponses, result.Items);
+            Assert.Equal(expectedUsers.Count, result.TotalCount);
+        }
+
+        [Fact]
+        public async Task GetLocation_ReturnsUserLocationId()
+        {
+            // Arrange
+            var userId = Guid.NewGuid();
+            var expectedLocationId = Guid.NewGuid();
+
+            var user = new User { Id = userId, LocationId = expectedLocationId };
+
+            _unitOfWorkMock.Setup(u => u.UserRepository.GetAsync(It.IsAny<Expression<Func<User, bool>>>()))
+                .ReturnsAsync(user);
+
+            // Act
+            var result = await _userService.GetLocation(userId);
+
+            // Assert
+            Assert.Equal(expectedLocationId, result);
+        }
     }
 }

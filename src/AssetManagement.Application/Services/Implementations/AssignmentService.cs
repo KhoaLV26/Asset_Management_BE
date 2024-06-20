@@ -35,7 +35,8 @@ namespace AssetManagement.Application.Services.Implementations
                 AssetId = request.AssetId,
                 Status = EnumAssignmentStatus.WaitingForAcceptance,
                 CreatedAt = DateTime.UtcNow,
-                CreatedBy = request.AssignedBy
+                CreatedBy = request.AssignedBy,
+                Note = request.Note,
             };
             await _unitOfWork.AssignmentRepository.AddAsync(assignment);
             if (await _unitOfWork.CommitAsync() < 1)
@@ -48,30 +49,6 @@ namespace AssetManagement.Application.Services.Implementations
             }
         }
 
-        //public async Task<(IEnumerable<AssignmentResponse> data, int totalCount)> GetAllAssignmentAsync(int page = 1, Expression<Func<Assignment, bool>>? filter = null, Func<IQueryable<Assignment>, IOrderedQueryable<Assignment>>? orderBy = null, string includeProperties = "", Guid? newAssignmentId = null)
-        //{
-            
-            
-
-        //    var assets = await _unitOfWork.AssignmentRepository.GetAllAsync(page, filter, orderBy, includeProperties,
-        //        prioritizeCondition);
-
-        //    return (assignments.items.Select(a => new AssignmentResponse
-        //    {
-        //        Id = a.Id,
-        //        AssignedTo = a.AssignedTo,
-        //        To = a.UserTo.Username,
-        //        AssignedBy = a.AssignedBy,
-        //        By = a.UserBy.Username,
-        //        AssignedDate = DateOnly.FromDateTime(a.AssignedDate),
-        //        AssetId = a.AssetId,
-        //        AssetCode = a.Asset.AssetCode,
-        //        AssetName = a.Asset.AssetName,
-        //        Note = a.Note,
-        //        Status = a.Status
-        //    }), assignments.totalCount);
-        //}
-
         public async Task<(IEnumerable<AssignmentResponse> data, int totalCount)> GetAllAssignmentAsync(int pageNumber, string? state, DateTime? assignedDate, string? search, string? sortOrder,
          string? sortBy = "assetCode", string includeProperties = "", Guid? newAssignmentId = null)
         {
@@ -79,7 +56,7 @@ namespace AssetManagement.Application.Services.Implementations
             Expression<Func<Assignment, bool>> filter = await GetFilterQuery(assignedDate, state, search);
             Expression<Func<Assignment, bool>> prioritizeCondition = null;
 
-       
+
             if (newAssignmentId.HasValue)
             {
                 prioritizeCondition = u => u.Id == newAssignmentId;
@@ -175,30 +152,22 @@ namespace AssetManagement.Application.Services.Implementations
             // Add search conditions
             if (!string.IsNullOrEmpty(search))
             {
-                var searchCondition = Expression.OrElse(
-                    Expression.Call(
-                        Expression.Property(parameter, nameof(Assignment.Asset.AssetCode)),
-                        nameof(string.Contains),
-                        Type.EmptyTypes,
-                        Expression.Constant(search)
-                    ),
-                    Expression.Call(
-                        Expression.Property(parameter, nameof(Assignment.Asset.AssetName)),
-                        nameof(string.Contains),
-                        Type.EmptyTypes,
-                        Expression.Constant(search)
-                    )
+                var assetProperty = Expression.Property(parameter, nameof(Assignment.Asset));
+                var assetCodeProperty = Expression.Property(assetProperty, nameof(Asset.AssetCode));
+                var assetNameProperty = Expression.Property(assetProperty, nameof(Asset.AssetName));
+                var userToProperty = Expression.Property(parameter, nameof(Assignment.UserTo));
+                var usernameProperty = Expression.Property(userToProperty, nameof(User.Username));
 
-                );
-                var userNameCondition = Expression.Call(
-                    Expression.Property(parameter, nameof(Assignment.UserTo.Username)),
-                    nameof(string.Contains),
-                    Type.EmptyTypes,
-                    Expression.Constant(search)
-                );
-                conditions.Add(Expression.OrElse(searchCondition, userNameCondition));
+                var searchCondition = Expression.OrElse(
+                    Expression.Call(assetNameProperty, nameof(string.Contains), Type.EmptyTypes, Expression.Constant(search)),
+                    Expression.OrElse(
+                        Expression.Call(assetCodeProperty, nameof(string.Contains), Type.EmptyTypes, Expression.Constant(search)),
+                        Expression.Call(usernameProperty, nameof(string.Contains), Type.EmptyTypes, Expression.Constant(search))
+                    )       
+            );
+                conditions.Add(searchCondition);
             }
-            // Add date conditions
+
             if (assignedDate.HasValue)
             {
                 var assignedDateValue = assignedDate.Value.Date;
@@ -207,7 +176,7 @@ namespace AssetManagement.Application.Services.Implementations
                 var dateCondition = Expression.Equal(datePropertyDate, Expression.Constant(assignedDateValue));
                 conditions.Add(dateCondition);
             }
-            // Combine all conditions with AndAlso
+
             if (conditions.Any())
             {
                 var combinedCondition = conditions.Aggregate((left, right) => Expression.AndAlso(left, right));
