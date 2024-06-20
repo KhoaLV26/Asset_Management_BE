@@ -12,7 +12,7 @@ namespace AssetManagement.WebAPI.Controllers
 {
     [Route("api/assignments")]
     [ApiController]
-    public class AssignmentController : ControllerBase
+    public class AssignmentController : BaseApiController
     {
         private readonly IAssignmentService _assignmentService;
         public AssignmentController(IAssignmentService assignmentService)
@@ -68,13 +68,13 @@ namespace AssetManagement.WebAPI.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAllAssignmentAsync(int pageNumber, DateTime? assignedDate ,string? state, string? search, string? sortOrder, string? sortBy = "assetCode")
+        public async Task<IActionResult> GetAllAssignmentAsync(int pageNumber, DateTime? assignedDate ,string? state, string? search, string? sortOrder, string? sortBy = "assetCode",Guid? newAssignmentId=null)
         {
             try
             {
-                Guid adminId = Guid.Parse("CFF14216-AC4D-4D5D-9222-C951287E51C6");
+                Guid adminId = UserID;
 
-                var assignments = await _assignmentService.GetAllAssignmentAsync(pageNumber == 0 ? 1 : pageNumber, state: state, assignedDate , search, sortOrder, sortBy, "UserTo,UserBy,Asset");
+                var assignments = await _assignmentService.GetAllAssignmentAsync(pageNumber == 0 ? 1 : pageNumber, state: state, assignedDate , search, sortOrder, sortBy, "UserTo,UserBy,Asset", newAssignmentId);
                 if (assignments.data.Any())
                 {
                     return Ok(new GeneralGetsResponse

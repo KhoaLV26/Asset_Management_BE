@@ -17,15 +17,13 @@ namespace AssetManagement.WebAPI.Controllers
 {
     [Route("api/assets")]
     [ApiController]
-    public class AssetController : ControllerBase
+    public class AssetController : BaseApiController
     {
         private readonly IAssetService _assetService;
-        private readonly IUserService _userService;
 
-        public AssetController(IAssetService assetService, IUserService userService)
+        public AssetController(IAssetService assetService)
         {
             _assetService = assetService;
-            _userService = userService;
         }
 
         [HttpPost]
@@ -66,7 +64,7 @@ namespace AssetManagement.WebAPI.Controllers
         {
             try
             {
-                Guid adminId = Guid.Parse("CFF14216-AC4D-4D5D-9222-C951287E51C6");
+                Guid adminId = UserID;
 
                 var assets = await _assetService.GetAllAssetAsync(adminId, pageNumber == 0 ? 1 : pageNumber, state: state, category, search, sortOrder, sortBy, "Category", newAssetCode);
                 if (assets.data.Any())
