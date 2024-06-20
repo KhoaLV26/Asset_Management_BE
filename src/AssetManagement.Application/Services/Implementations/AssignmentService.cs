@@ -217,6 +217,5 @@ namespace AssetManagement.Application.Services.Implementations
             }
             return orderBy;
         }
-
     }
 }
