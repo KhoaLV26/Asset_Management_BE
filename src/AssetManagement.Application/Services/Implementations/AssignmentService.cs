@@ -104,6 +104,24 @@ namespace AssetManagement.Application.Services.Implementations
             };
         }
 
+        public async Task<bool> UpdateAssignment(Guid id, AssignmentRequest assignmentRequest)
+        {
+            var currentAssignment = await _unitOfWork.AssignmentRepository.GetAsync(x => x.Id==id);
+            if (currentAssignment == null)
+            {
+                return false;
+            }
+            currentAssignment.AssignedTo = assignmentRequest.AssignedTo;
+            currentAssignment.AssignedBy = assignmentRequest.AssignedBy;
+            currentAssignment.AssignedDate = assignmentRequest.AssignedDate;
+            currentAssignment.AssetId = assignmentRequest.AssetId;
+            currentAssignment.Note = assignmentRequest.Note;
+            currentAssignment.Status = assignmentRequest.Status;
+
+            _unitOfWork.AssignmentRepository.Update(currentAssignment);
+            return await _unitOfWork.CommitAsync() > 0;
+        }
+
         private async Task<Expression<Func<Assignment, bool>>>? GetFilterQuery(DateTime? assignedDate, string? state, string? search)
         {
             // Determine the filtering criteria

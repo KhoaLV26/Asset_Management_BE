@@ -1,7 +1,7 @@
 ﻿using AssetManagement.Application.Models.Requests;
+using AssetManagement.Application.Models.Responses;
 using AssetManagement.Application.Services;
 using AssetManagement.Application.Services.Implementations;
-using AssetManagement.Domain.Entities;
 using AssetManagement.Domain.Models;
 using Microsoft.AspNetCore.Mvc;
 using System;
@@ -68,13 +68,13 @@ namespace AssetManagement.WebAPI.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAllAssignmentAsync(int pageNumber, DateTime? assignedDate ,string? state, string? search, string? sortOrder, string? sortBy = "assetCode")
+        public async Task<IActionResult> GetAllAssignmentAsync(int pageNumber, DateTime? assignedDate, string? state, string? search, string? sortOrder, string? sortBy = "assetCode")
         {
             try
             {
                 Guid adminId = Guid.Parse("CFF14216-AC4D-4D5D-9222-C951287E51C6");
 
-                var assignments = await _assignmentService.GetAllAssignmentAsync(pageNumber == 0 ? 1 : pageNumber, state: state, assignedDate , search, sortOrder, sortBy, "UserTo,UserBy,Asset");
+                var assignments = await _assignmentService.GetAllAssignmentAsync(pageNumber == 0 ? 1 : pageNumber, state: state, assignedDate, search, sortOrder, sortBy, "UserTo,UserBy,Asset");
                 if (assignments.data.Any())
                 {
                     return Ok(new GeneralGetsResponse
@@ -134,5 +134,30 @@ namespace AssetManagement.WebAPI.Controllers
                 });
             }
         }
+
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateAssignment(Guid id, [FromForm] AssignmentRequest assignmentRequest)
+        {
+            var response = new GeneralBoolResponse();
+            try
+            {
+                var result = await _assignmentService.UpdateAssignment(id, assignmentRequest);
+                if (result == false)
+                {
+                    response.Success = false;
+                    response.Message = "Update fail";
+                    return Conflict(response);
+                }
+                response.Success = true;
+                response.Message = "Update successfully";
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                response.Success = false;
+                response.Message = ex.Message;
+                return Conflict(response);
+            }
+        }          
     }
 }
