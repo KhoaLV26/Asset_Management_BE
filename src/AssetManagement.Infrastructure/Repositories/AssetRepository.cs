@@ -21,8 +21,12 @@ namespace AssetManagement.Infrastructure.Repositories
 
         public async Task<Asset?> GetAssetDetail(Guid id)
         {
-            return await _context.Assets.Include(x => x.Assignments).ThenInclude(x => x.UserBy).Include(x => x.Assignments)
-                .ThenInclude(x => x.UserTo).FirstOrDefaultAsync(x=>x.Id == id);
+            return await _context.Assets
+                .Include(x => x.Assignments)
+                .ThenInclude(x => x.UserBy)
+                .Include(x => x.Assignments)
+                .ThenInclude(x => x.UserTo)
+                .FirstOrDefaultAsync(x=>x.Id == id);
         }
     }
 }
