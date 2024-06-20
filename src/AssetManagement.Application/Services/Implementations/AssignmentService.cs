@@ -104,7 +104,7 @@ namespace AssetManagement.Application.Services.Implementations
             };
         }
 
-        private async Task<Expression<Func<Assignment, bool>>>? GetFilterQuery(DateTime? assignedDate, string? state, string? search)
+        public async Task<Expression<Func<Assignment, bool>>>? GetFilterQuery(DateTime? assignedDate, string? state, string? search)
         {
             // Determine the filtering criteria
             Expression<Func<Assignment, bool>>? filter = null;
@@ -185,7 +185,7 @@ namespace AssetManagement.Application.Services.Implementations
             return filter;
         }
 
-        private Func<IQueryable<Assignment>, IOrderedQueryable<Assignment>>? GetOrderQuery(string? sortOrder, string? sortBy)
+        public Func<IQueryable<Assignment>, IOrderedQueryable<Assignment>>? GetOrderQuery(string? sortOrder, string? sortBy)
         {
             Func<IQueryable<Assignment>, IOrderedQueryable<Assignment>>? orderBy;
             switch (sortBy?.ToLower())
