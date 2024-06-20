@@ -129,6 +129,7 @@ namespace AssetManagement.Application.Services.Implementations
                 AssetCode = a.AssetCode,
                 AssetName = a.AssetName,
                 CategoryId = a.CategoryId,
+                Specification = a.Specification,
                 CategoryName = a.Category.Name,
                 Status = a.Status
             }), assets.totalCount);
@@ -156,6 +157,7 @@ namespace AssetManagement.Application.Services.Implementations
                 AssetName = a.AssetName,
                 CategoryId = a.CategoryId,
                 CategoryName = a.Category.Name,
+                Specification = a.Specification,
                 Status = a.Status
             }), assets.totalCount);
         }
@@ -284,5 +286,19 @@ namespace AssetManagement.Application.Services.Implementations
             return orderBy;
         }
 
+        public async Task<bool> UpdateAsset(Guid id, AssetUpdateRequest assetRequest)
+        {
+            var currentAsset = await _unitOfWork.AssetRepository.GetAsync(x => x.Id == id);
+            if (currentAsset== null)
+            {
+                return false;
+            }
+            currentAsset.AssetName = assetRequest.AssetName;
+            currentAsset.Specification = assetRequest.Specification;
+            currentAsset.InstallDate = assetRequest.InstallDate;
+            currentAsset.Status = assetRequest.Status;
+            _unitOfWork.AssetRepository.Update(currentAsset);
+            return await _unitOfWork.CommitAsync() > 0;
+        }
     }
 }
