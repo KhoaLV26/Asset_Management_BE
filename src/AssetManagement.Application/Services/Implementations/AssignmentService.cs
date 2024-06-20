@@ -35,7 +35,8 @@ namespace AssetManagement.Application.Services.Implementations
                 AssetId = request.AssetId,
                 Status = EnumAssignmentStatus.WaitingForAcceptance,
                 CreatedAt = DateTime.UtcNow,
-                CreatedBy = request.AssignedBy
+                CreatedBy = request.AssignedBy,
+                Note = request.Note,
             };
             await _unitOfWork.AssignmentRepository.AddAsync(assignment);
             if (await _unitOfWork.CommitAsync() < 1)
@@ -47,30 +48,6 @@ namespace AssetManagement.Application.Services.Implementations
                 return _mapper.Map<AssignmentResponse>(assignment);
             }
         }
-
-        //public async Task<(IEnumerable<AssignmentResponse> data, int totalCount)> GetAllAssignmentAsync(int page = 1, Expression<Func<Assignment, bool>>? filter = null, Func<IQueryable<Assignment>, IOrderedQueryable<Assignment>>? orderBy = null, string includeProperties = "", Guid? newAssignmentId = null)
-        //{
-            
-            
-
-        //    var assets = await _unitOfWork.AssignmentRepository.GetAllAsync(page, filter, orderBy, includeProperties,
-        //        prioritizeCondition);
-
-        //    return (assignments.items.Select(a => new AssignmentResponse
-        //    {
-        //        Id = a.Id,
-        //        AssignedTo = a.AssignedTo,
-        //        To = a.UserTo.Username,
-        //        AssignedBy = a.AssignedBy,
-        //        By = a.UserBy.Username,
-        //        AssignedDate = DateOnly.FromDateTime(a.AssignedDate),
-        //        AssetId = a.AssetId,
-        //        AssetCode = a.Asset.AssetCode,
-        //        AssetName = a.Asset.AssetName,
-        //        Note = a.Note,
-        //        Status = a.Status
-        //    }), assignments.totalCount);
-        //}
 
         public async Task<(IEnumerable<AssignmentResponse> data, int totalCount)> GetAllAssignmentAsync(int pageNumber, string? state, DateTime? assignedDate, string? search, string? sortOrder,
          string? sortBy = "assetCode", string includeProperties = "", Guid? newAssignmentId = null)
