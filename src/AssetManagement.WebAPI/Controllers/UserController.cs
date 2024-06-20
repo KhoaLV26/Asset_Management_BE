@@ -1,6 +1,7 @@
 ﻿using AssetManagement.Application.Models.Requests;
 using AssetManagement.Application.Services;
 using AssetManagement.Domain.Constants;
+using AssetManagement.Domain.Entities;
 using AssetManagement.Domain.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -11,7 +12,7 @@ namespace AssetManagement.WebAPI.Controllers
 {
     [Route("api/users")]
     [ApiController]
-    public class UsersController : ControllerBase
+    public class UsersController : BaseApiController
     {
         private readonly IUserService _userService;
 
@@ -74,18 +75,19 @@ namespace AssetManagement.WebAPI.Controllers
         }
 
         [HttpGet]
+        [Authorize(Roles = RoleConstant.ADMIN)]
         public async Task<IActionResult> GetFilteredUsers(
-            [FromQuery] string adminId = "CFF14216-AC4D-4D5D-9222-C951287E51C6",
             [FromQuery] string? search  = "",
             [FromQuery] string? role = "",
             [FromQuery] string sortBy = "StaffCode",
-            [FromQuery] string sortDirection = "asc",
+            [FromQuery] string sortOrder = "asc",
             [FromQuery] int pageNumber = 1,
             [FromQuery] string? newStaffCode = "")
         {
             try
             {
-                var users = await _userService.GetFilteredUsersAsync(adminId, search, role, sortBy, sortDirection, pageNumber, newStaffCode);
+                var adminId = UserID.ToString();
+                var users = await _userService.GetFilteredUsersAsync(adminId, search, role, sortBy, sortOrder, pageNumber, newStaffCode);
                 return Ok(new GeneralGetsResponse
                 {
                     Success = true,
