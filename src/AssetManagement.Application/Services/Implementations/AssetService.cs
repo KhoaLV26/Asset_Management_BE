@@ -101,6 +101,7 @@ namespace AssetManagement.Application.Services.Implementations
 
             return new AssetDetailResponse
             {
+                Id = asset.Id,
                 AssetName = asset.AssetName,
                 AssetCode = asset.AssetCode,
                 CategoryId = asset.CategoryId,
