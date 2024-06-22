@@ -99,7 +99,8 @@ namespace AssetManagement.Infrastructure.Repositories
                 Id = a.UserTo.Id,
                 Username = a.UserTo.Username
             },
-            Note = a.Note
+            Note = a.Note,
+            Status = a.Status
         })
         .FirstOrDefaultAsync(a => a.Id == id);
         }

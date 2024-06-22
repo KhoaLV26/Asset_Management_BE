@@ -20,6 +20,6 @@ namespace AssetManagement.Application.Models.Responses
         public string AssetName { get; set; }
         public string AssetCode { get; set; }
         public string Note { get; set; }
-        public EnumAssignmentStatus Status { get; set; } = EnumAssignmentStatus.WaitingForAcceptance;
+        public EnumAssignmentStatus Status { get; set; }
     }
 }

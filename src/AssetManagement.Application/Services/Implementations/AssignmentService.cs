@@ -56,7 +56,6 @@ namespace AssetManagement.Application.Services.Implementations
             Expression<Func<Assignment, bool>> filter = await GetFilterQuery(assignedDate, state, search);
             Expression<Func<Assignment, bool>> prioritizeCondition = null;
 
-
             if (newAssignmentId.HasValue)
             {
                 prioritizeCondition = u => u.Id == newAssignmentId;
@@ -65,7 +64,7 @@ namespace AssetManagement.Application.Services.Implementations
             var assignments = await _unitOfWork.AssignmentRepository.GetAllAsync(pageNumber, filter, orderBy, includeProperties,
                 prioritizeCondition);
 
-            return (assignments.items.Select(a => new AssignmentResponse
+            return (assignments.items.Where(a => a.Status.Equals(EnumAssignmentStatus.WaitingForAcceptance) || a.Status.Equals(EnumAssignmentStatus.Accepted)).Select(a => new AssignmentResponse
             {
                 Id = a.Id,
                 AssignedTo = a.AssignedTo,
