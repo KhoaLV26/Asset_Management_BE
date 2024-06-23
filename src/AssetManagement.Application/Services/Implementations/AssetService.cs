@@ -132,7 +132,8 @@ namespace AssetManagement.Application.Services.Implementations
                 AssetName = a.AssetName,
                 CategoryId = a.CategoryId,
                 CategoryName = a.Category.Name,
-                Status = a.Status
+                Status = a.Status,
+                LocationId = a.LocationId,
             }), assets.totalCount);
         }
 
