@@ -55,7 +55,7 @@ namespace AssetManagement.Application.Services.Implementations
             Func<IQueryable<Assignment>, IOrderedQueryable<Assignment>>? orderBy = GetOrderQuery(sortOrder, sortBy);
             Expression<Func<Assignment, bool>> filter = await GetFilterQuery(assignedDate, state, search);
             Expression<Func<Assignment, bool>> prioritizeCondition = null;
-       
+
             if (newAssignmentId.HasValue)
             {
                 prioritizeCondition = u => u.Id == newAssignmentId;
@@ -64,7 +64,7 @@ namespace AssetManagement.Application.Services.Implementations
             var assignments = await _unitOfWork.AssignmentRepository.GetAllAsync(pageNumber, filter, orderBy, includeProperties,
                 prioritizeCondition);
 
-            return (assignments.items.Select(a => new AssignmentResponse
+            return (assignments.items.Where(a => !a.IsDeleted).Select(a => new AssignmentResponse
             {
                 Id = a.Id,
                 AssignedTo = a.AssignedTo,
@@ -86,7 +86,7 @@ namespace AssetManagement.Application.Services.Implementations
                      a => a.UserTo,
                      a => a.UserBy,
                      a => a.Asset);
-            if (assignment == null)
+            if (assignment == null || assignment.IsDeleted == false)
             {
                 return null;
             }
@@ -149,26 +149,23 @@ namespace AssetManagement.Application.Services.Implementations
                     }
                 }
             }
-            //else
-            //{
-            //    // Default states: Accepted, Waiting for acceptance
-            //    var acceptedCondition = Expression.Equal(
-            //        Expression.Property(parameter, nameof(Assignment.Status)),
-            //        Expression.Constant(EnumAssignmentStatus.Accepted)
-            //    );
+            else
+            {
+                // Default states: Accepted, Waiting for acceptance
+                var acceptedCondition = Expression.Equal(
+                    Expression.Property(parameter, nameof(Assignment.Status)),
+                    Expression.Constant(EnumAssignmentStatus.Accepted)
+                );
 
-            //    var waitingForAcceptance = Expression.Equal(
-            //        Expression.Property(parameter, nameof(Assignment.Status)),
-            //        Expression.Constant(EnumAssignmentStatus.WaitingForAcceptance)
-            //    );
+                var waitingForAcceptance = Expression.Equal(
+                    Expression.Property(parameter, nameof(Assignment.Status)),
+                    Expression.Constant(EnumAssignmentStatus.WaitingForAcceptance)
+                );
 
-            //    var defaultStateCondition = Expression.OrElse(
-            //        Expression.OrElse(acceptedCondition, waitingForAcceptance),
-            //        waitingForAcceptance
-            //    );
+                var defaultStateCondition = Expression.OrElse(acceptedCondition, waitingForAcceptance);
 
-            //    conditions.Add(defaultStateCondition);
-            //}
+                conditions.Add(defaultStateCondition);
+            }
             // Add search conditions
             if (!string.IsNullOrEmpty(search))
             {
