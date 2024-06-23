@@ -147,5 +147,86 @@ namespace AssetManagement.Test.Unit.UserServiceTest
             int daysToAdd = ((int)dayOfWeek - (int)startDate.DayOfWeek + 7) % 7;
             return startDate.AddDays(daysToAdd);
         }
+        [Fact]
+        public async Task AddUserAsync_CommitFails_ThrowsInvalidOperationException()
+        {
+            // Arrange
+            var userRegisterRequest = new UserRegisterRequest
+            {
+                FirstName = "John",
+                LastName = "Doe",
+                DateOfBirth = DateOnly.FromDateTime(DateTime.Now.AddYears(-20)),
+                DateJoined = DateOnly.FromDateTime(DateTime.Now),
+                Gender = EnumGender.Male,
+                RoleId = Guid.NewGuid(),
+                CreateBy = Guid.NewGuid()
+            };
+
+            _unitOfWorkMock.Setup(u => u.UserRepository.GetAllAsync(It.IsAny<Expression<Func<User, bool>>>()))
+                .ReturnsAsync(new User[0]);
+            _unitOfWorkMock.Setup(u => u.UserRepository.GetAsync(It.IsAny<Expression<Func<User, bool>>>(), It.IsAny<Expression<Func<User, object>>>()))
+                .ReturnsAsync(new User { Id = Guid.NewGuid(), LocationId = Guid.NewGuid() });
+            _unitOfWorkMock.Setup(u => u.RoleRepository.GetAsync(It.IsAny<Expression<Func<Role, bool>>>()))
+                .ReturnsAsync(new Role { Id = Guid.NewGuid() });
+            _unitOfWorkMock.Setup(u => u.UserRepository.AddAsync(It.IsAny<User>()))
+                .Returns(Task.CompletedTask);
+            _unitOfWorkMock.Setup(u => u.CommitAsync())
+                .ReturnsAsync(0);
+
+            // Act & Assert
+            await Assert.ThrowsAsync<InvalidOperationException>(() => _userService.AddUserAsync(userRegisterRequest));
+            _unitOfWorkMock.Verify(u => u.UserRepository.AddAsync(It.IsAny<User>()), Times.Once);
+            _unitOfWorkMock.Verify(u => u.CommitAsync(), Times.Once);
+        }
+
+        [Fact]
+        public async Task AddUserAsync_UsernameExists_AppendsUniqueNumber()
+        {
+            // Arrange
+            var userRegisterRequest = new UserRegisterRequest
+            {
+                FirstName = "John",
+                LastName = "Doe",
+                DateOfBirth = DateOnly.FromDateTime(DateTime.Now.AddYears(-20)),
+                DateJoined = DateOnly.FromDateTime(DateTime.Now),
+                Gender = EnumGender.Male,
+                RoleId = Guid.NewGuid(),
+                CreateBy = Guid.NewGuid()
+            };
+
+            var existingUsers = new[]
+            {
+                new User { Username = "johnd" },
+                new User { Username = "johnd1" }
+            };
+
+            var adminUser = new User { Id = userRegisterRequest.CreateBy, LocationId = Guid.NewGuid() };
+            var role = new Role { Id = userRegisterRequest.RoleId };
+
+            _unitOfWorkMock.Setup(u => u.UserRepository.GetAllAsync())
+                .ReturnsAsync(existingUsers);
+            _unitOfWorkMock.Setup(u => u.UserRepository.GetAsync(It.IsAny<Expression<Func<User, bool>>>(), It.IsAny<Expression<Func<User, object>>>()))
+                .ReturnsAsync(adminUser);
+            _unitOfWorkMock.Setup(u => u.RoleRepository.GetAsync(It.IsAny<Expression<Func<Role, bool>>>()))
+                .ReturnsAsync(role);
+            _unitOfWorkMock.Setup(u => u.UserRepository.AddAsync(It.IsAny<User>()))
+                .Returns(Task.CompletedTask);
+            _unitOfWorkMock.Setup(u => u.CommitAsync())
+                .ReturnsAsync(1);
+
+            _helperMock.Setup(h => h.GetUsername(It.IsAny<string>(), It.IsAny<string>()))
+                .Returns("johnd");
+
+            _mapperMock.Setup(m => m.Map<UserRegisterResponse>(It.IsAny<User>()))
+                .Returns((User user) => new UserRegisterResponse { Username = user.Username });
+
+            // Act
+            var result = await _userService.AddUserAsync(userRegisterRequest);
+
+            // Assert
+            Assert.Equal("johnd2", result.Username);
+            _unitOfWorkMock.Verify(u => u.UserRepository.AddAsync(It.Is<User>(u => u.Username == "johnd2")), Times.Once);
+            _unitOfWorkMock.Verify(u => u.CommitAsync(), Times.Once);
+        }
     }
 }

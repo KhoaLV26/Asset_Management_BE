@@ -12,7 +12,7 @@ namespace AssetManagement.Domain.Interfaces
 
         Task<IEnumerable<T>> GetAllAsync(Expression<Func<T, bool>> expression, params Expression<Func<T, object>>[] includeProperties);
 
-        Task<(IEnumerable<T> items, int totalCount)> GetAllAsync(int page = 1, Expression<Func<T, bool>>? filter = null, Func<IQueryable<T>, IOrderedQueryable<T>>? orderBy = null, string includeProperties = "");
+        Task<(IEnumerable<T> items, int totalCount)> GetAllAsync(int page = 1, Expression<Func<T, bool>> filter = null, Func<IQueryable<T>, IOrderedQueryable<T>>? orderBy = null, string includeProperties = "", Expression<Func<T, bool>>? prioritizeCondition = null);
 
         Task<T> GetAsync(Expression<Func<T, bool>> expression);
 
@@ -23,6 +23,8 @@ namespace AssetManagement.Domain.Interfaces
         void Update(T entity);
 
         void Delete(T entity);
+
+        void SoftDelete(T entity);
 
         void RemoveRange(IEnumerable<T> entities);
 

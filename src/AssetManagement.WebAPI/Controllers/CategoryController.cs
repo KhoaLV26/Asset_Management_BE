@@ -2,8 +2,10 @@ using AssetManagement.Application.Models.Requests;
 using AssetManagement.Application.Models.Responses;
 using AssetManagement.Application.Services;
 using AssetManagement.Application.Services.Implementations;
+using AssetManagement.Domain.Constants;
 using AssetManagement.Domain.Entities;
 using AssetManagement.Domain.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Identity.Client;
 using System;
@@ -58,6 +60,7 @@ namespace AssetManagement.WebAPI.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = RoleConstant.ADMIN)]
         public async Task<IActionResult> AddCategoryAsync([FromBody] CategoryRequest request)
         {
             try
