@@ -24,6 +24,7 @@ namespace AssetManagement.Application.Services.Implementations
             _unitOfWork = unitOfWork;
             _mapper = mapper;
         }
+
         public async Task<AssignmentResponse> AddAssignmentAsync(AssignmentRequest request)
         {
             var assignment = new Assignment
@@ -55,7 +56,6 @@ namespace AssetManagement.Application.Services.Implementations
             Func<IQueryable<Assignment>, IOrderedQueryable<Assignment>>? orderBy = GetOrderQuery(sortOrder, sortBy);
             Expression<Func<Assignment, bool>> filter = await GetFilterQuery(assignedDate, state, search);
             Expression<Func<Assignment, bool>> prioritizeCondition = null;
-
 
             if (newAssignmentId.HasValue)
             {
@@ -163,7 +163,7 @@ namespace AssetManagement.Application.Services.Implementations
                     Expression.OrElse(
                         Expression.Call(assetCodeProperty, nameof(string.Contains), Type.EmptyTypes, Expression.Constant(search)),
                         Expression.Call(usernameProperty, nameof(string.Contains), Type.EmptyTypes, Expression.Constant(search))
-                    )       
+                    )
             );
                 conditions.Add(searchCondition);
             }
@@ -205,12 +205,15 @@ namespace AssetManagement.Application.Services.Implementations
                 case "assignedby":
                     orderBy = x => sortOrder != "desc" ? x.OrderBy(a => a.UserBy.Username) : x.OrderByDescending(a => a.UserBy.Username);
                     break;
+
                 case "assigneddate":
                     orderBy = x => sortOrder != "desc" ? x.OrderBy(a => a.AssignedDate) : x.OrderByDescending(a => a.AssignedDate);
                     break;
+
                 case "state":
                     orderBy = x => sortOrder != "desc" ? x.OrderBy(a => a.Status) : x.OrderByDescending(a => a.Status);
                     break;
+
                 default:
                     orderBy = null;
                     break;
@@ -218,5 +221,18 @@ namespace AssetManagement.Application.Services.Implementations
             return orderBy;
         }
 
+        public async Task<bool> DeleteAssignment(Guid id)
+        {
+            var assignment = await _unitOfWork.AssignmentRepository
+                .GetAsync(a => !a.IsDeleted
+                            && a.Id == id
+                            && a.Status != EnumAssignmentStatus.Accepted);
+            if (assignment == null)
+            {
+                return false;
+            }
+            _unitOfWork.AssignmentRepository.Delete(assignment);
+            return await _unitOfWork.CommitAsync() > 0;
+        }
     }
 }

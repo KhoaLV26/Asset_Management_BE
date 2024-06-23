@@ -1,8 +1,10 @@
 ﻿using AssetManagement.Application.Models.Requests;
 using AssetManagement.Application.Services;
 using AssetManagement.Application.Services.Implementations;
+using AssetManagement.Domain.Constants;
 using AssetManagement.Domain.Entities;
 using AssetManagement.Domain.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Linq;
@@ -15,10 +17,12 @@ namespace AssetManagement.WebAPI.Controllers
     public class AssignmentController : BaseApiController
     {
         private readonly IAssignmentService _assignmentService;
+
         public AssignmentController(IAssignmentService assignmentService)
         {
             _assignmentService = assignmentService;
         }
+
         [HttpPost]
         public async Task<IActionResult> CreateAssignment([FromBody] AssignmentRequest assignmentRequest)
         {
@@ -68,13 +72,13 @@ namespace AssetManagement.WebAPI.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAllAssignmentAsync(int pageNumber, DateTime? assignedDate ,string? state, string? search, string? sortOrder, string? sortBy = "assetCode",Guid? newAssignmentId=null)
+        public async Task<IActionResult> GetAllAssignmentAsync(int pageNumber, DateTime? assignedDate, string? state, string? search, string? sortOrder, string? sortBy = "assetCode", Guid? newAssignmentId = null)
         {
             try
             {
                 Guid adminId = UserID;
 
-                var assignments = await _assignmentService.GetAllAssignmentAsync(pageNumber == 0 ? 1 : pageNumber, state: state, assignedDate , search, sortOrder, sortBy, "UserTo,UserBy,Asset", newAssignmentId);
+                var assignments = await _assignmentService.GetAllAssignmentAsync(pageNumber == 0 ? 1 : pageNumber, state: state, assignedDate, search, sortOrder, sortBy, "UserTo,UserBy,Asset", newAssignmentId);
                 if (assignments.data.Any())
                 {
                     return Ok(new GeneralGetsResponse
@@ -128,6 +132,40 @@ namespace AssetManagement.WebAPI.Controllers
             catch (Exception ex)
             {
                 return Conflict(new GeneralGetResponse
+                {
+                    Success = false,
+                    Message = ex.Message
+                });
+            }
+        }
+
+        [HttpDelete("{id}")]
+        [Authorize(Roles = RoleConstant.ADMIN)]
+        public async Task<IActionResult> DeleteAssignment(Guid id)
+        {
+            try
+            {
+                var result = await _assignmentService.DeleteAssignment(id);
+                if (result)
+                {
+                    return Ok(new GeneralBoolResponse
+                    {
+                        Success = true,
+                        Message = "Assignment deleted successfully."
+                    });
+                }
+                else
+                {
+                    return Conflict(new GeneralBoolResponse
+                    {
+                        Success = false,
+                        Message = "Assignment not found."
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                return Conflict(new GeneralBoolResponse
                 {
                     Success = false,
                     Message = ex.Message
