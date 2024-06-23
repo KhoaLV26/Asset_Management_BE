@@ -90,7 +90,8 @@ namespace AssetManagement.Application.Services.Implementations
                 AssetName = a.AssetName,
                 CategoryId = a.CategoryId,
                 CategoryName = a.Category.Name,
-                Status = a.Status
+                Status = a.Status,
+                LocationId = a.LocationId,
             }), assets.totalCount);
         }
 
@@ -115,10 +116,12 @@ namespace AssetManagement.Application.Services.Implementations
 
             return new AssetDetailResponse
             {
+                Id = asset.Id,
                 AssetName = asset.AssetName,
                 AssetCode = asset.AssetCode,
                 CategoryId = asset.CategoryId,
                 Status = asset.Status,
+                LocationId = asset.LocationId,
                 AssignmentResponses = assignmentResponses.Select(a => new AssignmentResponse
                 {
                     Id = a.Id,

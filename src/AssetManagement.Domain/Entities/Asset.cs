@@ -24,7 +24,7 @@ namespace AssetManagement.Domain.Entities
         public ICollection<Assignment> Assignments { get; set; } = new List<Assignment>();
         [MaxLength(255)]
         public string Specification { get; set; } = string.Empty;
-        public Guid? LocationId { get; set; }
+        public Guid LocationId { get; set; }
         public Location? Location { get; set; }
     }
 }
