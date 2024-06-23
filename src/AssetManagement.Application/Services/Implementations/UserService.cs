@@ -289,7 +289,7 @@ namespace AssetManagement.Application.Services.Implementations
             var assignments = await _unitOfWork.AssignmentRepository.GetAllAsync(
                 a => a.AssignedTo == id && !a.IsDeleted);
 
-            if (assignments.Any(a => a.Status != EnumAssignmentStatus.Returned))
+            if (assignments.Any(a => a.Status == EnumAssignmentStatus.Accepted || a.Status == EnumAssignmentStatus.WaitingForAcceptance))
             {
                 return false;
             }
