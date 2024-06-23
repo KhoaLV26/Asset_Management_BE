@@ -1,6 +1,9 @@
 ﻿using AssetManagement.Application.Models.Requests;
 using AssetManagement.Application.Services;
+using AssetManagement.Domain.Constants;
+using AssetManagement.Domain.Entities;
 using AssetManagement.Domain.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Threading.Tasks;
@@ -9,15 +12,17 @@ namespace AssetManagement.WebAPI.Controllers
 {
     [Route("api/users")]
     [ApiController]
-    public class UsersController : ControllerBase
+    public class UsersController : BaseApiController
     {
         private readonly IUserService _userService;
+
         public UsersController(IUserService userService)
         {
             _userService = userService;
         }
 
         [HttpPost]
+        [Authorize(Roles = RoleConstant.ADMIN)]
         public async Task<IActionResult> RegisterUser([FromBody] UserRegisterRequest request)
         {
             {
@@ -69,19 +74,20 @@ namespace AssetManagement.WebAPI.Controllers
             }
         }
 
-        [HttpGet("search")]
+        [HttpGet]
+        [Authorize(Roles = RoleConstant.ADMIN)]
         public async Task<IActionResult> GetFilteredUsers(
-            [FromQuery] string location,
-            [FromQuery] string? searchTerm,
-            [FromQuery] string? role,
+            [FromQuery] string? search  = "",
+            [FromQuery] string? role = "",
             [FromQuery] string sortBy = "StaffCode",
-            [FromQuery] string sortDirection = "asc",
+            [FromQuery] string sortOrder = "asc",
             [FromQuery] int pageNumber = 1,
-            [FromQuery] int pageSize = 15)
+            [FromQuery] string? newStaffCode = "")
         {
             try
             {
-                var users = await _userService.GetFilteredUsersAsync(location, searchTerm, role, sortBy, sortDirection, pageNumber, pageSize);
+                var adminId = UserID.ToString();
+                var users = await _userService.GetFilteredUsersAsync(adminId, search, role, sortBy, sortOrder, pageNumber, newStaffCode);
                 return Ok(new GeneralGetsResponse
                 {
                     Success = true,

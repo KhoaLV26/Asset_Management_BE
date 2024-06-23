@@ -17,9 +17,9 @@ namespace AssetManagement.Application.Models.Responses
         public string By { get; set; }
         public DateTime AssignedDate { get; set; }
         public Guid AssetId { get; set; }
-        public Asset Asset { get; set; }
-        public Guid? ReturnRequestId { get; set; }
-        public ReturnRequest? ReturnRequest { get; set; }
+        public string AssetName { get; set; }
+        public string AssetCode { get; set; }
+        public string Note { get; set; }
         public EnumAssignmentStatus Status { get; set; } = EnumAssignmentStatus.WaitingForAcceptance;
     }
 }

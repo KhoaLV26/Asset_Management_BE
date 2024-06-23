@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using System;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 
@@ -8,7 +9,9 @@ namespace AssetManagement.WebAPI.Controllers
     [Route("api/[controller]")]
     public class BaseApiController : ControllerBase
     {
-        protected string UserID => FindClaim(ClaimTypes.NameIdentifier);
+        protected Guid UserID => Guid.Parse(FindClaim(ClaimTypes.Actor));
+        protected Guid LocationID => Guid.Parse(FindClaim(ClaimTypes.Locality));
+        protected string UserName => FindClaim(ClaimTypes.NameIdentifier).ToString();
 
         private string FindClaim(string claimName)
         {

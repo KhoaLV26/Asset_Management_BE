@@ -1,4 +1,7 @@
-﻿using AssetManagement.Domain.Entities;
+﻿using AssetManagement.Application.Models.Responses;
+using AssetManagement.Domain.Entities;
+using System;
+using System.Threading.Tasks;
 
 namespace AssetManagement.Application.Services
 {
@@ -6,12 +9,14 @@ namespace AssetManagement.Application.Services
     {
         //Task<User> RegisterAsync(string email, string password, int roleId);
 
-        //Task<(string token, string refreshToken, string role, string userId)> LoginAsync(string email, string password);
+        Task<(string token, string refreshToken, GetUserResponse userResponse)> LoginAsync(string email, string password);
 
-        //Task<(string token, string refreshToken, string role, string userId)> RefreshTokenAsync(string refreshToken);
+        Task<(string token, string refreshToken, GetUserResponse userResponse)> RefreshTokenAsync(string refreshToken);
 
-        //Task<int> LogoutAsync(string userId);
+        Task<int> LogoutAsync(Guid userId);
 
-        //Task<int> ResetPasswordAsync(string email, string newPassword, string confirmPassword);
+        Task<int> ResetPasswordAsync(string userName, string newPassword);
+
+        Task<int> ChangePasswordAsync(string userName, string oldPassword, string newPassword);
     }
 }

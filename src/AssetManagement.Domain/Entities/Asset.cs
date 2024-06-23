@@ -16,18 +16,15 @@ namespace AssetManagement.Domain.Entities
 
         [MaxLength(100)]
         public string AssetName { get; set; } = string.Empty;
-
         public Guid CategoryId { get; set; }
         public Category Category { get; set; }
         public EnumAssetStatus Status { get; set; } = EnumAssetStatus.Available;
         public DateOnly InstallDate { get; set; }
         public Guid? AssignmentId { get; set; }
         public ICollection<Assignment> Assignments { get; set; } = new List<Assignment>();
-
         [MaxLength(255)]
         public string Specification { get; set; } = string.Empty;
-
-        public Guid? LocationId { get; set; }
+        public Guid LocationId { get; set; }
         public Location? Location { get; set; }
     }
 }

@@ -26,6 +26,7 @@ namespace AssetManagement.Application.Configurations
             CreateMap<Asset, AssetResponse>()
                 .ForMember(dest => dest.CategoryName, opt => opt.MapFrom(src => src.Category.Name))
                 .ForMember(dest => dest.LocationName, opt => opt.MapFrom(src => src.Location.Name));
+            CreateMap<Assignment, AssignmentResponse>();
         }
     }
 }
