@@ -278,5 +278,27 @@ namespace AssetManagement.Application.Services.Implementations
             return user.LocationId;
         }
 
+        public async Task<bool> DisableUser(Guid id)
+        {
+            var user = await _unitOfWork.UserRepository.GetAsync(u => u.Id == id);
+            if (user == null)
+            {
+                throw new ArgumentException("User not found.");
+            }
+
+            var assignments = await _unitOfWork.AssignmentRepository.GetAllAsync(
+                a => a.AssignedTo == id && !a.IsDeleted);
+
+            if (assignments.Any(a => a.Status != EnumAssignmentStatus.Returned))
+            {
+                return false;
+            }
+
+            user.IsDeleted = true;
+            _unitOfWork.UserRepository.Update(user);
+
+            var result = await _unitOfWork.CommitAsync();
+            return result > 0;
+        }
     }
 }

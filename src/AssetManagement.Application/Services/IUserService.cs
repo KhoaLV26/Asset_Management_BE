@@ -14,13 +14,15 @@ namespace AssetManagement.Application.Services
         Task<UserRegisterResponse> AddUserAsync(UserRegisterRequest userRegisterRequest);
         Task<Guid> GetLocation(Guid id);
         Task<(IEnumerable<GetUserResponse> Items, int TotalCount)> GetFilteredUsersAsync(
-    string adminId,
-    string? searchTerm,
-    string? role = null,
-    string sortBy = "StaffCode",
-    string sortDirection = "asc",
-    int pageNumber = 1,
-    string? newStaffCode = "");
+        string adminId,
+        string? searchTerm,
+        string? role = null,
+        string sortBy = "StaffCode",
+        string sortDirection = "asc",
+        int pageNumber = 1,
+        string? newStaffCode = "");
+
+        Task<bool> DisableUser(Guid id);
 
     }
 }
