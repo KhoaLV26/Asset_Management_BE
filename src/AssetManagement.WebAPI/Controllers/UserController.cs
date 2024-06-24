@@ -142,7 +142,7 @@ namespace AssetManagement.WebAPI.Controllers
                     return Conflict(new GeneralBoolResponse
                     {
                         Success = false,
-                        Message = "User not found."
+                        Message = "User have valid assignment"
                     });
                 }
             }
