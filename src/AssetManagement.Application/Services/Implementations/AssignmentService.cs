@@ -27,7 +27,7 @@ namespace AssetManagement.Application.Services.Implementations
             var asset = await _unitOfWork.AssetRepository.GetAsync(a => a.Id == request.AssetId);
             if (asset == null || asset.Status != EnumAssetStatus.Available)
             {
-                throw new InvalidOperationException("The asset is not available for assignment.");
+                throw new ArgumentException("The asset is not available for assignment.");
             }
             var assignment = new Assignment
             {
@@ -44,7 +44,7 @@ namespace AssetManagement.Application.Services.Implementations
             await _unitOfWork.AssignmentRepository.AddAsync(assignment);
             if (await _unitOfWork.CommitAsync() < 1)
             {
-                throw new InvalidOperationException("An error occurred while create assignment.");
+                throw new ArgumentException("An error occurred while create assignment.");
             }
             else
             {
