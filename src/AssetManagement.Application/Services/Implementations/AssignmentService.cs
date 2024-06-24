@@ -52,9 +52,8 @@ namespace AssetManagement.Application.Services.Implementations
             }
             else
             {
-                asset.Status = EnumAssetStatus.NotAvailable;
+                asset.Status = EnumAssetStatus.Assigned;
                 _unitOfWork.AssetRepository.Update(asset);
-
                 // Commit the asset status change
                 if (await _unitOfWork.CommitAsync() < 1)
                 {
