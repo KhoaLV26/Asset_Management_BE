@@ -14,6 +14,9 @@ namespace AssetManagement.Application.Models.Responses
         public string AssetName { get; set; }
         public Guid CategoryId { get; set; }
         public string CategoryName { get; set; }
+        public string Specification { get; set; }
+        public DateOnly InstallDate { get; set; }
+        public Guid LocationId { get; set; }
         public EnumAssetStatus Status { get; set; }
         public IEnumerable<AssignmentResponse>? AssignmentResponses { get; set; }
     }
