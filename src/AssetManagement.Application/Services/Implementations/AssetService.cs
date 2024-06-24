@@ -231,11 +231,6 @@ namespace AssetManagement.Application.Services.Implementations
 
                 conditions.Add(defaultStateCondition);
             }
-
-            // Add IsDelete
-            var isDeletedCondition = Expression.Equal(Expression.Property(parameter, nameof(Asset.IsDeleted)),
-                Expression.Constant(false));
-            conditions.Add(isDeletedCondition);
             
             // Add search conditions
             if (!string.IsNullOrEmpty(search))
