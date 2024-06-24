@@ -23,6 +23,8 @@ namespace AssetManagement.Application.Services
         string? newStaffCode = "");
 
         Task<bool> DisableUser(Guid id);
+        Task<UserDetailResponse> GetUserDetailAsync(Guid id);
+        Task<UpdateUserResponse> UpdateUserAsync(Guid id,EditUserRequest request);
 
     }
 }

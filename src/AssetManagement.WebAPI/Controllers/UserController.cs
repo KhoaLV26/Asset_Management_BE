@@ -3,6 +3,7 @@ using AssetManagement.Application.Services;
 using AssetManagement.Domain.Constants;
 using AssetManagement.Domain.Entities;
 using AssetManagement.Domain.Models;
+using Azure;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System;
@@ -121,6 +122,53 @@ namespace AssetManagement.WebAPI.Controllers
                 });
             }
         }
+
+        [HttpGet("{id}")]
+        public async Task<IActionResult> Get(Guid id)
+        {
+            try
+            {
+                var user = await _userService.GetUserDetailAsync(id);
+                return Ok(new GeneralGetResponse
+                {
+                    Data = user,
+                    Message = "User retrieve successfully.",
+                    Success = true
+                });
+            }
+            catch (Exception e)
+            {
+                return Conflict(new GeneralGetResponse
+                {
+                    Success = false,
+                    Message = e.Message
+                });
+            }
+        }
+
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Put(Guid id, EditUserRequest request)
+        {
+            try
+            {
+                var staffCode = await _userService.UpdateUserAsync(id, request);
+                return Ok(new GeneralGetResponse
+                {
+                    Data = staffCode,
+                    Message = "Update successfully",
+                    Success = true
+                });
+            }
+            catch (Exception e)
+            {
+                return Conflict(new GeneralGetResponse
+                {
+                    Success = false,
+                    Message = e.Message
+                });
+            }
+        }
+
 
         [HttpDelete("{id}")]
         [Authorize(Roles = RoleConstant.ADMIN)]
