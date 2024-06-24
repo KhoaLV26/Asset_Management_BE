@@ -77,7 +77,7 @@ namespace AssetManagement.WebAPI.Controllers
         [HttpGet]
         [Authorize(Roles = RoleConstant.ADMIN)]
         public async Task<IActionResult> GetFilteredUsers(
-            [FromQuery] string? search  = "",
+            [FromQuery] string? search = "",
             [FromQuery] string? role = "",
             [FromQuery] string sortBy = "StaffCode",
             [FromQuery] string sortOrder = "asc",
@@ -124,11 +124,11 @@ namespace AssetManagement.WebAPI.Controllers
 
         [HttpDelete("{id}")]
         [Authorize(Roles = RoleConstant.ADMIN)]
-        public async Task<IActionResult> DisableUser(Guid Id)
+        public async Task<IActionResult> DisableUser(Guid id)
         {
             try
             {
-                var result = await _userService.DisableUser(Id);
+                var result = await _userService.DisableUser(id);
                 if (result)
                 {
                     return Ok(new GeneralBoolResponse

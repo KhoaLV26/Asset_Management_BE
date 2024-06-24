@@ -52,7 +52,7 @@ namespace AssetManagement.Application.Services.Implementations
             }
             else
             {
-                asset.Status = EnumAssetStatus.NotAvailable;
+                asset.Status = EnumAssetStatus.Assigned;
                 _unitOfWork.AssetRepository.Update(asset);
                 return _mapper.Map<AssignmentResponse>(assignment);
             }
