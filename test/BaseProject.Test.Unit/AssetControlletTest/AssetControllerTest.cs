@@ -1,307 +1,348 @@
-﻿//using AssetManagement.Application.Models.Requests;
-//using AssetManagement.Application.Models.Responses;
-//using AssetManagement.Application.Services;
-//using AssetManagement.Domain.Enums;
-//using AssetManagement.Domain.Models;
-//using AssetManagement.WebAPI.Controllers;
-//using Microsoft.AspNetCore.Mvc;
-//using Moq;
-//using System;
-//using System.Collections.Generic;
-//using System.Linq;
-//using System.Text;
-//using System.Threading.Tasks;
-//using Xunit;
+﻿using AssetManagement.Application.Models.Requests;
+using AssetManagement.Application.Models.Responses;
+using AssetManagement.Application.Services;
+using AssetManagement.Domain.Enums;
+using AssetManagement.Domain.Models;
+using AssetManagement.WebAPI.Controllers;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Moq;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Security.Claims;
+using System.Text;
+using System.Threading.Tasks;
+using Xunit;
 
-//namespace AssetManagement.Test.Unit.AssetControlletTest
-//{
-//    public class AssetControllerTest
-//    {
-//        private readonly Mock<IAssetService> _assetServiceMock;
-//        private readonly Mock<IUserService> _userServiceMock;
-//        private readonly AssetController _controller;
-//        public AssetControllerTest()
-//        {
-//            _assetServiceMock = new Mock<IAssetService>();
-//            _userServiceMock = new Mock<IUserService>();
-//            _controller = new AssetController(_assetServiceMock.Object, _userServiceMock.Object);
-//        }
-//        [Fact]
-//        public async Task GetAllAssetAsync_ReturnsOkResult_WhenAssetsExist()
-//        {
-//            // Arrange
-//            var adminId = Guid.Parse("CFF14216-AC4D-4D5D-9222-C951287E51C6");
-//            var assets = new List<AssetResponse>
-//    {
-//        new AssetResponse { Id = Guid.NewGuid(), AssetCode = "A001", AssetName = "Asset 1" },
-//        new AssetResponse { Id = Guid.NewGuid(), AssetCode = "A002", AssetName = "Asset 2" }
-//    };
-//            var assetResult = (assets, assets.Count);
+namespace AssetManagement.Test.Unit.AssetControlletTest
+{
+    public class AssetControllerTest
+    {
+        private readonly Mock<IAssetService> _assetServiceMock;
+        private readonly AssetController _controller;
 
-//            _assetServiceMock.Setup(s => s.GetAllAssetAsync(adminId, It.IsAny<int>(), It.IsAny<string>(), It.IsAny<Guid?>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), "Category", It.IsAny<string>()))
-//                .ReturnsAsync(assetResult);
+        public AssetControllerTest()
+        {
+            _assetServiceMock = new Mock<IAssetService>();
+            _controller = new AssetController(_assetServiceMock.Object);
+        }
 
-//            // Act
-//            var result = await _controller.GetAllAssetAsync(1, null, null, null, null);
+        [Fact]
+        public async Task CreateAssetAsync_ValidRequest_ReturnsOkResult()
+        {
+            // Arrange
+            var assetRequest = new AssetRequest
+            {
+                AssetName = "Test Asset",
+                CategoryId = Guid.NewGuid(),
+                Specification = "Test Specification",
+                InstallDate = DateOnly.FromDateTime(DateTime.Now),
+                Status = EnumAssetStatus.Available,
+                CreatedBy = Guid.NewGuid()
+            };
 
-//            // Assert
-//            var okResult = Assert.IsType<OkObjectResult>(result);
-//            var response = Assert.IsType<GeneralGetsResponse>(okResult.Value);
-//            Assert.True(response.Success);
-//            Assert.Equal("Assets retrieved successfully.", response.Message);
-//            Assert.Equal(assets.Count, response.TotalCount);
-//            Assert.Equal(assets, response.Data);
-//        }
+            var expectedAssetResponse = new AssetResponse
+            {
+                Id = Guid.NewGuid(),
+                AssetCode = "TEST001",
+                AssetName = assetRequest.AssetName,
+                CategoryId = assetRequest.CategoryId,
+                CategoryName = "Test Category",
+                Status = assetRequest.Status
+            };
 
-//        [Fact]
-//        public async Task GetAllAssetAsync_ReturnsConflictResult_WhenNoAssetsExist()
-//        {
-//            // Arrange
-//            var adminId = Guid.Parse("CFF14216-AC4D-4D5D-9222-C951287E51C6");
-//            var assets = new List<AssetResponse>();
-//            var assetResult = (assets, assets.Count);
+            _assetServiceMock.Setup(service => service.CreateAssetAsync(assetRequest))
+                .ReturnsAsync(expectedAssetResponse);
 
-//            _assetServiceMock.Setup(s => s.GetAllAssetAsync(adminId, It.IsAny<int>(), It.IsAny<string>(), It.IsAny<Guid?>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), "Category", It.IsAny<string>()))
-//                .ReturnsAsync(assetResult);
+            // Act
+            var result = await _controller.CreateAssetAsync(assetRequest);
 
-//            // Act
-//            var result = await _controller.GetAllAssetAsync(1, null, null, null, null);
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            var response = Assert.IsType<GeneralCreateResponse>(okResult.Value);
+            Assert.True(response.Success);
+            Assert.Equal("Asset created successfully.", response.Message);
+            Assert.Equal(expectedAssetResponse, response.Data);
+        }
 
-//            // Assert
-//            var conflictResult = Assert.IsType<ConflictObjectResult>(result);
-//            var response = Assert.IsType<GeneralGetsResponse>(conflictResult.Value);
-//            Assert.False(response.Success);
-//            Assert.Equal("No data.", response.Message);
-//        }
+        [Fact]
+        public async Task CreateAssetAsync_AssetCreationFailed_ReturnsConflictResult()
+        {
+            // Arrange
+            var assetRequest = new AssetRequest
+            {
+                AssetName = "Test Asset",
+                CategoryId = Guid.NewGuid(),
+                Specification = "Test Specification",
+                InstallDate = DateOnly.FromDateTime(DateTime.Now),
+                Status = EnumAssetStatus.Available,
+                CreatedBy = Guid.NewGuid()
+            };
 
-//        [Fact]
-//        public async Task GetAssetId_ReturnsOkResult_WhenAssetExists()
-//        {
-//            // Arrange
-//            var assetId = Guid.NewGuid();
-//            var asset = new AssetDetailResponse { Id = assetId, AssetCode = "A001", AssetName = "Asset 1" };
+            _assetServiceMock.Setup(service => service.CreateAssetAsync(assetRequest))
+                .ReturnsAsync((AssetResponse)null);
 
-//            _assetServiceMock.Setup(s => s.GetAssetByIdAsync(assetId))
-//                .ReturnsAsync(asset);
+            // Act
+            var result = await _controller.CreateAssetAsync(assetRequest);
 
-//            // Act
-//            var result = await _controller.GetAssetId(assetId);
+            // Assert
+            var conflictResult = Assert.IsType<ConflictObjectResult>(result);
+            var response = Assert.IsType<GeneralBoolResponse>(conflictResult.Value);
+            Assert.False(response.Success);
+            Assert.Equal("Asset creation failed.", response.Message);
+        }
 
-//            // Assert
-//            var okResult = Assert.IsType<OkObjectResult>(result);
-//            var response = Assert.IsType<GeneralGetResponse>(okResult.Value);
-//            Assert.True(response.Success);
-//            Assert.Equal("Asset retrived successfully.", response.Message);
-//            Assert.Equal(asset, response.Data);
-//        }
+        [Fact]
+        public async Task CreateAssetAsync_Exception_ReturnsConflictResult()
+        {
+            // Arrange
+            var assetRequest = new AssetRequest
+            {
+                AssetName = "Test Asset",
+                CategoryId = Guid.NewGuid(),
+                Specification = "Test Specification",
+                InstallDate = DateOnly.FromDateTime(DateTime.Now),
+                Status = EnumAssetStatus.Available,
+                CreatedBy = Guid.NewGuid()
+            };
 
-//        [Fact]
-//        public async Task GetAssetId_ReturnsConflictResult_WhenAssetDoesNotExist()
-//        {
-//            // Arrange
-//            var assetId = Guid.NewGuid();
+            var exceptionMessage = "Test exception";
 
-//            _assetServiceMock.Setup(s => s.GetAssetByIdAsync(assetId))
-//                .ReturnsAsync((AssetDetailResponse)null);
+            _assetServiceMock.Setup(service => service.CreateAssetAsync(assetRequest))
+                .ThrowsAsync(new Exception(exceptionMessage));
 
-//            // Act
-//            var result = await _controller.GetAssetId(assetId);
+            // Act
+            var result = await _controller.CreateAssetAsync(assetRequest);
 
-//            // Assert
-//            var conflictResult = Assert.IsType<ConflictObjectResult>(result);
-//            var response = Assert.IsType<GeneralBoolResponse>(conflictResult.Value);
-//            Assert.False(response.Success);
-//            Assert.Equal("Asset not found.", response.Message);
-//        }
+            // Assert
+            var conflictResult = Assert.IsType<ConflictObjectResult>(result);
+            var response = Assert.IsType<GeneralBoolResponse>(conflictResult.Value);
+            Assert.False(response.Success);
+            Assert.Equal(exceptionMessage, response.Message);
+        }
 
-//        [Fact]
-//        public async Task GetAssetId_ReturnsConflictResult_WhenExceptionIsThrown()
-//        {
-//            // Arrange
-//            var assetId = Guid.NewGuid();
-//            var exceptionMessage = "An error occurred.";
+        //    [Fact]
+        //    public async Task GetAllAssetAsync_ReturnsOkResult_WhenAssetsExist()
+        //    {
+        //        // Arrange
+        //        var adminId = Guid.NewGuid();
+        //        var assets = new List<AssetResponse>
+        //{
+        //    new AssetResponse { Id = Guid.NewGuid(), AssetCode = "A001", AssetName = "Asset 1" },
+        //    new AssetResponse { Id = Guid.NewGuid(), AssetCode = "A002", AssetName = "Asset 2" }
+        //};
+        //        var assetResult = (assets, assets.Count);
 
-//            _assetServiceMock.Setup(s => s.GetAssetByIdAsync(assetId))
-//                .ThrowsAsync(new Exception(exceptionMessage));
+        //        // Set up the controller context with a mocked user
+        //        var claims = new List<Claim>
+        //{
+        //    new Claim("userId", adminId.ToString())
+        //};
+        //        var identity = new ClaimsIdentity(claims);
+        //        var principal = new ClaimsPrincipal(identity);
+        //        var httpContext = new DefaultHttpContext { User = principal };
+        //        var controllerContext = new ControllerContext { HttpContext = httpContext };
+        //        _controller.ControllerContext = controllerContext;
 
-//            // Act
-//            var result = await _controller.GetAssetId(assetId);
+        //        _assetServiceMock.Setup(s => s.GetAllAssetAsync(adminId, It.IsAny<int>(), It.IsAny<string>(), It.IsAny<Guid?>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), "Category", It.IsAny<string>()))
+        //            .ReturnsAsync(assetResult);
 
-//            // Assert
-//            var conflictResult = Assert.IsType<ConflictObjectResult>(result);
-//            var response = Assert.IsType<GeneralGetResponse>(conflictResult.Value);
-//            Assert.False(response.Success);
-//            Assert.Equal(exceptionMessage, response.Message);
-//        }
+        //        // Act
+        //        var result = await _controller.GetAllAssetAsync(1, null, null, null, null, null);
 
-//        [Fact]
-//        public async Task GetAllAssetAsync_ReturnsConflictResult_WhenExceptionIsThrown()
-//        {
-//            // Arrange
-//            var adminId = Guid.Parse("CFF14216-AC4D-4D5D-9222-C951287E51C6");
-//            var exceptionMessage = "An error occurred.";
+        //        // Assert
+        //        var okResult = Assert.IsType<OkObjectResult>(result);
+        //        var response = Assert.IsType<GeneralGetsResponse>(okResult.Value);
+        //        Assert.True(response.Success);
+        //        Assert.Equal("Assets retrieved successfully.", response.Message);
+        //        Assert.Equal(assets.Count, response.TotalCount);
+        //        Assert.Equal(assets, response.Data);
+        //    }
 
-//            _assetServiceMock.Setup(s => s.GetAllAssetAsync(adminId, It.IsAny<int>(), It.IsAny<string>(), It.IsAny<Guid?>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), "Category", It.IsAny<string>()))
-//                .ThrowsAsync(new Exception(exceptionMessage));
+        [Fact]
+        public async Task GetAllAssetAsync_ReturnsConflictResult_WhenNoAssetsExist()
+        {
+            // Arrange
+            var adminId = Guid.NewGuid();
+            var assets = new List<AssetResponse>();
+            var assetResult = (assets, assets.Count);
 
-//            // Act
-//            var result = await _controller.GetAllAssetAsync(1, null, null, null, null);
+            _assetServiceMock.Setup(s => s.GetAllAssetAsync(adminId, It.IsAny<int>(), It.IsAny<string>(), It.IsAny<Guid?>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), "Category", It.IsAny<string>()))
+                .ReturnsAsync(assetResult);
 
-//            // Assert
-//            var conflictResult = Assert.IsType<ConflictObjectResult>(result);
-//            var response = Assert.IsType<GeneralGetsResponse>(conflictResult.Value);
-//            Assert.False(response.Success);
-//            Assert.Equal(exceptionMessage, response.Message);
-//        }
+            // Act
+            var result = await _controller.GetAllAssetAsync(1, null, null, null, null);
 
-//        [Fact]
-//        public async Task CreateAssetAsync_ReturnsOkResult_WhenAssetCreationSucceeds()
-//        {
-//            // Arrange
-//            var assetRequest = new AssetRequest
-//            {
-//                AssetName = "Asset 1",
-//                CategoryId = Guid.NewGuid(),
-//                Specification = "Test specification",
-//                InstallDate = DateOnly.FromDateTime(DateTime.Now),
-//                Status = EnumAssetStatus.Available
-//            };
+            // Assert
+            var conflictResult = Assert.IsType<ConflictObjectResult>(result);
+            var response = Assert.IsType<GeneralGetsResponse>(conflictResult.Value);
+            Assert.False(response.Success);
+        }
 
-//            var createdAsset = new AssetResponse
-//            {
-//                Id = Guid.NewGuid(),
-//                AssetName = assetRequest.AssetName,
-//                CategoryId = assetRequest.CategoryId,
-//                Specification = assetRequest.Specification,
-//                InstallDate = assetRequest.InstallDate,
-//                Status = assetRequest.Status
-//            };
+        [Fact]
+        public async Task GetAssetId_ReturnsOkResult_WhenAssetExists()
+        {
+            // Arrange
+            var assetId = Guid.NewGuid();
+            var asset = new AssetDetailResponse
+            {
+                AssetCode = "A001",
+                AssetName = "Asset 1",
+                CategoryId = Guid.NewGuid(),
+                Status = EnumAssetStatus.Available,
+                AssignmentResponses = new List<AssignmentResponse>()
+            };
 
-//            _assetServiceMock.Setup(s => s.CreateAssetAsync(assetRequest))
-//                .ReturnsAsync(createdAsset);
+            _assetServiceMock.Setup(s => s.GetAssetByIdAsync(assetId))
+                .ReturnsAsync(asset);
 
-//            // Act
-//            var result = await _controller.CreateAssetAsync(assetRequest);
+            // Act
+            var result = await _controller.GetAssetId(assetId);
 
-//            // Assert
-//            var okResult = Assert.IsType<OkObjectResult>(result);
-//            var response = Assert.IsType<GeneralCreateResponse>(okResult.Value);
-//            Assert.True(response.Success);
-//            Assert.Equal("Asset created successfully.", response.Message);
-//            Assert.Equal(createdAsset, response.Data);
-//        }
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            var response = Assert.IsType<GeneralGetResponse>(okResult.Value);
+            Assert.True(response.Success);
+            Assert.Equal("Asset retrived successfully.", response.Message);
+            Assert.Equal(asset, response.Data);
+        }
 
-//        [Fact]
-//        public async Task CreateAssetAsync_ReturnsConflictResult_WhenAssetCreationFails()
-//        {
-//            // Arrange
-//            var assetRequest = new AssetRequest
-//            {
-//                AssetName = "Asset 1",
-//                CategoryId = Guid.NewGuid(),
-//                Specification = "Test specification",
-//                InstallDate = DateOnly.FromDateTime(DateTime.Now),
-//                Status = EnumAssetStatus.Available
-//            };
+        [Fact]
+        public async Task GetAssetId_ReturnsConflictResult_WhenAssetDoesNotExist()
+        {
+            // Arrange
+            var assetId = Guid.NewGuid();
 
-//            _assetServiceMock.Setup(s => s.CreateAssetAsync(assetRequest))
-//                .ReturnsAsync((AssetResponse)null);
+            _assetServiceMock.Setup(s => s.GetAssetByIdAsync(assetId))
+                .ReturnsAsync((AssetDetailResponse)null);
 
-//            // Act
-//            var result = await _controller.CreateAssetAsync(assetRequest);
+            // Act
+            var result = await _controller.GetAssetId(assetId);
 
-//            // Assert
-//            var conflictResult = Assert.IsType<ConflictObjectResult>(result);
-//            var response = Assert.IsType<GeneralBoolResponse>(conflictResult.Value);
-//            Assert.False(response.Success);
-//            Assert.Equal("Asset creation failed.", response.Message);
-//        }
+            // Assert
+            var conflictResult = Assert.IsType<ConflictObjectResult>(result);
+            var response = Assert.IsType<GeneralBoolResponse>(conflictResult.Value);
+            Assert.False(response.Success);
+            Assert.Equal("Asset not found.", response.Message);
+        }
 
-//        [Fact]
-//        public async Task CreateAssetAsync_ReturnsConflictResult_WhenExceptionIsThrown()
-//        {
-//            // Arrange
-//            var assetRequest = new AssetRequest
-//            {
-//                AssetName = "Asset 1",
-//                CategoryId = Guid.NewGuid(),
-//                Specification = "Test specification",
-//                InstallDate = DateOnly.FromDateTime(DateTime.Now),
-//                Status = EnumAssetStatus.Available
-//            };
+        [Fact]
+        public async Task GetAssetId_ReturnsConflictResult_WhenExceptionIsThrown()
+        {
+            // Arrange
+            var assetId = Guid.NewGuid();
+            var exceptionMessage = "An error occurred.";
 
-//            var exceptionMessage = "An error occurred.";
-//            _assetServiceMock.Setup(s => s.CreateAssetAsync(assetRequest))
-//                .ThrowsAsync(new Exception(exceptionMessage));
+            _assetServiceMock.Setup(s => s.GetAssetByIdAsync(assetId))
+                .ThrowsAsync(new Exception(exceptionMessage));
 
-//            // Act
-//            var result = await _controller.CreateAssetAsync(assetRequest);
+            // Act
+            var result = await _controller.GetAssetId(assetId);
 
-//            // Assert
-//            var conflictResult = Assert.IsType<ConflictObjectResult>(result);
-//            var response = Assert.IsType<GeneralBoolResponse>(conflictResult.Value);
-//            Assert.False(response.Success);
-//            Assert.Equal(exceptionMessage, response.Message);
-//        }
+            // Assert
+            var conflictResult = Assert.IsType<ConflictObjectResult>(result);
+            var response = Assert.IsType<GeneralGetResponse>(conflictResult.Value);
+            Assert.False(response.Success);
+            Assert.Equal(exceptionMessage, response.Message);
+        }
 
-//        [Fact]
-//        public async Task CreateAssetAsync_ValidRequest_ReturnsOkResult()
-//        {
-//            // Arrange
-//            var assetRequest = new AssetRequest();
-//            var assetResponse = new AssetResponse();
+        [Fact]
+        public async Task GetAllAssetAsync_ReturnsConflictResult_WhenExceptionIsThrown()
+        {
+            // Arrange
+            var adminId = Guid.NewGuid();
+            var exceptionMessage = "An error occurred.";
 
-//            _assetServiceMock.Setup(service => service.CreateAssetAsync(assetRequest))
-//                .ReturnsAsync(assetResponse);
+            // Set up the controller context with a mocked user
+            var claims = new List<Claim>
+            {
+                new Claim("userId", adminId.ToString())
+            };
+            var identity = new ClaimsIdentity(claims);
+            var principal = new ClaimsPrincipal(identity);
+            var httpContext = new DefaultHttpContext { User = principal };
+            var controllerContext = new ControllerContext { HttpContext = httpContext };
+            _controller.ControllerContext = controllerContext;
 
-//            // Act
-//            var result = await _controller.CreateAssetAsync(assetRequest);
+            _assetServiceMock.Setup(s => s.GetAllAssetAsync(adminId, It.IsAny<int>(), It.IsAny<string>(), It.IsAny<Guid?>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), "Category", It.IsAny<string>()))
+                .ThrowsAsync(new Exception(exceptionMessage));
 
-//            // Assert
-//            var okResult = Assert.IsType<OkObjectResult>(result);
-//            var response = Assert.IsType<GeneralCreateResponse>(okResult.Value);
-//            Assert.True(response.Success);
-//            Assert.Equal("Asset created successfully.", response.Message);
-//            Assert.Equal(assetResponse, response.Data);
-//        }
+            // Act
+            var result = await _controller.GetAllAssetAsync(1, null, null, null, null);
 
-//        [Fact]
-//        public async Task CreateAssetAsync_AssetCreationFailed_ReturnsConflictResult()
-//        {
-//            // Arrange
-//            var assetRequest = new AssetRequest();
+            // Assert
+            var conflictResult = Assert.IsType<ConflictObjectResult>(result);
+            var response = Assert.IsType<GeneralGetsResponse>(conflictResult.Value);
+            Assert.False(response.Success);
+        }
 
-//            _assetServiceMock.Setup(service => service.CreateAssetAsync(assetRequest))
-//                .ReturnsAsync((AssetResponse)null);
+        [Fact]
+        public async Task DeleteAsset_ValidId_ReturnsOkResult()
+        {
+            // Arrange
+            var assetId = Guid.NewGuid();
+            var expectedAssetResponse = new AssetResponse
+            {
+                Id = assetId,
+                AssetCode = "TEST001",
+                AssetName = "Test Asset",
+                CategoryId = Guid.NewGuid(),
+                CategoryName = "Test Category",
+                Status = EnumAssetStatus.Available
+            };
 
-//            // Act
-//            var result = await _controller.CreateAssetAsync(assetRequest);
+            _assetServiceMock.Setup(service => service.DeleteAssetAsync(assetId))
+                .ReturnsAsync(expectedAssetResponse);
 
-//            // Assert
-//            var conflictResult = Assert.IsType<ConflictObjectResult>(result);
-//            var response = Assert.IsType<GeneralBoolResponse>(conflictResult.Value);
-//            Assert.False(response.Success);
-//            Assert.Equal("Asset creation failed.", response.Message);
-//        }
+            // Act
+            var result = await _controller.DeleteAsset(assetId);
 
-//        [Fact]
-//        public async Task CreateAssetAsync_Exception_ReturnsConflictResult()
-//        {
-//            // Arrange
-//            var assetRequest = new AssetRequest();
-//            var exceptionMessage = "Test exception";
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            var response = Assert.IsType<GeneralGetResponse>(okResult.Value);
+            Assert.True(response.Success);
+            Assert.Equal("Asset delete successfully.", response.Message);
+            Assert.Equal(expectedAssetResponse, response.Data);
+        }
 
-//            _assetServiceMock.Setup(service => service.CreateAssetAsync(assetRequest))
-//                .ThrowsAsync(new Exception(exceptionMessage));
+        [Fact]
+        public async Task DeleteAsset_AssetDeleteFailed_ReturnsConflictResult()
+        {
+            // Arrange
+            var assetId = Guid.NewGuid();
 
-//            // Act
-//            var result = await _controller.CreateAssetAsync(assetRequest);
+            _assetServiceMock.Setup(service => service.DeleteAssetAsync(assetId))
+                .ReturnsAsync((AssetResponse)null);
 
-//            // Assert
-//            var conflictResult = Assert.IsType<ConflictObjectResult>(result);
-//            var response = Assert.IsType<GeneralBoolResponse>(conflictResult.Value);
-//            Assert.False(response.Success);
-//            Assert.Equal(exceptionMessage, response.Message);
-//        }
-//    }
-//}
+            // Act
+            var result = await _controller.DeleteAsset(assetId);
+
+            // Assert
+            var conflictResult = Assert.IsType<ConflictObjectResult>(result);
+            var response = Assert.IsType<GeneralBoolResponse>(conflictResult.Value);
+            Assert.False(response.Success);
+            Assert.Equal("Asset delete failed.", response.Message);
+        }
+
+        [Fact]
+        public async Task DeleteAsset_Exception_ReturnsConflictResult()
+        {
+            // Arrange
+            var assetId = Guid.NewGuid();
+            var exceptionMessage = "An error occurred.";
+
+            _assetServiceMock.Setup(service => service.DeleteAssetAsync(assetId))
+                .ThrowsAsync(new Exception(exceptionMessage));
+
+            // Act
+            var result = await _controller.DeleteAsset(assetId);
+
+            // Assert
+            var conflictResult = Assert.IsType<ConflictObjectResult>(result);
+            var response = Assert.IsType<GeneralBoolResponse>(conflictResult.Value);
+            Assert.False(response.Success);
+            Assert.Equal(exceptionMessage, response.Message);
+        }
+    }
+}

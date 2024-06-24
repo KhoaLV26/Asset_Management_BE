@@ -26,7 +26,7 @@ namespace AssetManagement.Infrastructure.Repositories
                 .ThenInclude(x => x.UserBy)
                 .Include(x => x.Assignments)
                 .ThenInclude(x => x.UserTo)
-                .FirstOrDefaultAsync(x=>x.Id == id);
+                .FirstOrDefaultAsync(x=>x.Id == id && !x.IsDeleted);
         }
     }
 }
