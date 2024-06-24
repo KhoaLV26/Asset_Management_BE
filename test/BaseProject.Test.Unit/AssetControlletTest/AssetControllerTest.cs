@@ -276,6 +276,73 @@ namespace AssetManagement.Test.Unit.AssetControlletTest
             var response = Assert.IsType<GeneralGetsResponse>(conflictResult.Value);
             Assert.False(response.Success);
         }
+
+        [Fact]
+        public async Task DeleteAsset_ValidId_ReturnsOkResult()
+        {
+            // Arrange
+            var assetId = Guid.NewGuid();
+            var expectedAssetResponse = new AssetResponse
+            {
+                Id = assetId,
+                AssetCode = "TEST001",
+                AssetName = "Test Asset",
+                CategoryId = Guid.NewGuid(),
+                CategoryName = "Test Category",
+                Status = EnumAssetStatus.Available
+            };
+
+            _assetServiceMock.Setup(service => service.DeleteAssetAsync(assetId))
+                .ReturnsAsync(expectedAssetResponse);
+
+            // Act
+            var result = await _controller.DeleteAsset(assetId);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            var response = Assert.IsType<GeneralGetResponse>(okResult.Value);
+            Assert.True(response.Success);
+            Assert.Equal("Asset delete successfully.", response.Message);
+            Assert.Equal(expectedAssetResponse, response.Data);
+        }
+
+        [Fact]
+        public async Task DeleteAsset_AssetDeleteFailed_ReturnsConflictResult()
+        {
+            // Arrange
+            var assetId = Guid.NewGuid();
+
+            _assetServiceMock.Setup(service => service.DeleteAssetAsync(assetId))
+                .ReturnsAsync((AssetResponse)null);
+
+            // Act
+            var result = await _controller.DeleteAsset(assetId);
+
+            // Assert
+            var conflictResult = Assert.IsType<ConflictObjectResult>(result);
+            var response = Assert.IsType<GeneralBoolResponse>(conflictResult.Value);
+            Assert.False(response.Success);
+            Assert.Equal("Asset delete failed.", response.Message);
+        }
+
+        [Fact]
+        public async Task DeleteAsset_Exception_ReturnsConflictResult()
+        {
+            // Arrange
+            var assetId = Guid.NewGuid();
+            var exceptionMessage = "An error occurred.";
+
+            _assetServiceMock.Setup(service => service.DeleteAssetAsync(assetId))
+                .ThrowsAsync(new Exception(exceptionMessage));
+
+            // Act
+            var result = await _controller.DeleteAsset(assetId);
+
+            // Assert
+            var conflictResult = Assert.IsType<ConflictObjectResult>(result);
+            var response = Assert.IsType<GeneralBoolResponse>(conflictResult.Value);
+            Assert.False(response.Success);
+            Assert.Equal(exceptionMessage, response.Message);
+        }
     }
 }
-

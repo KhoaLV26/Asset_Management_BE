@@ -117,6 +117,37 @@ namespace AssetManagement.WebAPI.Controllers
             }
         }
 
+        [HttpDelete("{id}")]
+        [Authorize(Roles = RoleConstant.ADMIN)]
+        public async Task<IActionResult> DeleteAsset(Guid id)
+        {
+            try
+            {
+                var result = await _assetService.DeleteAssetAsync(id);
+                if (result == null)
+                {
+                    return Conflict(new GeneralBoolResponse
+                    {
+                        Success = false,
+                        Message = "Asset delete failed."
+                    });
+                }
+
+                return Ok(new GeneralGetResponse
+                {
+                    Success = true,
+                    Message = "Asset delete successfully.",
+                    Data = result
+                });
+            }
+            catch (Exception ex)
+            {
+                return Conflict(new GeneralBoolResponse
+                {
+                    Success = false,
+                    Message = ex.Message
+                });
+                
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateAsset(Guid id, AssetUpdateRequest assetRequest)
         {

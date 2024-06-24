@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace AssetManagement.Application.Services.Implementations
 {
@@ -180,6 +181,12 @@ namespace AssetManagement.Application.Services.Implementations
             var locationCondition = Expression.Equal(Expression.Property(parameter, nameof(Asset.LocationId)),
                 Expression.Constant(nullableLocationId, typeof(Guid?)));
             conditions.Add(locationCondition);
+
+            // Add IsDelete
+            var isDeletedCondition = Expression.Equal(Expression.Property(parameter, nameof(Asset.IsDeleted)),
+                Expression.Constant(false));
+            conditions.Add(isDeletedCondition);
+
             // Parse state parameter to enum
             if (!string.IsNullOrEmpty(state))
             {
@@ -268,6 +275,33 @@ namespace AssetManagement.Application.Services.Implementations
             }
 
             return filter;
+        }
+
+        public async Task<AssetResponse> DeleteAssetAsync(Guid id)
+        {
+            var asset = await _unitOfWork.AssetRepository.GetAsync(x => x.Id == id);
+            if (asset == null)
+            {
+                throw new Exception("Asset not found");
+            }
+
+            var detail = await GetAssetByIdAsync(id);
+            if (detail.AssignmentResponses != null && detail.AssignmentResponses.Count() > 0)
+            {
+                throw new Exception("This asset have historical assignment");
+            }
+            else
+            {
+                _unitOfWork.AssetRepository.SoftDelete(asset);
+                if (await _unitOfWork.CommitAsync() > 0)
+                {
+                    return _mapper.Map<AssetResponse>(asset);
+                }
+                else
+                {
+                    throw new Exception("Failed to delete asset");
+                }
+            }
         }
 
         private Func<IQueryable<Asset>, IOrderedQueryable<Asset>>? GetOrderQuery(string? sortOrder, string? sortBy)
