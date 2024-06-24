@@ -102,10 +102,15 @@ namespace AssetManagement.Application.Services.Implementations
 
             return new AssetDetailResponse
             {
+                Id = asset.Id,
                 AssetName = asset.AssetName,
                 AssetCode = asset.AssetCode,
                 CategoryId = asset.CategoryId,
+                CategoryName = asset.Category.Name,
+                Specification = asset.Specification,
+                InstallDate = asset.InstallDate,
                 Status = asset.Status,
+                LocationId = asset.LocationId.HasValue ? asset.LocationId.Value : Guid.Empty,
                 AssignmentResponses = assignmentResponses.Select(a => new AssignmentResponse
                 {
                     Id = a.Id,
@@ -130,8 +135,10 @@ namespace AssetManagement.Application.Services.Implementations
                 AssetCode = a.AssetCode,
                 AssetName = a.AssetName,
                 CategoryId = a.CategoryId,
+                Specification = a.Specification,
                 CategoryName = a.Category.Name,
-                Status = a.Status
+                Status = a.Status,
+                LocationId = a.LocationId.HasValue ? a.LocationId.Value : Guid.Empty,
             }), assets.totalCount);
         }
 
@@ -157,13 +164,14 @@ namespace AssetManagement.Application.Services.Implementations
                 AssetName = a.AssetName,
                 CategoryId = a.CategoryId,
                 CategoryName = a.Category.Name,
+                Specification = a.Specification,
                 Status = a.Status
             }), assets.totalCount);
         }
 
         private async Task<Expression<Func<Asset, bool>>>? GetFilterQuery(Guid adminId, Guid? category, string? state, string? search)
         {
-            var user = await _unitOfWork.UserRepository.GetAsync(x=>x.Id == adminId);
+            var user = await _unitOfWork.UserRepository.GetAsync(x => x.Id == adminId);
             var locationId = user.LocationId;
             var nullableLocationId = (Guid?)locationId;
             // Determine the filtering criteria
@@ -223,6 +231,12 @@ namespace AssetManagement.Application.Services.Implementations
 
                 conditions.Add(defaultStateCondition);
             }
+
+            // Add IsDelete
+            var isDeletedCondition = Expression.Equal(Expression.Property(parameter, nameof(Asset.IsDeleted)),
+                Expression.Constant(false));
+            conditions.Add(isDeletedCondition);
+            
             // Add search conditions
             if (!string.IsNullOrEmpty(search))
             {
@@ -318,5 +332,27 @@ namespace AssetManagement.Application.Services.Implementations
             return orderBy;
         }
 
+        public async Task<AssetResponse> UpdateAsset(Guid id, AssetUpdateRequest assetRequest)
+        {
+            var currentAsset = await _unitOfWork.AssetRepository.GetAsync(x => x.Id == id);
+            if (currentAsset== null)
+            {
+                throw new ArgumentException("Asset not exist");
+            }
+            currentAsset.AssetName = assetRequest.AssetName;
+            currentAsset.Specification = assetRequest.Specification;
+            currentAsset.InstallDate = assetRequest.InstallDate;
+            currentAsset.Status = assetRequest.Status;
+            _unitOfWork.AssetRepository.Update(currentAsset);
+            await _unitOfWork.CommitAsync();
+            return new AssetResponse
+            {
+                AssetCode = currentAsset.AssetCode,
+                AssetName = currentAsset.AssetName,
+                Specification = currentAsset.Specification,
+                InstallDate = currentAsset.InstallDate,
+                Status = currentAsset.Status
+            };
+        }
     }
 }

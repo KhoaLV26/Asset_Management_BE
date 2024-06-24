@@ -24,15 +24,22 @@ namespace AssetManagement.Application.Services.Implementations
             _unitOfWork = unitOfWork;
             _mapper = mapper;
         }
+
         public async Task<AssignmentResponse> AddAssignmentAsync(AssignmentRequest request)
         {
+            var asset = await _unitOfWork.AssetRepository.GetAsync(a => a.Id == request.AssetId);
+            if (asset == null || asset.Status != EnumAssetStatus.Available)
+            {
+                throw new ArgumentException("The asset is not available for assignment.");
+            }
+
             var assignment = new Assignment
             {
                 Id = Guid.NewGuid(),
                 AssignedTo = request.AssignedTo,
                 AssignedBy = request.AssignedBy,
                 AssignedDate = request.AssignedDate,
-                AssetId = request.AssetId,
+                AssetId = asset.Id,
                 Status = EnumAssignmentStatus.WaitingForAcceptance,
                 CreatedAt = DateTime.UtcNow,
                 CreatedBy = request.AssignedBy,
@@ -41,10 +48,12 @@ namespace AssetManagement.Application.Services.Implementations
             await _unitOfWork.AssignmentRepository.AddAsync(assignment);
             if (await _unitOfWork.CommitAsync() < 1)
             {
-                throw new InvalidOperationException("An error occurred while registering the user.");
+                throw new ArgumentException("An error occurred while create assignment.");
             }
             else
             {
+                asset.Status = EnumAssetStatus.Assigned;
+                _unitOfWork.AssetRepository.Update(asset);
                 return _mapper.Map<AssignmentResponse>(assignment);
             }
         }
@@ -55,7 +64,6 @@ namespace AssetManagement.Application.Services.Implementations
             Func<IQueryable<Assignment>, IOrderedQueryable<Assignment>>? orderBy = GetOrderQuery(sortOrder, sortBy);
             Expression<Func<Assignment, bool>> filter = await GetFilterQuery(assignedDate, state, search);
             Expression<Func<Assignment, bool>> prioritizeCondition = null;
-
 
             if (newAssignmentId.HasValue)
             {
@@ -104,7 +112,7 @@ namespace AssetManagement.Application.Services.Implementations
             };
         }
 
-        private async Task<Expression<Func<Assignment, bool>>>? GetFilterQuery(DateTime? assignedDate, string? state, string? search)
+        public async Task<Expression<Func<Assignment, bool>>>? GetFilterQuery(DateTime? assignedDate, string? state, string? search)
         {
             // Determine the filtering criteria
             Expression<Func<Assignment, bool>>? filter = null;
@@ -163,7 +171,7 @@ namespace AssetManagement.Application.Services.Implementations
                     Expression.OrElse(
                         Expression.Call(assetCodeProperty, nameof(string.Contains), Type.EmptyTypes, Expression.Constant(search)),
                         Expression.Call(usernameProperty, nameof(string.Contains), Type.EmptyTypes, Expression.Constant(search))
-                    )       
+                    )
             );
                 conditions.Add(searchCondition);
             }
@@ -185,7 +193,7 @@ namespace AssetManagement.Application.Services.Implementations
             return filter;
         }
 
-        private Func<IQueryable<Assignment>, IOrderedQueryable<Assignment>>? GetOrderQuery(string? sortOrder, string? sortBy)
+        public Func<IQueryable<Assignment>, IOrderedQueryable<Assignment>>? GetOrderQuery(string? sortOrder, string? sortBy)
         {
             Func<IQueryable<Assignment>, IOrderedQueryable<Assignment>>? orderBy;
             switch (sortBy?.ToLower())
@@ -205,12 +213,15 @@ namespace AssetManagement.Application.Services.Implementations
                 case "assignedby":
                     orderBy = x => sortOrder != "desc" ? x.OrderBy(a => a.UserBy.Username) : x.OrderByDescending(a => a.UserBy.Username);
                     break;
+
                 case "assigneddate":
                     orderBy = x => sortOrder != "desc" ? x.OrderBy(a => a.AssignedDate) : x.OrderByDescending(a => a.AssignedDate);
                     break;
+
                 case "state":
                     orderBy = x => sortOrder != "desc" ? x.OrderBy(a => a.Status) : x.OrderByDescending(a => a.Status);
                     break;
+
                 default:
                     orderBy = null;
                     break;
@@ -218,5 +229,18 @@ namespace AssetManagement.Application.Services.Implementations
             return orderBy;
         }
 
+        public async Task<bool> DeleteAssignment(Guid id)
+        {
+            var assignment = await _unitOfWork.AssignmentRepository
+                .GetAsync(a => !a.IsDeleted
+                            && a.Id == id
+                            && a.Status != EnumAssignmentStatus.Accepted);
+            if (assignment == null)
+            {
+                return false;
+            }
+            _unitOfWork.AssignmentRepository.Delete(assignment);
+            return await _unitOfWork.CommitAsync() > 0;
+        }
     }
 }

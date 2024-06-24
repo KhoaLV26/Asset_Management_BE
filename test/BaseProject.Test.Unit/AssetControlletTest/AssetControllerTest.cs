@@ -122,43 +122,43 @@ namespace AssetManagement.Test.Unit.AssetControlletTest
             Assert.Equal(exceptionMessage, response.Message);
         }
 
-        //    [Fact]
-        //    public async Task GetAllAssetAsync_ReturnsOkResult_WhenAssetsExist()
-        //    {
-        //        // Arrange
-        //        var adminId = Guid.NewGuid();
-        //        var assets = new List<AssetResponse>
-        //{
-        //    new AssetResponse { Id = Guid.NewGuid(), AssetCode = "A001", AssetName = "Asset 1" },
-        //    new AssetResponse { Id = Guid.NewGuid(), AssetCode = "A002", AssetName = "Asset 2" }
-        //};
-        //        var assetResult = (assets, assets.Count);
+    //    [Fact]
+    //    public async Task GetAllAssetAsync_ReturnsOkResult_WhenAssetsExist()
+    //    {
+    //        // Arrange
+    //        var adminId = Guid.NewGuid();
+    //        var assets = new List<AssetResponse>
+    //{
+    //    new AssetResponse { Id = Guid.NewGuid(), AssetCode = "A001", AssetName = "Asset 1" },
+    //    new AssetResponse { Id = Guid.NewGuid(), AssetCode = "A002", AssetName = "Asset 2" }
+    //};
+    //        var assetResult = (assets, assets.Count);
 
-        //        // Set up the controller context with a mocked user
-        //        var claims = new List<Claim>
-        //{
-        //    new Claim("userId", adminId.ToString())
-        //};
-        //        var identity = new ClaimsIdentity(claims);
-        //        var principal = new ClaimsPrincipal(identity);
-        //        var httpContext = new DefaultHttpContext { User = principal };
-        //        var controllerContext = new ControllerContext { HttpContext = httpContext };
-        //        _controller.ControllerContext = controllerContext;
+    //        // Set up the controller context with a mocked user
+    //        var claims = new List<Claim>
+    //{
+    //    new Claim("userId", adminId.ToString())
+    //};
+    //        var identity = new ClaimsIdentity(claims);
+    //        var principal = new ClaimsPrincipal(identity);
+    //        var httpContext = new DefaultHttpContext { User = principal };
+    //        var controllerContext = new ControllerContext { HttpContext = httpContext };
+    //        _controller.ControllerContext = controllerContext;
 
-        //        _assetServiceMock.Setup(s => s.GetAllAssetAsync(adminId, It.IsAny<int>(), It.IsAny<string>(), It.IsAny<Guid?>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), "Category", It.IsAny<string>()))
-        //            .ReturnsAsync(assetResult);
+    //        _assetServiceMock.Setup(s => s.GetAllAssetAsync(adminId, It.IsAny<int>(), It.IsAny<string>(), It.IsAny<Guid?>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), "Category", It.IsAny<string>()))
+    //            .ReturnsAsync(assetResult);
 
-        //        // Act
-        //        var result = await _controller.GetAllAssetAsync(1, null, null, null, null, null);
+    //        // Act
+    //        var result = await _controller.GetAllAssetAsync(1, null, null, null, null, null);
 
-        //        // Assert
-        //        var okResult = Assert.IsType<OkObjectResult>(result);
-        //        var response = Assert.IsType<GeneralGetsResponse>(okResult.Value);
-        //        Assert.True(response.Success);
-        //        Assert.Equal("Assets retrieved successfully.", response.Message);
-        //        Assert.Equal(assets.Count, response.TotalCount);
-        //        Assert.Equal(assets, response.Data);
-        //    }
+    //        // Assert
+    //        var okResult = Assert.IsType<OkObjectResult>(result);
+    //        var response = Assert.IsType<GeneralGetsResponse>(okResult.Value);
+    //        Assert.True(response.Success);
+    //        Assert.Equal("Assets retrieved successfully.", response.Message);
+    //        Assert.Equal(assets.Count, response.TotalCount);
+    //        Assert.Equal(assets, response.Data);
+    //    }
 
         [Fact]
         public async Task GetAllAssetAsync_ReturnsConflictResult_WhenNoAssetsExist()

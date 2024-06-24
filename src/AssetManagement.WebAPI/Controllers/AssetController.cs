@@ -12,6 +12,7 @@ using System.Linq.Expressions;
 using System.Threading.Tasks;
 using AssetManagement.Domain.Constants;
 using Microsoft.AspNetCore.Authorization;
+using AssetManagement.Application.Services.Implementations;
 
 namespace AssetManagement.WebAPI.Controllers
 {
@@ -99,23 +100,12 @@ namespace AssetManagement.WebAPI.Controllers
             try
             {
                 var asset = await _assetService.GetAssetByIdAsync(id);
-                if (asset != null)
+                return Ok(new GeneralGetResponse
                 {
-                    return Ok(new GeneralGetResponse
-                    {
-                        Success = true,
-                        Message = "Asset retrived successfully.",
-                        Data = asset
-                    });
-                }
-                else
-                {
-                    return Conflict(new GeneralBoolResponse
-                    {
-                        Success = false,
-                        Message = "Asset not found."
-                    });
-                }
+                    Success = true,
+                    Message = "Asset retrived successfully.",
+                    Data = asset
+                });
             }
             catch (Exception ex)
             {
@@ -157,6 +147,24 @@ namespace AssetManagement.WebAPI.Controllers
                     Success = false,
                     Message = ex.Message
                 });
+                
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateAsset(Guid id, AssetUpdateRequest assetRequest)
+        {
+            var response = new GeneralGetResponse();
+            try
+            {
+                var result = await _assetService.UpdateAsset(id, assetRequest);
+                response.Success = true;
+                response.Message = "Update successfully";
+                response.Data = result;
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                response.Success = false;
+                response.Message = ex.Message;
+                return Conflict(response);
             }
         }
     }

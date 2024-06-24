@@ -36,7 +36,7 @@ namespace AssetManagement.Application.Services.Implementations
 
         public async Task<(string token, string refreshToken, GetUserResponse userResponse)> LoginAsync(string username, string password)
         {
-            var user = await _unitOfWork.UserRepository.GetAsync(u => u.Username == username, u => u.Role, u => u.Location);
+            var user = await _unitOfWork.UserRepository.GetAsync(u => !u.IsDeleted && u.Username == username, u => u.Role, u => u.Location);
             if (user == null || !_cryptographyHelper.VerifyPassword(password, user.HashPassword, user.SaltPassword))
             {
                 throw new UnauthorizedAccessException("Email or password incorrect!!!");
