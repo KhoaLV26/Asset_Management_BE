@@ -3,6 +3,7 @@ using AssetManagement.Application.Models.Responses;
 using AssetManagement.Application.Services;
 using AssetManagement.Domain.Models;
 using AssetManagement.WebAPI.Controllers;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Moq;
@@ -308,5 +309,77 @@ namespace AssetManagement.Test.Unit.UserControllerTest
         //    Assert.False(response.Success);
         //    Assert.Equal(exceptionMessage, response.Message);
         //}
+
+        [Fact]
+        public async Task DisableUser_Success_ReturnsOkResult()
+        {
+            // Arrange
+            var userId = Guid.NewGuid();
+            _userServiceMock.Setup(s => s.DisableUser(userId))
+                .ReturnsAsync(true);
+
+            // Act
+            var result = await _controller.DisableUser(userId);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            var response = Assert.IsType<GeneralBoolResponse>(okResult.Value);
+            Assert.True(response.Success);
+            Assert.Equal("User disabled successfully.", response.Message);
+        }
+
+        [Fact]
+        public async Task DisableUser_Failure_ReturnsConflict()
+        {
+            // Arrange
+            var userId = Guid.NewGuid();
+            _userServiceMock.Setup(s => s.DisableUser(userId))
+                .ReturnsAsync(false);
+
+            // Act
+            var result = await _controller.DisableUser(userId);
+
+            // Assert
+            var conflictResult = Assert.IsType<ConflictObjectResult>(result);
+            var response = Assert.IsType<GeneralBoolResponse>(conflictResult.Value);
+            Assert.False(response.Success);
+            Assert.Equal("User have valid assignment", response.Message);
+        }
+
+        [Fact]
+        public async Task DisableUser_Exception_ReturnsConflict()
+        {
+            // Arrange
+            var userId = Guid.NewGuid();
+            var exceptionMessage = "An unexpected error occurred.";
+            _userServiceMock.Setup(s => s.DisableUser(userId))
+                .ThrowsAsync(new Exception(exceptionMessage));
+
+            // Act
+            var result = await _controller.DisableUser(userId);
+
+            // Assert
+            var conflictResult = Assert.IsType<ConflictObjectResult>(result);
+            var response = Assert.IsType<GeneralBoolResponse>(conflictResult.Value);
+            Assert.False(response.Success);
+            Assert.Equal(exceptionMessage, response.Message);
+        }
+
+        [Fact]
+        public void DisableUser_Unauthorized_ReturnsUnauthorized()
+        {
+            // Arrange
+            var userId = Guid.NewGuid();
+            var controller = new UsersController(_userServiceMock.Object);
+            controller.ControllerContext = new ControllerContext();
+            controller.ControllerContext.HttpContext = new DefaultHttpContext();
+            controller.ControllerContext.HttpContext.User = new ClaimsPrincipal(new ClaimsIdentity());
+
+            // Act
+            var result = controller.DisableUser(userId).Result;
+
+            // Assert
+            Assert.IsType<ConflictObjectResult>(result);
+        }
     }
 }
