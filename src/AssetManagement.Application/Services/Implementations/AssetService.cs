@@ -298,19 +298,27 @@ namespace AssetManagement.Application.Services.Implementations
             return orderBy;
         }
 
-        public async Task<bool> UpdateAsset(Guid id, AssetUpdateRequest assetRequest)
+        public async Task<AssetResponse> UpdateAsset(Guid id, AssetUpdateRequest assetRequest)
         {
             var currentAsset = await _unitOfWork.AssetRepository.GetAsync(x => x.Id == id);
             if (currentAsset== null)
             {
-                return false;
+                throw new ArgumentException("Asset not exist");
             }
             currentAsset.AssetName = assetRequest.AssetName;
             currentAsset.Specification = assetRequest.Specification;
             currentAsset.InstallDate = assetRequest.InstallDate;
             currentAsset.Status = assetRequest.Status;
             _unitOfWork.AssetRepository.Update(currentAsset);
-            return await _unitOfWork.CommitAsync() > 0;
+            await _unitOfWork.CommitAsync();
+            return new AssetResponse
+            {
+                AssetCode = currentAsset.AssetCode,
+                AssetName = currentAsset.AssetName,
+                Specification = currentAsset.Specification,
+                InstallDate = currentAsset.InstallDate,
+                Status = currentAsset.Status
+            };
         }
     }
 }
