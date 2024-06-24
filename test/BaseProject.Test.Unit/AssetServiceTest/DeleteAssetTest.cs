@@ -1,4 +1,4 @@
-﻿using AssetManagement.Application.Models.Requests;
+using AssetManagement.Application.Models.Requests;
 using AssetManagement.Application.Models.Responses;
 using AssetManagement.Application.Services.Implementations;
 using AssetManagement.Domain.Entities;
@@ -56,12 +56,21 @@ namespace AssetManagement.Test.Unit.AssetServiceTest
             var assignedId = Guid.NewGuid();
             var categoryId = Guid.NewGuid();
             var assetId = Guid.NewGuid();
+
+            var category = new Category
+            {
+                Id = categoryId,
+                Name = "Cate",
+                Code = "CA"
+            };
+
             var asset = new Asset
             {
                 Id = assetId,
                 AssetName = "Test Asset",
                 AssetCode = "ABC123",
                 CategoryId = categoryId,
+                Category = category,
                 Status = EnumAssetStatus.Available,
                 Assignments = new List<Assignment>
                     {
@@ -121,12 +130,21 @@ namespace AssetManagement.Test.Unit.AssetServiceTest
             var assignedId = Guid.NewGuid();
             var categoryId = Guid.NewGuid();
             var assetId = Guid.NewGuid();
+
+            var category = new Category
+            {
+                Id = categoryId,
+                Name = "Cate",
+                Code = "CA"
+            };
+
             var asset = new Asset
             {
                 Id = assetId,
                 AssetName = "Test Asset",
                 AssetCode = "ABC123",
                 CategoryId = categoryId,
+                Category = category,
                 Status = EnumAssetStatus.Available,
                 Assignments = new List<Assignment>()       
             };
@@ -173,8 +191,31 @@ namespace AssetManagement.Test.Unit.AssetServiceTest
         public async Task DeleteAssetAsync_FailedCommit_ThrowsException()
         {
             // Arrange
+            var assignerId = Guid.NewGuid();
+            var assignedId = Guid.NewGuid();
+            var categoryId = Guid.NewGuid();
             var assetId = Guid.NewGuid();
-            var asset = new Asset { Id = assetId };
+            var locationId = Guid.NewGuid();
+
+            var category = new Category
+            {
+                Id = categoryId,
+                Name = "Cate",
+                Code = "CA"
+            };
+
+            var asset = new Asset
+            {
+                Id = assetId,
+                AssetName = "Test Asset",
+                AssetCode = "ABC123",
+                CategoryId = categoryId,
+                Category = category,
+                Status = EnumAssetStatus.Available,
+                InstallDate = DateOnly.FromDateTime(DateTime.UtcNow),
+                LocationId = locationId,
+                Assignments = new List<Assignment>()
+            };
 
             _mockAssetRepository.Setup(repo => repo.GetAssetDetail(assetId))
                 .ReturnsAsync(asset);

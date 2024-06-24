@@ -1,22 +1,18 @@
 ﻿using AssetManagement.Application.Models.Requests;
+using AssetManagement.Application.Models.Responses;
+using AssetManagement.Domain.Constants;
 using AssetManagement.Domain.Entities;
 using AssetManagement.Domain.Enums;
 using AssetManagement.Domain.Interfaces;
-using Org.BouncyCastle.Crypto.Generators;
+using AssetManagement.Infrastructure.Helpers;
+using AutoMapper;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Linq.Expressions;
-using System.Text;
 using System.Threading.Tasks;
-using BCrypt.Net;
-using AssetManagement.Infrastructure.Helpers;
-using AutoMapper;
-using AssetManagement.Application.Models.Responses;
-using AssetManagement.Domain.Constants;
-using System.Text.RegularExpressions;
-using Microsoft.EntityFrameworkCore;
 
 namespace AssetManagement.Application.Services.Implementations
 {
@@ -299,6 +295,46 @@ namespace AssetManagement.Application.Services.Implementations
 
             var result = await _unitOfWork.CommitAsync();
             return result > 0;
+        }
+
+        public async Task<UserDetailResponse> GetUserDetailAsync(Guid id)
+        {
+            var user = await _unitOfWork.UserRepository.GetAsync(u => u.Id == id && u.IsDeleted == false);
+            if (user == null)
+            {
+                throw new ArgumentException("User not found.");
+            }
+
+            return new UserDetailResponse
+            {
+                DateOfBirth = user.DateOfBirth,
+                FirstName = user.FirstName,
+                LastName = user.LastName,
+                Gender = user.Gender,
+                DateJoined = user.DateJoined,
+                RoleId = user.RoleId
+            };
+        }
+
+        public async Task<UpdateUserResponse> UpdateUserAsync(Guid id, EditUserRequest request)
+        {
+            var user = await _unitOfWork.UserRepository.GetAsync(x => x.IsDeleted == false && x.Id == id);
+            if (user == null)
+            {
+                throw new ArgumentException("User not found.");
+            }
+            user.DateJoined = request.DateJoined;
+            user.FirstName = request.FirstName;
+            user.LastName = request.LastName;
+            user.Gender = request.Gender;
+            user.DateOfBirth = request.DateOfBirth;
+            user.RoleId = request.RoleId;
+            _unitOfWork.UserRepository.Update(user);
+            await _unitOfWork.CommitAsync();
+            return new UpdateUserResponse
+            {
+                StaffCode = user.StaffCode
+            };
         }
     }
 }

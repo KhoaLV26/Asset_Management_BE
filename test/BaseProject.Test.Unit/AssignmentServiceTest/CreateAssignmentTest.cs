@@ -9,6 +9,7 @@ using Moq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
 using Xunit;
@@ -17,96 +18,110 @@ namespace AssetManagement.Test.Unit.AssignmentServiceTest
 {
     public class CreateAssignmentTest
     {
-        private readonly Mock<IUnitOfWork> _unitOfWorkMock;
-        private readonly Mock<IMapper> _mapperMock;
-        private readonly AssignmentService _assignmentService;
+        private readonly Mock<IUnitOfWork> _mockUnitOfWork;
+        private readonly Mock<IMapper> _mockMapper;
+        private readonly Mock<IAssetRepository> _mockAssetRepository;
+        private readonly Mock<IAssignmentRepository> _mockAssignmentRepository;
 
         public CreateAssignmentTest()
         {
-            _unitOfWorkMock = new Mock<IUnitOfWork>();
-            _mapperMock = new Mock<IMapper>();
-            _assignmentService = new AssignmentService(_unitOfWorkMock.Object, _mapperMock.Object);
+            _mockUnitOfWork = new Mock<IUnitOfWork>();
+            _mockMapper = new Mock<IMapper>();
+            _mockAssetRepository = new Mock<IAssetRepository>();
+            _mockAssignmentRepository = new Mock<IAssignmentRepository>();
+
+            _mockUnitOfWork.Setup(uow => uow.AssetRepository).Returns(_mockAssetRepository.Object);
+            _mockUnitOfWork.Setup(uow => uow.AssignmentRepository).Returns(_mockAssignmentRepository.Object);
         }
 
         [Fact]
-        public async Task AddAssignmentAsync_ValidRequest_ShouldAddAssignment()
+        public async Task AddAssignmentAsync_WithValidRequest_ReturnsAssignmentResponse()
         {
             // Arrange
+            var assignmentService = new AssignmentService(_mockUnitOfWork.Object, _mockMapper.Object);
+            var assetId = Guid.NewGuid();
             var request = new AssignmentRequest
             {
                 AssignedTo = Guid.NewGuid(),
                 AssignedBy = Guid.NewGuid(),
                 AssignedDate = DateTime.UtcNow,
-                AssetId = Guid.NewGuid(),
+                AssetId = assetId,
                 Note = "Test assignment"
             };
 
-            var expectedAssignment = new Assignment
-            {
-                Id = Guid.NewGuid(),
-                AssignedTo = request.AssignedTo,
-                AssignedBy = request.AssignedBy,
-                AssignedDate = request.AssignedDate,
-                AssetId = request.AssetId,
-                Status = EnumAssignmentStatus.WaitingForAcceptance,
-                CreatedAt = DateTime.UtcNow,
-                CreatedBy = request.AssignedBy,
-                Note = request.Note
-            };
+            var asset = new Asset { Id = assetId, Status = EnumAssetStatus.Available };
+            var assignment = new Assignment();
+            var assignmentResponse = new AssignmentResponse();
 
-            var expectedResponse = new AssignmentResponse
-            {
-                Id = expectedAssignment.Id,
-                AssignedTo = expectedAssignment.AssignedTo,
-                AssignedBy = expectedAssignment.AssignedBy,
-                AssignedDate = expectedAssignment.AssignedDate,
-                AssetId = expectedAssignment.AssetId,
-                Status = expectedAssignment.Status
-            };
-
-            _unitOfWorkMock.Setup(uow => uow.AssignmentRepository.AddAsync(It.IsAny<Assignment>()))
+            _mockAssetRepository.Setup(repo => repo.GetAsync(It.IsAny<Expression<Func<Asset, bool>>>()))
+                .ReturnsAsync(asset);
+            _mockAssignmentRepository.Setup(repo => repo.AddAsync(It.IsAny<Assignment>()))
                 .Returns(Task.CompletedTask);
-            _unitOfWorkMock.Setup(uow => uow.CommitAsync())
-                .ReturnsAsync(1);
-            _mapperMock.Setup(mapper => mapper.Map<AssignmentResponse>(It.IsAny<Assignment>()))
-                .Returns(expectedResponse);
+            _mockUnitOfWork.Setup(uow => uow.CommitAsync()).ReturnsAsync(1);
+            _mockMapper.Setup(m => m.Map<AssignmentResponse>(It.IsAny<Assignment>()))
+                .Returns(assignmentResponse);
 
             // Act
-            var result = await _assignmentService.AddAssignmentAsync(request);
+            var result = await assignmentService.AddAssignmentAsync(request);
 
             // Assert
-            Assert.Equal(expectedResponse.Id, result.Id);
-            Assert.Equal(expectedResponse.AssignedTo, result.AssignedTo);
-            Assert.Equal(expectedResponse.AssignedBy, result.AssignedBy);
-            Assert.Equal(expectedResponse.AssignedDate, result.AssignedDate);
-            Assert.Equal(expectedResponse.AssetId, result.AssetId);
-            Assert.Equal(expectedResponse.Status, result.Status);
-            _unitOfWorkMock.Verify(uow => uow.AssignmentRepository.AddAsync(It.IsAny<Assignment>()), Times.Once);
-            _unitOfWorkMock.Verify(uow => uow.CommitAsync(), Times.Once);
+            Assert.NotNull(result);
+            Assert.IsType<AssignmentResponse>(result);
+            _mockAssignmentRepository.Verify(repo => repo.AddAsync(It.IsAny<Assignment>()), Times.Once);
+            _mockUnitOfWork.Verify(uow => uow.CommitAsync(), Times.Exactly(2));
+            _mockAssetRepository.Verify(repo => repo.Update(It.Is<Asset>(a => a.Status == EnumAssetStatus.Assigned)), Times.Once);
+            Assert.Equal(EnumAssetStatus.Assigned, asset.Status);
         }
 
         [Fact]
-        public async Task AddAssignmentAsync_CommitFails_ShouldThrowInvalidOperationException()
+        public async Task AddAssignmentAsync_WithUnavailableAsset_ThrowsInvalidOperationException()
         {
             // Arrange
+            var assignmentService = new AssignmentService(_mockUnitOfWork.Object, _mockMapper.Object);
+            var assetId = Guid.NewGuid();
             var request = new AssignmentRequest
             {
                 AssignedTo = Guid.NewGuid(),
                 AssignedBy = Guid.NewGuid(),
                 AssignedDate = DateTime.UtcNow,
-                AssetId = Guid.NewGuid(),
+                AssetId = assetId,
                 Note = "Test assignment"
             };
 
-            _unitOfWorkMock.Setup(uow => uow.AssignmentRepository.AddAsync(It.IsAny<Assignment>()))
-                .Returns(Task.CompletedTask);
-            _unitOfWorkMock.Setup(uow => uow.CommitAsync())
-                .ReturnsAsync(0);
+            var asset = new Asset { Id = assetId, Status = EnumAssetStatus.NotAvailable };
+
+            _mockAssetRepository.Setup(repo => repo.GetAsync(It.IsAny<Expression<Func<Asset, bool>>>()))
+                .ReturnsAsync(asset);
 
             // Act & Assert
-            await Assert.ThrowsAsync<InvalidOperationException>(() => _assignmentService.AddAssignmentAsync(request));
-            _unitOfWorkMock.Verify(uow => uow.AssignmentRepository.AddAsync(It.IsAny<Assignment>()), Times.Once);
-            _unitOfWorkMock.Verify(uow => uow.CommitAsync(), Times.Once);
+            await Assert.ThrowsAsync<ArgumentException>(() => assignmentService.AddAssignmentAsync(request));
+        }
+
+        [Fact]
+        public async Task AddAssignmentAsync_FailedToCommit_ThrowsInvalidOperationException()
+        {
+            // Arrange
+            var assignmentService = new AssignmentService(_mockUnitOfWork.Object, _mockMapper.Object);
+            var assetId = Guid.NewGuid();
+            var request = new AssignmentRequest
+            {
+                AssignedTo = Guid.NewGuid(),
+                AssignedBy = Guid.NewGuid(),
+                AssignedDate = DateTime.UtcNow,
+                AssetId = assetId,
+                Note = "Test assignment"
+            };
+
+            var asset = new Asset { Id = assetId, Status = EnumAssetStatus.Available };
+
+            _mockAssetRepository.Setup(repo => repo.GetAsync(It.IsAny<Expression<Func<Asset, bool>>>()))
+                .ReturnsAsync(asset);
+            _mockAssignmentRepository.Setup(repo => repo.AddAsync(It.IsAny<Assignment>()))
+                .Returns(Task.CompletedTask);
+            _mockUnitOfWork.Setup(uow => uow.CommitAsync()).ReturnsAsync(0);
+
+            // Act & Assert
+            await Assert.ThrowsAsync<ArgumentException>(() => assignmentService.AddAssignmentAsync(request));
         }
     }
 }

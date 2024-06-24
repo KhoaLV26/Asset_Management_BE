@@ -54,6 +54,11 @@ namespace AssetManagement.Application.Services.Implementations
             {
                 asset.Status = EnumAssetStatus.Assigned;
                 _unitOfWork.AssetRepository.Update(asset);
+                // Commit the asset status change
+                if (await _unitOfWork.CommitAsync() < 1)
+                {
+                    throw new ArgumentException("Assignment created but failed to update asset status.");
+                }
                 return _mapper.Map<AssignmentResponse>(assignment);
             }
         }
@@ -119,6 +124,11 @@ namespace AssetManagement.Application.Services.Implementations
             var parameter = Expression.Parameter(typeof(Assignment), "x");
             var conditions = new List<Expression>();
             // Parse state parameter to enum
+
+            var isDeleteCondition = Expression.Equal(Expression.Property(parameter, nameof(Assignment.IsDeleted)),
+                Expression.Constant(false));
+            conditions.Add(isDeleteCondition);
+
             if (!string.IsNullOrEmpty(state))
             {
                 if (state.ToLower() != "all")
@@ -137,26 +147,7 @@ namespace AssetManagement.Application.Services.Implementations
                     }
                 }
             }
-            //else
-            //{
-            //    // Default states: Accepted, Waiting for acceptance
-            //    var acceptedCondition = Expression.Equal(
-            //        Expression.Property(parameter, nameof(Assignment.Status)),
-            //        Expression.Constant(EnumAssignmentStatus.Accepted)
-            //    );
-
-            //    var waitingForAcceptance = Expression.Equal(
-            //        Expression.Property(parameter, nameof(Assignment.Status)),
-            //        Expression.Constant(EnumAssignmentStatus.WaitingForAcceptance)
-            //    );
-
-            //    var defaultStateCondition = Expression.OrElse(
-            //        Expression.OrElse(acceptedCondition, waitingForAcceptance),
-            //        waitingForAcceptance
-            //    );
-
-            //    conditions.Add(defaultStateCondition);
-            //}
+            
             // Add search conditions
             if (!string.IsNullOrEmpty(search))
             {
