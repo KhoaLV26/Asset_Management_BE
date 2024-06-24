@@ -149,7 +149,7 @@ namespace AssetManagement.WebAPI.Controllers
                 });
             }
         }
-                
+
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateAsset(Guid id, AssetUpdateRequest assetRequest)
         {
@@ -167,6 +167,39 @@ namespace AssetManagement.WebAPI.Controllers
                 response.Success = false;
                 response.Message = ex.Message;
                 return Conflict(response);
+            }
+        }
+
+        [HttpGet("reports")]
+        [Authorize(Roles = RoleConstant.ADMIN)]
+        public async Task<IActionResult> GetReports(int pageNumber, string? sortOrder, string? sortBy)
+        {
+            try
+            {
+                var (reports, count) = await _assetService.GetReports(sortOrder, sortBy, LocationID, pageNumber);
+                if (reports.Any())
+                {
+                    return Ok(new GeneralGetsResponse
+                    {
+                        Success = true,
+                        Message = "Reports retrieved successfully.",
+                        Data = reports,
+                        TotalCount = count
+                    });
+                }
+                return Conflict(new GeneralGetsResponse
+                {
+                    Success = false,
+                    Message = "No data.",
+                });
+            }
+            catch (Exception ex)
+            {
+                return Conflict(new GeneralGetsResponse
+                {
+                    Success = false,
+                    Message = ex.Message,
+                });
             }
         }
     }

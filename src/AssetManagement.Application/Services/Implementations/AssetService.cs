@@ -1,5 +1,6 @@
 using AssetManagement.Application.Models.Requests;
 using AssetManagement.Application.Models.Responses;
+using AssetManagement.Domain.Constants;
 using AssetManagement.Domain.Entities;
 using AssetManagement.Domain.Enums;
 using AssetManagement.Domain.Interfaces;
@@ -231,7 +232,7 @@ namespace AssetManagement.Application.Services.Implementations
 
                 conditions.Add(defaultStateCondition);
             }
-            
+
             // Add search conditions
             if (!string.IsNullOrEmpty(search))
             {
@@ -330,7 +331,7 @@ namespace AssetManagement.Application.Services.Implementations
         public async Task<AssetResponse> UpdateAsset(Guid id, AssetUpdateRequest assetRequest)
         {
             var currentAsset = await _unitOfWork.AssetRepository.GetAsync(x => x.Id == id);
-            if (currentAsset== null)
+            if (currentAsset == null)
             {
                 throw new ArgumentException("Asset not exist");
             }
@@ -348,6 +349,70 @@ namespace AssetManagement.Application.Services.Implementations
                 InstallDate = currentAsset.InstallDate,
                 Status = currentAsset.Status
             };
+        }
+
+        public async Task<(IEnumerable<ReportResponse>, int count)> GetReports(string? sortOrder, string? sortBy, Guid locationId, int pageNumber = 1)
+        {
+            var categories = await _unitOfWork.CategoryRepository.GetAllAsync(c => !c.IsDeleted);
+            var assets = await _unitOfWork.AssetRepository.GetAllAsync(a => a.LocationId == locationId && !a.IsDeleted);
+
+            var reports = categories.Select(category => new ReportResponse
+            {
+                Category = category.Name,
+                Total = assets.Count(asset => asset.CategoryId == category.Id),
+                Assigned = assets.Count(asset => asset.CategoryId == category.Id && asset.Status == EnumAssetStatus.Assigned),
+                Available = assets.Count(asset => asset.CategoryId == category.Id && asset.Status == EnumAssetStatus.Available),
+                NotAvailable = assets.Count(asset => asset.CategoryId == category.Id && asset.Status == EnumAssetStatus.NotAvailable),
+                WaitingForRecycling = assets.Count(asset => asset.CategoryId == category.Id && asset.Status == EnumAssetStatus.WaitingForRecycling),
+                Recycled = assets.Count(asset => asset.CategoryId == category.Id && asset.Status == EnumAssetStatus.Recycled)
+            }).AsQueryable();
+            var orderBy = GetOrderReportQuery(sortOrder, sortBy);
+            if (orderBy != null)
+            {
+                reports = orderBy(reports);
+            }
+            reports = reports.Skip((pageNumber - 1) * PageSizeConstant.PAGE_SIZE).Take(PageSizeConstant.PAGE_SIZE);
+            return (reports, categories.Count());
+        }
+
+        private Func<IQueryable<ReportResponse>, IOrderedQueryable<ReportResponse>>? GetOrderReportQuery(string? sortOrder, string? sortBy)
+        {
+            Func<IQueryable<ReportResponse>, IOrderedQueryable<ReportResponse>>? orderBy;
+            switch (sortBy?.ToLower())
+            {
+                case "total":
+                    orderBy = x => sortOrder != "desc" ? x.OrderBy(a => a.Total) : x.OrderByDescending(a => a.Total);
+                    break;
+
+                case "assigned":
+                    orderBy = x => sortOrder != "desc" ? x.OrderBy(a => a.Assigned) : x.OrderByDescending(a => a.Assigned);
+                    break;
+
+                case "available":
+                    orderBy = x => sortOrder != "desc" ? x.OrderBy(a => a.Available) : x.OrderByDescending(a => a.Available);
+                    break;
+
+                case "notavailable":
+                    orderBy = x => sortOrder != "desc" ? x.OrderBy(a => a.NotAvailable) : x.OrderByDescending(a => a.NotAvailable);
+                    break;
+
+                case "waitingforrecycling":
+                    orderBy = x => sortOrder != "desc" ? x.OrderBy(a => a.WaitingForRecycling) : x.OrderByDescending(a => a.WaitingForRecycling);
+                    break;
+
+                case "recycled":
+                    orderBy = x => sortOrder != "desc" ? x.OrderBy(a => a.Recycled) : x.OrderByDescending(a => a.Recycled);
+                    break;
+
+                case "category":
+                    orderBy = x => sortOrder != "desc" ? x.OrderBy(a => a.Category) : x.OrderByDescending(a => a.Category);
+                    break;
+
+                default:
+                    orderBy = null;
+                    break;
+            }
+            return orderBy;
         }
     }
 }
