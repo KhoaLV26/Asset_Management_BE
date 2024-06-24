@@ -12,6 +12,7 @@ using System.Linq.Expressions;
 using System.Threading.Tasks;
 using AssetManagement.Domain.Constants;
 using Microsoft.AspNetCore.Authorization;
+using AssetManagement.Application.Services.Implementations;
 
 namespace AssetManagement.WebAPI.Controllers
 {
@@ -124,6 +125,31 @@ namespace AssetManagement.WebAPI.Controllers
                     Success = false,
                     Message = ex.Message
                 });
+            }
+        }
+
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateAsset(Guid id, AssetUpdateRequest assetRequest)
+        {
+            var response = new GeneralBoolResponse();
+            try
+            {
+                var result = await _assetService.UpdateAsset(id, assetRequest);
+                if (result == false)
+                {
+                    response.Success = false;
+                    response.Message = "Update fail";
+                    return Conflict(response);
+                }
+                response.Success = true;
+                response.Message = "Update successfully";
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                response.Success = false;
+                response.Message = ex.Message;
+                return Conflict(response);
             }
         }
     }
