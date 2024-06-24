@@ -100,23 +100,12 @@ namespace AssetManagement.WebAPI.Controllers
             try
             {
                 var asset = await _assetService.GetAssetByIdAsync(id);
-                if (asset != null)
+                return Ok(new GeneralGetResponse
                 {
-                    return Ok(new GeneralGetResponse
-                    {
-                        Success = true,
-                        Message = "Asset retrived successfully.",
-                        Data = asset
-                    });
-                }
-                else
-                {
-                    return Conflict(new GeneralBoolResponse
-                    {
-                        Success = false,
-                        Message = "Asset not found."
-                    });
-                }
+                    Success = true,
+                    Message = "Asset retrived successfully.",
+                    Data = asset
+                });
             }
             catch (Exception ex)
             {
@@ -131,18 +120,13 @@ namespace AssetManagement.WebAPI.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateAsset(Guid id, AssetUpdateRequest assetRequest)
         {
-            var response = new GeneralBoolResponse();
+            var response = new GeneralGetResponse();
             try
             {
                 var result = await _assetService.UpdateAsset(id, assetRequest);
-                if (result == false)
-                {
-                    response.Success = false;
-                    response.Message = "Update fail";
-                    return Conflict(response);
-                }
                 response.Success = true;
                 response.Message = "Update successfully";
+                response.Data = result;
                 return Ok(response);
             }
             catch (Exception ex)

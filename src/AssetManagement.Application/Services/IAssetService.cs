@@ -14,6 +14,6 @@ namespace AssetManagement.Application.Services
         Task<(IEnumerable<AssetResponse> data, int totalCount)> GetAllAssetAsync(Guid adminId,int pageNumber, string? state, Guid? category, string? search, string? sortOrder, string? sortBy = "assetCode", string includeProperties = "", string? newAssetCode = "");
         Task<AssetDetailResponse> GetAssetByIdAsync(Guid id);
         Task<AssetResponse> CreateAssetAsync(AssetRequest assetRequest);
-        Task<bool> UpdateAsset(Guid id, AssetUpdateRequest assetRequest);
+        Task<AssetResponse> UpdateAsset(Guid id, AssetUpdateRequest assetRequest);
     }
 }
