@@ -52,8 +52,14 @@ namespace AssetManagement.Application.Services.Implementations
             }
             else
             {
-                asset.Status = EnumAssetStatus.Assigned;
+                asset.Status = EnumAssetStatus.NotAvailable;
                 _unitOfWork.AssetRepository.Update(asset);
+
+                // Commit the asset status change
+                if (await _unitOfWork.CommitAsync() < 1)
+                {
+                    throw new ArgumentException("Assignment created but failed to update asset status.");
+                }
                 return _mapper.Map<AssignmentResponse>(assignment);
             }
         }
