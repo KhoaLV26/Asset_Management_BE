@@ -147,6 +147,8 @@ namespace AssetManagement.WebAPI.Controllers
                     Success = false,
                     Message = ex.Message
                 });
+            }
+        }
                 
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateAsset(Guid id, AssetUpdateRequest assetRequest)
