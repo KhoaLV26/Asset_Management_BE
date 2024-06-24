@@ -234,12 +234,14 @@ namespace AssetManagement.Application.Services.Implementations
             var assignment = await _unitOfWork.AssignmentRepository
                 .GetAsync(a => !a.IsDeleted
                             && a.Id == id
-                            && a.Status != EnumAssignmentStatus.Accepted);
+                            && a.Status != EnumAssignmentStatus.Accepted,
+                            a => a.Asset);
             if (assignment == null)
             {
                 return false;
             }
             _unitOfWork.AssignmentRepository.SoftDelete(assignment);
+            assignment.Asset.Status = EnumAssetStatus.Available;
             return await _unitOfWork.CommitAsync() > 0;
         }
     }
