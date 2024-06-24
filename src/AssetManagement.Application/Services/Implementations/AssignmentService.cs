@@ -27,13 +27,19 @@ namespace AssetManagement.Application.Services.Implementations
 
         public async Task<AssignmentResponse> AddAssignmentAsync(AssignmentRequest request)
         {
+            var asset = await _unitOfWork.AssetRepository.GetAsync(a => a.Id == request.AssetId);
+            if (asset == null || asset.Status != EnumAssetStatus.Available)
+            {
+                throw new ArgumentException("The asset is not available for assignment.");
+            }
+
             var assignment = new Assignment
             {
                 Id = Guid.NewGuid(),
                 AssignedTo = request.AssignedTo,
                 AssignedBy = request.AssignedBy,
                 AssignedDate = request.AssignedDate,
-                AssetId = request.AssetId,
+                AssetId = asset.Id,
                 Status = EnumAssignmentStatus.WaitingForAcceptance,
                 CreatedAt = DateTime.UtcNow,
                 CreatedBy = request.AssignedBy,
@@ -42,10 +48,12 @@ namespace AssetManagement.Application.Services.Implementations
             await _unitOfWork.AssignmentRepository.AddAsync(assignment);
             if (await _unitOfWork.CommitAsync() < 1)
             {
-                throw new InvalidOperationException("An error occurred while registering the user.");
+                throw new ArgumentException("An error occurred while create assignment.");
             }
             else
             {
+                asset.Status = EnumAssetStatus.NotAvailable;
+                _unitOfWork.AssetRepository.Update(asset);
                 return _mapper.Map<AssignmentResponse>(assignment);
             }
         }
