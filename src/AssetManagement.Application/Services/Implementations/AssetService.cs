@@ -105,6 +105,9 @@ namespace AssetManagement.Application.Services.Implementations
                 AssetName = asset.AssetName,
                 AssetCode = asset.AssetCode,
                 CategoryId = asset.CategoryId,
+                CategoryName = asset.Category.Name,
+                Specification = asset.Specification,
+                InstallDate = asset.InstallDate,
                 Status = asset.Status,
                 LocationId = asset.LocationId,
                 AssignmentResponses = assignmentResponses.Select(a => new AssignmentResponse
