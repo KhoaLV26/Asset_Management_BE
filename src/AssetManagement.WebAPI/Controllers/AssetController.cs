@@ -129,7 +129,7 @@ namespace AssetManagement.WebAPI.Controllers
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateAsset(Guid id, [FromForm] AssetUpdateRequest assetRequest)
+        public async Task<IActionResult> UpdateAsset(Guid id, AssetUpdateRequest assetRequest)
         {
             var response = new GeneralBoolResponse();
             try
