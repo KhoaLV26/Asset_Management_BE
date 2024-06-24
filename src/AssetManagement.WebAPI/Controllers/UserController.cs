@@ -124,11 +124,11 @@ namespace AssetManagement.WebAPI.Controllers
 
         [HttpDelete("{id}")]
         [Authorize(Roles = RoleConstant.ADMIN)]
-        public async Task<IActionResult> DisableUser(Guid userId)
+        public async Task<IActionResult> DisableUser(Guid Id)
         {
             try
             {
-                var result = await _userService.DisableUser(userId);
+                var result = await _userService.DisableUser(Id);
                 if (result)
                 {
                     return Ok(new GeneralBoolResponse
