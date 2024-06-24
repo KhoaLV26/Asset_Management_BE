@@ -128,7 +128,7 @@ namespace AssetManagement.Application.Services.Implementations
         {
             var assets = await _unitOfWork.AssetRepository.GetAllAsync(page, filter, orderBy, includeProperties);
 
-            return (assets.items.Select(a => new AssetResponse
+            return (assets.items.Where(a => !a.IsDeleted).Select(a => new AssetResponse
             {
                 Id = a.Id,
                 AssetCode = a.AssetCode,
@@ -155,7 +155,7 @@ namespace AssetManagement.Application.Services.Implementations
             var assets = await _unitOfWork.AssetRepository.GetAllAsync(pageNumber, filter, orderBy, includeProperties,
                 prioritizeCondition);
 
-            return (assets.items.Select(a => new AssetResponse
+            return (assets.items.Where(a => !a.IsDeleted).Select(a => new AssetResponse
             {
                 Id = a.Id,
                 AssetCode = a.AssetCode,
