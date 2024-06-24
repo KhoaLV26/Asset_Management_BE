@@ -245,7 +245,7 @@ namespace AssetManagement.Application.Services.Implementations
             {
                 return false;
             }
-            _unitOfWork.AssignmentRepository.Delete(assignment);
+            _unitOfWork.AssignmentRepository.SoftDelete(assignment);
             return await _unitOfWork.CommitAsync() > 0;
         }
     }
