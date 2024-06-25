@@ -24,15 +24,22 @@ namespace AssetManagement.Application.Services.Implementations
             _unitOfWork = unitOfWork;
             _mapper = mapper;
         }
+
         public async Task<AssignmentResponse> AddAssignmentAsync(AssignmentRequest request)
         {
+            var asset = await _unitOfWork.AssetRepository.GetAsync(a => a.Id == request.AssetId);
+            if (asset == null || asset.Status != EnumAssetStatus.Available)
+            {
+                throw new ArgumentException("The asset is not available for assignment.");
+            }
+
             var assignment = new Assignment
             {
                 Id = Guid.NewGuid(),
                 AssignedTo = request.AssignedTo,
                 AssignedBy = request.AssignedBy,
                 AssignedDate = request.AssignedDate,
-                AssetId = request.AssetId,
+                AssetId = asset.Id,
                 Status = EnumAssignmentStatus.WaitingForAcceptance,
                 CreatedAt = DateTime.UtcNow,
                 CreatedBy = request.AssignedBy,
@@ -41,10 +48,17 @@ namespace AssetManagement.Application.Services.Implementations
             await _unitOfWork.AssignmentRepository.AddAsync(assignment);
             if (await _unitOfWork.CommitAsync() < 1)
             {
-                throw new InvalidOperationException("An error occurred while registering the user.");
+                throw new ArgumentException("An error occurred while create assignment.");
             }
             else
             {
+                asset.Status = EnumAssetStatus.Assigned;
+                _unitOfWork.AssetRepository.Update(asset);
+                // Commit the asset status change
+                if (await _unitOfWork.CommitAsync() < 1)
+                {
+                    throw new ArgumentException("Assignment created but failed to update asset status.");
+                }
                 return _mapper.Map<AssignmentResponse>(assignment);
             }
         }
@@ -106,31 +120,18 @@ namespace AssetManagement.Application.Services.Implementations
             };
         }
 
-        public async Task<bool> UpdateAssignment(Guid id, AssignmentRequest assignmentRequest)
-        {
-            var currentAssignment = await _unitOfWork.AssignmentRepository.GetAsync(x => x.Id==id);
-            if (currentAssignment == null)
-            {
-                return false;
-            }
-            currentAssignment.AssignedTo = assignmentRequest.AssignedTo;
-            currentAssignment.AssignedBy = assignmentRequest.AssignedBy;
-            currentAssignment.AssignedDate = assignmentRequest.AssignedDate;
-            currentAssignment.AssetId = assignmentRequest.AssetId;
-            currentAssignment.Note = assignmentRequest.Note;
-            currentAssignment.Status = assignmentRequest.Status;
-
-            _unitOfWork.AssignmentRepository.Update(currentAssignment);
-            return await _unitOfWork.CommitAsync() > 0;
-        }
-
-        private async Task<Expression<Func<Assignment, bool>>>? GetFilterQuery(DateTime? assignedDate, string? state, string? search)
+        public async Task<Expression<Func<Assignment, bool>>>? GetFilterQuery(DateTime? assignedDate, string? state, string? search)
         {
             // Determine the filtering criteria
             Expression<Func<Assignment, bool>>? filter = null;
             var parameter = Expression.Parameter(typeof(Assignment), "x");
             var conditions = new List<Expression>();
             // Parse state parameter to enum
+
+            var isDeleteCondition = Expression.Equal(Expression.Property(parameter, nameof(Assignment.IsDeleted)),
+                Expression.Constant(false));
+            conditions.Add(isDeleteCondition);
+
             if (!string.IsNullOrEmpty(state))
             {
                 if (state.ToLower() != "all")
@@ -149,48 +150,18 @@ namespace AssetManagement.Application.Services.Implementations
                     }
                 }
             }
-            else
-            {
-                // Default states: Accepted, Waiting for acceptance
-                var acceptedCondition = Expression.Equal(
-                    Expression.Property(parameter, nameof(Assignment.Status)),
-                    Expression.Constant(EnumAssignmentStatus.Accepted)
-                );
 
-                var waitingForAcceptance = Expression.Equal(
-                    Expression.Property(parameter, nameof(Assignment.Status)),
-                    Expression.Constant(EnumAssignmentStatus.WaitingForAcceptance)
-                );
-
-                var defaultStateCondition = Expression.OrElse(acceptedCondition, waitingForAcceptance);
-
-                conditions.Add(defaultStateCondition);
-            }
             // Add search conditions
             if (!string.IsNullOrEmpty(search))
             {
                 var searchCondition = Expression.OrElse(
-                    Expression.Call(
-                        Expression.Property(parameter, nameof(Assignment.Asset.AssetCode)),
-                        nameof(string.Contains),
-                        Type.EmptyTypes,
-                        Expression.Constant(search)
-                    ),
-                    Expression.Call(
-                        Expression.Property(parameter, nameof(Assignment.Asset.AssetName)),
-                        nameof(string.Contains),
-                        Type.EmptyTypes,
-                        Expression.Constant(search)
+                    Expression.Call(assetNameProperty, nameof(string.Contains), Type.EmptyTypes, Expression.Constant(search)),
+                    Expression.OrElse(
+                        Expression.Call(assetCodeProperty, nameof(string.Contains), Type.EmptyTypes, Expression.Constant(search)),
+                        Expression.Call(usernameProperty, nameof(string.Contains), Type.EmptyTypes, Expression.Constant(search))
                     )
-
-                );
-                var userNameCondition = Expression.Call(
-                    Expression.Property(parameter, nameof(Assignment.UserTo.Username)),
-                    nameof(string.Contains),
-                    Type.EmptyTypes,
-                    Expression.Constant(search)
-                );
-                conditions.Add(Expression.OrElse(searchCondition, userNameCondition));
+            );
+                conditions.Add(searchCondition);
             }
             // Add date conditions
             if (assignedDate.HasValue)
@@ -210,7 +181,7 @@ namespace AssetManagement.Application.Services.Implementations
             return filter;
         }
 
-        private Func<IQueryable<Assignment>, IOrderedQueryable<Assignment>>? GetOrderQuery(string? sortOrder, string? sortBy)
+        public Func<IQueryable<Assignment>, IOrderedQueryable<Assignment>>? GetOrderQuery(string? sortOrder, string? sortBy)
         {
             Func<IQueryable<Assignment>, IOrderedQueryable<Assignment>>? orderBy;
             switch (sortBy?.ToLower())
@@ -230,12 +201,15 @@ namespace AssetManagement.Application.Services.Implementations
                 case "assignedby":
                     orderBy = x => sortOrder != "desc" ? x.OrderBy(a => a.UserBy.Username) : x.OrderByDescending(a => a.UserBy.Username);
                     break;
+
                 case "assigneddate":
                     orderBy = x => sortOrder != "desc" ? x.OrderBy(a => a.AssignedDate) : x.OrderByDescending(a => a.AssignedDate);
                     break;
+
                 case "state":
                     orderBy = x => sortOrder != "desc" ? x.OrderBy(a => a.Status) : x.OrderByDescending(a => a.Status);
                     break;
+
                 default:
                     orderBy = null;
                     break;
@@ -243,5 +217,86 @@ namespace AssetManagement.Application.Services.Implementations
             return orderBy;
         }
 
+        public async Task<bool> DeleteAssignment(Guid id)
+        {
+            var assignment = await _unitOfWork.AssignmentRepository
+                .GetAsync(a => !a.IsDeleted
+                            && a.Id == id
+                            && a.Status != EnumAssignmentStatus.Accepted,
+                            a => a.Asset);
+            if (assignment == null)
+            {
+                return false;
+            }
+            _unitOfWork.AssignmentRepository.SoftDelete(assignment);
+            assignment.Asset.Status = EnumAssetStatus.Available;
+            return await _unitOfWork.CommitAsync() > 0;
+        }
+
+        public async Task<Expression<Func<Assignment, bool>>>? GetUserFilterQuery(Guid userId)
+        {
+            // Determine the filtering criteria
+            Expression<Func<Assignment, bool>>? filter = null;
+            var parameter = Expression.Parameter(typeof(Assignment), "x");
+            var conditions = new List<Expression>();
+
+            // Condition to check if the record is not deleted
+            var isDeleteCondition = Expression.Equal(Expression.Property(parameter, nameof(Assignment.IsDeleted)),
+                Expression.Constant(false));
+            conditions.Add(isDeleteCondition);
+
+            // Condition for AssignedTo equals userId
+            var assignedToCondition = Expression.Equal(Expression.Property(parameter, nameof(Assignment.AssignedTo)),
+                Expression.Constant(userId));
+            conditions.Add(assignedToCondition);
+
+            // Condition for AssignedDate <= today
+            var today = DateTime.Today;
+            var dateProperty = Expression.Property(parameter, nameof(Assignment.AssignedDate));
+            var dateCondition = Expression.LessThanOrEqual(dateProperty, Expression.Constant(today));
+            conditions.Add(dateCondition);
+
+            // Condition for Status not equal to Declined
+            var acceptedStatus = EnumAssignmentStatus.Accepted;
+            var waitingForAcceptanceStatus = EnumAssignmentStatus.WaitingForAcceptance;
+            var statusProperty = Expression.Property(parameter, nameof(Assignment.Status));
+            var statusCondition = Expression.OrElse(
+                Expression.Equal(statusProperty, Expression.Constant(acceptedStatus)),
+                Expression.Equal(statusProperty, Expression.Constant(waitingForAcceptanceStatus))
+            );
+            conditions.Add(statusCondition);
+
+
+            // Combine all conditions
+            if (conditions.Any())
+            {
+                var combinedCondition = conditions.Aggregate((left, right) => Expression.AndAlso(left, right));
+                filter = Expression.Lambda<Func<Assignment, bool>>(combinedCondition, parameter);
+            }
+            return filter;
+        }
+
+        public async Task<(IEnumerable<AssignmentResponse> data, int totalCount)> GetUserAssignmentAsync(int pageNumber, Guid userId, string? sortOrder,
+         string? sortBy = "assigneddate")
+        {
+            Func<IQueryable<Assignment>, IOrderedQueryable<Assignment>>? orderBy = GetOrderQuery(sortOrder, sortBy);
+            Expression<Func<Assignment, bool>> filter = await GetUserFilterQuery(userId);
+            var assignments = await _unitOfWork.AssignmentRepository.GetAllAsync(pageNumber, filter, orderBy, "UserTo,UserBy,Asset");
+
+            return (assignments.items.Select(a => new AssignmentResponse
+            {
+                Id = a.Id,
+                AssignedTo = a.AssignedTo,
+                To = a.UserTo.Username,
+                AssignedBy = a.AssignedBy,
+                By = a.UserBy.Username,
+                AssignedDate = a.AssignedDate,
+                AssetId = a.AssetId,
+                AssetCode = a.Asset.AssetCode,
+                AssetName = a.Asset.AssetName,
+                Note = a.Note,
+                Status = a.Status
+            }), assignments.totalCount);
+        }
     }
 }

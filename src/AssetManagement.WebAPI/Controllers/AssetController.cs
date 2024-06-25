@@ -12,20 +12,19 @@ using System.Linq.Expressions;
 using System.Threading.Tasks;
 using AssetManagement.Domain.Constants;
 using Microsoft.AspNetCore.Authorization;
+using AssetManagement.Application.Services.Implementations;
 
 namespace AssetManagement.WebAPI.Controllers
 {
     [Route("api/assets")]
     [ApiController]
-    public class AssetController : ControllerBase
+    public class AssetController : BaseApiController
     {
         private readonly IAssetService _assetService;
-        private readonly IUserService _userService;
 
-        public AssetController(IAssetService assetService, IUserService userService)
+        public AssetController(IAssetService assetService)
         {
             _assetService = assetService;
-            _userService = userService;
         }
 
         [HttpPost]
@@ -66,7 +65,7 @@ namespace AssetManagement.WebAPI.Controllers
         {
             try
             {
-                Guid adminId = Guid.Parse("CFF14216-AC4D-4D5D-9222-C951287E51C6");
+                Guid adminId = UserID;
 
                 var assets = await _assetService.GetAllAssetAsync(adminId, pageNumber == 0 ? 1 : pageNumber, state: state, category, search, sortOrder, sortBy, "Category", newAssetCode);
                 if (assets.data.Any())
@@ -101,23 +100,12 @@ namespace AssetManagement.WebAPI.Controllers
             try
             {
                 var asset = await _assetService.GetAssetByIdAsync(id);
-                if (asset != null)
+                return Ok(new GeneralGetResponse
                 {
-                    return Ok(new GeneralGetResponse
-                    {
-                        Success = true,
-                        Message = "Asset retrived successfully.",
-                        Data = asset
-                    });
-                }
-                else
-                {
-                    return Conflict(new GeneralBoolResponse
-                    {
-                        Success = false,
-                        Message = "Asset not found."
-                    });
-                }
+                    Success = true,
+                    Message = "Asset retrived successfully.",
+                    Data = asset
+                });
             }
             catch (Exception ex)
             {
@@ -125,6 +113,92 @@ namespace AssetManagement.WebAPI.Controllers
                 {
                     Success = false,
                     Message = ex.Message
+                });
+            }
+        }
+
+        [HttpDelete("{id}")]
+        [Authorize(Roles = RoleConstant.ADMIN)]
+        public async Task<IActionResult> DeleteAsset(Guid id)
+        {
+            try
+            {
+                var result = await _assetService.DeleteAssetAsync(id);
+                if (result == null)
+                {
+                    return Conflict(new GeneralBoolResponse
+                    {
+                        Success = false,
+                        Message = "Asset delete failed."
+                    });
+                }
+
+                return Ok(new GeneralGetResponse
+                {
+                    Success = true,
+                    Message = "Asset delete successfully.",
+                    Data = result
+                });
+            }
+            catch (Exception ex)
+            {
+                return Conflict(new GeneralBoolResponse
+                {
+                    Success = false,
+                    Message = ex.Message
+                });
+            }
+        }
+
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateAsset(Guid id, AssetUpdateRequest assetRequest)
+        {
+            var response = new GeneralGetResponse();
+            try
+            {
+                var result = await _assetService.UpdateAsset(id, assetRequest);
+                response.Success = true;
+                response.Message = "Update successfully";
+                response.Data = result;
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                response.Success = false;
+                response.Message = ex.Message;
+                return Conflict(response);
+            }
+        }
+
+        [HttpGet("reports")]
+        [Authorize(Roles = RoleConstant.ADMIN)]
+        public async Task<IActionResult> GetReports(int pageNumber, string? sortOrder, string? sortBy)
+        {
+            try
+            {
+                var (reports, count) = await _assetService.GetReports(sortOrder, sortBy, LocationID, pageNumber);
+                if (reports.Any())
+                {
+                    return Ok(new GeneralGetsResponse
+                    {
+                        Success = true,
+                        Message = "Reports retrieved successfully.",
+                        Data = reports,
+                        TotalCount = count
+                    });
+                }
+                return Conflict(new GeneralGetsResponse
+                {
+                    Success = false,
+                    Message = "No data.",
+                });
+            }
+            catch (Exception ex)
+            {
+                return Conflict(new GeneralGetsResponse
+                {
+                    Success = false,
+                    Message = ex.Message,
                 });
             }
         }

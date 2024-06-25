@@ -38,6 +38,14 @@ namespace AssetManagement.Test.Unit.AssetServiceTest
             var assignedId = Guid.NewGuid();
             var categoryId = Guid.NewGuid();
             var assetId = Guid.NewGuid();
+            var locationId = Guid.NewGuid();
+
+            var category = new Category
+            {
+                Id = categoryId,
+                Name = "Cate",
+                Code = "CA"
+            };
 
             var existingAsset = new Asset
             {
@@ -45,7 +53,10 @@ namespace AssetManagement.Test.Unit.AssetServiceTest
                 AssetName = "Test Asset",
                 AssetCode = "ABC123",
                 CategoryId = categoryId,
+                Category = category,
                 Status = EnumAssetStatus.Available,
+                InstallDate = DateOnly.FromDateTime(DateTime.UtcNow),
+                LocationId = locationId,
                 Assignments = new List<Assignment>
                     {
                         new Assignment
@@ -66,7 +77,7 @@ namespace AssetManagement.Test.Unit.AssetServiceTest
                 .ReturnsAsync(existingAsset);
 
             // Act
-            var result = await _assetService.GetAssetByIdAsync(existingAsset.Id);
+            var result = await _assetService.GetAssetByIdAsync(assetId);
 
             // Assert
             Assert.NotNull(result);

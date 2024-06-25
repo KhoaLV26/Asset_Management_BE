@@ -1,5 +1,6 @@
 using AssetManagement.Application.Models.Requests;
 using AssetManagement.Application.Models.Responses;
+using AssetManagement.Domain.Constants;
 using AssetManagement.Domain.Entities;
 using AssetManagement.Domain.Enums;
 using AssetManagement.Domain.Interfaces;
@@ -9,6 +10,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace AssetManagement.Application.Services.Implementations
 {
@@ -101,10 +103,15 @@ namespace AssetManagement.Application.Services.Implementations
 
             return new AssetDetailResponse
             {
+                Id = asset.Id,
                 AssetName = asset.AssetName,
                 AssetCode = asset.AssetCode,
                 CategoryId = asset.CategoryId,
+                CategoryName = asset.Category.Name,
+                Specification = asset.Specification,
+                InstallDate = asset.InstallDate,
                 Status = asset.Status,
+                LocationId = asset.LocationId.HasValue ? asset.LocationId.Value : Guid.Empty,
                 AssignmentResponses = assignmentResponses.Select(a => new AssignmentResponse
                 {
                     Id = a.Id,
@@ -129,8 +136,10 @@ namespace AssetManagement.Application.Services.Implementations
                 AssetCode = a.AssetCode,
                 AssetName = a.AssetName,
                 CategoryId = a.CategoryId,
+                Specification = a.Specification,
                 CategoryName = a.Category.Name,
-                Status = a.Status
+                Status = a.Status,
+                LocationId = a.LocationId.HasValue ? a.LocationId.Value : Guid.Empty,
             }), assets.totalCount);
         }
 
@@ -156,13 +165,14 @@ namespace AssetManagement.Application.Services.Implementations
                 AssetName = a.AssetName,
                 CategoryId = a.CategoryId,
                 CategoryName = a.Category.Name,
+                Specification = a.Specification,
                 Status = a.Status
             }), assets.totalCount);
         }
 
         private async Task<Expression<Func<Asset, bool>>>? GetFilterQuery(Guid adminId, Guid? category, string? state, string? search)
         {
-            var user = await _unitOfWork.UserRepository.GetAsync(x=>x.Id == adminId);
+            var user = await _unitOfWork.UserRepository.GetAsync(x => x.Id == adminId);
             var locationId = user.LocationId;
             var nullableLocationId = (Guid?)locationId;
             // Determine the filtering criteria
@@ -172,6 +182,12 @@ namespace AssetManagement.Application.Services.Implementations
             var locationCondition = Expression.Equal(Expression.Property(parameter, nameof(Asset.LocationId)),
                 Expression.Constant(nullableLocationId, typeof(Guid?)));
             conditions.Add(locationCondition);
+
+            // Add IsDelete
+            var isDeletedCondition = Expression.Equal(Expression.Property(parameter, nameof(Asset.IsDeleted)),
+                Expression.Constant(false));
+            conditions.Add(isDeletedCondition);
+
             // Parse state parameter to enum
             if (!string.IsNullOrEmpty(state))
             {
@@ -216,6 +232,7 @@ namespace AssetManagement.Application.Services.Implementations
 
                 conditions.Add(defaultStateCondition);
             }
+
             // Add search conditions
             if (!string.IsNullOrEmpty(search))
             {
@@ -256,6 +273,33 @@ namespace AssetManagement.Application.Services.Implementations
             return filter;
         }
 
+        public async Task<AssetResponse> DeleteAssetAsync(Guid id)
+        {
+            var asset = await _unitOfWork.AssetRepository.GetAsync(x => x.Id == id);
+            if (asset == null)
+            {
+                throw new Exception("Asset not found");
+            }
+
+            var detail = await GetAssetByIdAsync(id);
+            if (detail.AssignmentResponses != null && detail.AssignmentResponses.Count() > 0)
+            {
+                throw new Exception("This asset have historical assignment");
+            }
+            else
+            {
+                _unitOfWork.AssetRepository.SoftDelete(asset);
+                if (await _unitOfWork.CommitAsync() > 0)
+                {
+                    return _mapper.Map<AssetResponse>(asset);
+                }
+                else
+                {
+                    throw new Exception("Failed to delete asset");
+                }
+            }
+        }
+
         private Func<IQueryable<Asset>, IOrderedQueryable<Asset>>? GetOrderQuery(string? sortOrder, string? sortBy)
         {
             Func<IQueryable<Asset>, IOrderedQueryable<Asset>>? orderBy;
@@ -284,5 +328,91 @@ namespace AssetManagement.Application.Services.Implementations
             return orderBy;
         }
 
+        public async Task<AssetResponse> UpdateAsset(Guid id, AssetUpdateRequest assetRequest)
+        {
+            var currentAsset = await _unitOfWork.AssetRepository.GetAsync(x => x.Id == id);
+            if (currentAsset == null)
+            {
+                throw new ArgumentException("Asset not exist");
+            }
+            currentAsset.AssetName = assetRequest.AssetName;
+            currentAsset.Specification = assetRequest.Specification;
+            currentAsset.InstallDate = assetRequest.InstallDate;
+            currentAsset.Status = assetRequest.Status;
+            _unitOfWork.AssetRepository.Update(currentAsset);
+            await _unitOfWork.CommitAsync();
+            return new AssetResponse
+            {
+                AssetCode = currentAsset.AssetCode,
+                AssetName = currentAsset.AssetName,
+                Specification = currentAsset.Specification,
+                InstallDate = currentAsset.InstallDate,
+                Status = currentAsset.Status
+            };
+        }
+
+        public async Task<(IEnumerable<ReportResponse>, int count)> GetReports(string? sortOrder, string? sortBy, Guid locationId, int pageNumber = 1)
+        {
+            var categories = await _unitOfWork.CategoryRepository.GetAllAsync(c => !c.IsDeleted);
+            var assets = await _unitOfWork.AssetRepository.GetAllAsync(a => a.LocationId == locationId && !a.IsDeleted);
+
+            var reports = categories.Select(category => new ReportResponse
+            {
+                Category = category.Name,
+                Total = assets.Count(asset => asset.CategoryId == category.Id),
+                Assigned = assets.Count(asset => asset.CategoryId == category.Id && asset.Status == EnumAssetStatus.Assigned),
+                Available = assets.Count(asset => asset.CategoryId == category.Id && asset.Status == EnumAssetStatus.Available),
+                NotAvailable = assets.Count(asset => asset.CategoryId == category.Id && asset.Status == EnumAssetStatus.NotAvailable),
+                WaitingForRecycling = assets.Count(asset => asset.CategoryId == category.Id && asset.Status == EnumAssetStatus.WaitingForRecycling),
+                Recycled = assets.Count(asset => asset.CategoryId == category.Id && asset.Status == EnumAssetStatus.Recycled)
+            }).AsQueryable();
+            var orderBy = GetOrderReportQuery(sortOrder, sortBy);
+            if (orderBy != null)
+            {
+                reports = orderBy(reports);
+            }
+            reports = reports.Skip((pageNumber - 1) * PageSizeConstant.PAGE_SIZE).Take(PageSizeConstant.PAGE_SIZE);
+            return (reports, categories.Count());
+        }
+
+        private Func<IQueryable<ReportResponse>, IOrderedQueryable<ReportResponse>>? GetOrderReportQuery(string? sortOrder, string? sortBy)
+        {
+            Func<IQueryable<ReportResponse>, IOrderedQueryable<ReportResponse>>? orderBy;
+            switch (sortBy?.ToLower())
+            {
+                case "total":
+                    orderBy = x => sortOrder != "desc" ? x.OrderBy(a => a.Total) : x.OrderByDescending(a => a.Total);
+                    break;
+
+                case "assigned":
+                    orderBy = x => sortOrder != "desc" ? x.OrderBy(a => a.Assigned) : x.OrderByDescending(a => a.Assigned);
+                    break;
+
+                case "available":
+                    orderBy = x => sortOrder != "desc" ? x.OrderBy(a => a.Available) : x.OrderByDescending(a => a.Available);
+                    break;
+
+                case "notavailable":
+                    orderBy = x => sortOrder != "desc" ? x.OrderBy(a => a.NotAvailable) : x.OrderByDescending(a => a.NotAvailable);
+                    break;
+
+                case "waitingforrecycling":
+                    orderBy = x => sortOrder != "desc" ? x.OrderBy(a => a.WaitingForRecycling) : x.OrderByDescending(a => a.WaitingForRecycling);
+                    break;
+
+                case "recycled":
+                    orderBy = x => sortOrder != "desc" ? x.OrderBy(a => a.Recycled) : x.OrderByDescending(a => a.Recycled);
+                    break;
+
+                case "category":
+                    orderBy = x => sortOrder != "desc" ? x.OrderBy(a => a.Category) : x.OrderByDescending(a => a.Category);
+                    break;
+
+                default:
+                    orderBy = null;
+                    break;
+            }
+            return orderBy;
+        }
     }
 }
