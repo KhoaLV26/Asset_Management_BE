@@ -210,5 +210,30 @@ namespace AssetManagement.WebAPI.Controllers
                 });
             }
         }
+
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateAssignment(Guid id, [FromForm] AssignmentRequest assignmentRequest)
+        {
+            var response = new GeneralBoolResponse();
+            try
+            {
+                var result = await _assignmentService.UpdateAssignment(id, assignmentRequest);
+                if (result == false)
+                {
+                    response.Success = false;
+                    response.Message = "Update fail";
+                    return Conflict(response);
+                }
+                response.Success = true;
+                response.Message = "Update successfully";
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                response.Success = false;
+                response.Message = ex.Message;
+                return Conflict(response);
+            }
+        }
     }
 }

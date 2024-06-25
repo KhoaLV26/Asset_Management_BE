@@ -19,5 +19,7 @@ namespace AssetManagement.Application.Services
         Task<bool> DeleteAssignment(Guid id);
 
         Task<(IEnumerable<AssignmentResponse> data, int totalCount)> GetUserAssignmentAsync(int pageNumber, Guid userId, string? sortOrder, string? sortBy = "assigneddate");
+        Task<bool> UpdateAssignment(Guid id, AssignmentRequest assignmentRequest);
+
     }
 }

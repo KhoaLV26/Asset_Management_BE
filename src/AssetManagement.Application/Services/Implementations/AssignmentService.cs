@@ -100,7 +100,7 @@ namespace AssetManagement.Application.Services.Implementations
                      a => a.UserTo,
                      a => a.UserBy,
                      a => a.Asset);
-            if (assignment == null || assignment.IsDeleted == false)
+            if (assignment == null || assignment.IsDeleted == true)
             {
                 return null;
             }
@@ -118,6 +118,24 @@ namespace AssetManagement.Application.Services.Implementations
                 Note = assignment.Note,
                 Status = assignment.Status
             };
+        }
+
+        public async Task<bool> UpdateAssignment(Guid id, AssignmentRequest assignmentRequest)
+        {
+            var currentAssignment = await _unitOfWork.AssignmentRepository.GetAsync(x => x.Id == id);
+            if (currentAssignment == null)
+            {
+                return false;
+            }
+            currentAssignment.AssignedTo = assignmentRequest.AssignedTo;
+            currentAssignment.AssignedBy = assignmentRequest.AssignedBy;
+            currentAssignment.AssignedDate = assignmentRequest.AssignedDate;
+            currentAssignment.AssetId = assignmentRequest.AssetId;
+            currentAssignment.Note = assignmentRequest.Note;
+            currentAssignment.Status = assignmentRequest.Status;
+
+            _unitOfWork.AssignmentRepository.Update(currentAssignment);
+            return await _unitOfWork.CommitAsync() > 0;
         }
 
         public async Task<Expression<Func<Assignment, bool>>>? GetFilterQuery(DateTime? assignedDate, string? state, string? search)
