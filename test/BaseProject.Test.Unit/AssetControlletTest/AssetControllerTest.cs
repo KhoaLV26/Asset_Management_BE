@@ -122,43 +122,28 @@ namespace AssetManagement.Test.Unit.AssetControlletTest
             Assert.Equal(exceptionMessage, response.Message);
         }
 
-    //    [Fact]
-    //    public async Task GetAllAssetAsync_ReturnsOkResult_WhenAssetsExist()
-    //    {
-    //        // Arrange
-    //        var adminId = Guid.NewGuid();
-    //        var assets = new List<AssetResponse>
-    //{
-    //    new AssetResponse { Id = Guid.NewGuid(), AssetCode = "A001", AssetName = "Asset 1" },
-    //    new AssetResponse { Id = Guid.NewGuid(), AssetCode = "A002", AssetName = "Asset 2" }
-    //};
-    //        var assetResult = (assets, assets.Count);
+        [Fact]
+        public async Task CreateAssetAsync_InvalidModelState_ReturnsBadRequest()
+        {
+            // Arrange
+            var assetRequest = new AssetRequest
+            {
+                AssetName = "Test Asset",
+                CategoryId = Guid.NewGuid(),
+                Specification = "Test Specification",
+                InstallDate = DateOnly.FromDateTime(DateTime.Now),
+                Status = EnumAssetStatus.Available,
+                CreatedBy = Guid.NewGuid()
+            };
+            _controller.ModelState.AddModelError("error", "some error");
 
-    //        // Set up the controller context with a mocked user
-    //        var claims = new List<Claim>
-    //{
-    //    new Claim("userId", adminId.ToString())
-    //};
-    //        var identity = new ClaimsIdentity(claims);
-    //        var principal = new ClaimsPrincipal(identity);
-    //        var httpContext = new DefaultHttpContext { User = principal };
-    //        var controllerContext = new ControllerContext { HttpContext = httpContext };
-    //        _controller.ControllerContext = controllerContext;
+            // Act
+            var result = await _controller.CreateAssetAsync(assetRequest);
 
-    //        _assetServiceMock.Setup(s => s.GetAllAssetAsync(adminId, It.IsAny<int>(), It.IsAny<string>(), It.IsAny<Guid?>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), "Category", It.IsAny<string>()))
-    //            .ReturnsAsync(assetResult);
-
-    //        // Act
-    //        var result = await _controller.GetAllAssetAsync(1, null, null, null, null, null);
-
-    //        // Assert
-    //        var okResult = Assert.IsType<OkObjectResult>(result);
-    //        var response = Assert.IsType<GeneralGetsResponse>(okResult.Value);
-    //        Assert.True(response.Success);
-    //        Assert.Equal("Assets retrieved successfully.", response.Message);
-    //        Assert.Equal(assets.Count, response.TotalCount);
-    //        Assert.Equal(assets, response.Data);
-    //    }
+            // Assert
+            var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
+            Assert.IsType<SerializableError>(badRequestResult.Value);
+        }
 
         [Fact]
         public async Task GetAllAssetAsync_ReturnsConflictResult_WhenNoAssetsExist()
@@ -178,6 +163,44 @@ namespace AssetManagement.Test.Unit.AssetControlletTest
             var conflictResult = Assert.IsType<ConflictObjectResult>(result);
             var response = Assert.IsType<GeneralGetsResponse>(conflictResult.Value);
             Assert.False(response.Success);
+        }
+
+        [Fact]
+        public async Task GetAllAssetAsync_ReturnsOkResult_WhenAssetsExist()
+        {
+            // Arrange
+            var adminId = Guid.NewGuid();
+            var assets = new List<AssetResponse>
+            {
+                new AssetResponse { Id = Guid.NewGuid(), AssetCode = "A001", AssetName = "Asset 1" },
+                new AssetResponse { Id = Guid.NewGuid(), AssetCode = "A002", AssetName = "Asset 2" }
+            };
+            var assetResult = (assets, assets.Count);
+
+            // Set up the controller context with a mocked user
+            var claims = new List<Claim>
+            {
+                new Claim("userId", adminId.ToString())
+            };
+            var identity = new ClaimsIdentity(claims);
+            var principal = new ClaimsPrincipal(identity);
+            var httpContext = new DefaultHttpContext { User = principal };
+            var controllerContext = new ControllerContext { HttpContext = httpContext };
+            _controller.ControllerContext = controllerContext;
+
+            _assetServiceMock.Setup(s => s.GetAllAssetAsync(adminId, It.IsAny<int>(), It.IsAny<string>(), It.IsAny<Guid?>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), "Category", It.IsAny<string>()))
+                .ReturnsAsync(assetResult);
+
+            // Act
+            var result = await _controller.GetAllAssetAsync(1, null, null, null, null);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            var response = Assert.IsType<GeneralGetsResponse>(okResult.Value);
+            Assert.True(response.Success);
+            Assert.Equal("Assets retrieved successfully.", response.Message);
+            Assert.Equal(assets.Count, response.TotalCount);
+            Assert.Equal(assets, response.Data);
         }
 
         [Fact]
@@ -204,7 +227,7 @@ namespace AssetManagement.Test.Unit.AssetControlletTest
             var okResult = Assert.IsType<OkObjectResult>(result);
             var response = Assert.IsType<GeneralGetResponse>(okResult.Value);
             Assert.True(response.Success);
-            Assert.Equal("Asset retrived successfully.", response.Message);
+            Assert.Equal("Asset retrieved successfully.", response.Message);
             Assert.Equal(asset, response.Data);
         }
 
@@ -276,6 +299,58 @@ namespace AssetManagement.Test.Unit.AssetControlletTest
             var response = Assert.IsType<GeneralGetsResponse>(conflictResult.Value);
             Assert.False(response.Success);
         }
+
+        [Fact]
+        public async Task UpdateAsset_ReturnsOkResult_WhenUpdateIsSuccessful()
+        {
+            // Arrange
+            var assetId = Guid.NewGuid();
+            var assetRequest = new AssetUpdateRequest
+            {
+                // Initialize properties as necessary
+            };
+
+            var updatedAsset = new AssetResponse
+            {
+                // Initialize properties as necessary
+            };
+
+            _assetServiceMock.Setup(service => service.UpdateAsset(assetId, assetRequest))
+                             .ReturnsAsync(updatedAsset);
+
+            // Act
+            var result = await _controller.UpdateAsset(assetId, assetRequest);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            var response = Assert.IsType<GeneralGetResponse>(okResult.Value);
+            Assert.True(response.Success);
+            Assert.Equal("Update successful.", response.Message);
+            Assert.Equal(updatedAsset, response.Data);
+        }
+
+        [Fact]
+        public async Task UpdateAsset_ReturnsConflictResult_WhenExceptionIsThrown()
+        {
+            // Arrange
+            var assetId = Guid.NewGuid();
+            var assetRequest = new AssetUpdateRequest
+            {
+                // Initialize properties as necessary
+            };
+
+            var exceptionMessage = "Test exception";
+            _assetServiceMock.Setup(service => service.UpdateAsset(assetId, assetRequest))
+                             .ThrowsAsync(new Exception(exceptionMessage));
+
+            // Act
+            var result = await _controller.UpdateAsset(assetId, assetRequest);
+
+            // Assert
+            var conflictResult = Assert.IsType<ConflictObjectResult>(result);
+            var response = Assert.IsType<GeneralGetResponse>(conflictResult.Value);
+            Assert.False(response.Success);
+            Assert.Equal(exceptionMessage, response.Message);
+        }
     }
 }
-

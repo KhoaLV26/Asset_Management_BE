@@ -87,17 +87,17 @@ namespace AssetManagement.Application.Services.Implementations
             {
                 return null;
             }
-            var assignmentResponses = asset.Assignments.Select(a => new AssignmentResponse
-            {
-                Id = a.Id,
-                AssetId = a.AssetId,
-                AssignedBy = a.AssignedBy,
-                AssignedTo = a.AssignedTo,
-                AssignedDate = a.AssignedDate,
-                Status = a.Status,
-                By = a.UserBy.Username,
-                To = a.UserTo.Username
-            }).ToList();
+            //var assignmentResponses = asset.Assignments.Select(a => new AssignmentResponse
+            //{
+            //    Id = a.Id,
+            //    AssetId = a.AssetId,
+            //    AssignedBy = a.AssignedBy,
+            //    AssignedTo = a.AssignedTo,
+            //    AssignedDate = a.AssignedDate,
+            //    Status = a.Status,
+            //    By = a.UserBy.Username,
+            //    To = a.UserTo.Username
+            //}).ToList();
 
             return new AssetDetailResponse
             {
@@ -110,7 +110,7 @@ namespace AssetManagement.Application.Services.Implementations
                 InstallDate = asset.InstallDate,
                 Status = asset.Status,
                 LocationId = asset.LocationId.HasValue ? asset.LocationId.Value : Guid.Empty,
-                AssignmentResponses = assignmentResponses.Select(a => new AssignmentResponse
+                AssignmentResponses = asset.Assignments.Select(a => new AssignmentResponse
                 {
                     Id = a.Id,
                     AssetId = a.AssetId,
@@ -118,8 +118,8 @@ namespace AssetManagement.Application.Services.Implementations
                     AssignedTo = a.AssignedTo,
                     AssignedDate = a.AssignedDate,
                     Status = a.Status,
-                    By = a.By,
-                    To = a.To
+                    By = a.UserBy.Username,
+                    To = a.UserTo.Username
                 }).ToList()
             };
         }
