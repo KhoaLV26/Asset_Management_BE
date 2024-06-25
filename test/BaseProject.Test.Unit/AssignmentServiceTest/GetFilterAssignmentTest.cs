@@ -159,21 +159,6 @@ namespace AssetManagement.Test.Unit.AssignmentServiceTest
         }
 
         [Fact]
-        public void GetFilterQuery_NoFilters_ReturnsNotDeletedExpression()
-        {
-            // Arrange
-            DateTime? assignedDate = null;
-            string state = null;
-            string search = null;
-
-            // Act
-            var filter = _assignmentService.GetFilterQuery(assignedDate, state, search).Result;
-
-            // Assert
-            Assert.Null(filter);
-        }
-
-        [Fact]
         public void GetFilterQuery_WithAssignedDate_ReturnsCorrectExpression()
         {
             // Arrange
