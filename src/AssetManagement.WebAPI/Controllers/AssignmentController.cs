@@ -236,6 +236,38 @@ namespace AssetManagement.WebAPI.Controllers
                 response.Success = false;
                 response.Message = ex.Message;
                 return Conflict(response);
+
+        [HttpGet("user/{userId}")]
+        [Authorize(Roles = RoleConstant.ADMIN)]
+        public async Task<IActionResult> AdminGetUserAssignmentAsync(int pageNumber, Guid userId)
+        {
+            try
+            {
+                var assignments = await _assignmentService.GetUserAssignmentAsync(pageNumber == 0 ? 1 : pageNumber, userId, "", "");
+                if (assignments.data.Any())
+                {
+                    return Ok(new GeneralGetsResponse
+                    {
+                        Success = true,
+                        Message = "Assignments of user retrieved successfully.",
+                        Data = assignments.data,
+                        TotalCount = assignments.totalCount
+                    });
+                }
+                return Conflict(new GeneralGetsResponse
+                {
+                    Success = false,
+                    Message = "No data.",
+                });
+            }
+            catch (Exception ex)
+            {
+                return Conflict(new GeneralGetsResponse
+                {
+                    Success = false,
+                    Message = ex.Message,
+                });
+
             }
         }
     }
