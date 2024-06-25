@@ -138,5 +138,53 @@ namespace AssetManagement.Test.Unit.AssignmentControllerTest.cs
             Assert.False(response.Success);
             Assert.Equal("An error occurred while registering the user.", response.Message);
         }
+
+        [Fact]
+        public async Task DeleteAssignment_WhenAssignmentNotFound_ReturnsFalse()
+        {
+            //Arrange
+            var id = Guid.NewGuid();
+            _assignmentServiceMock.Setup(x => x.DeleteAssignment(id)).ReturnsAsync(false);
+
+            //Act
+            var result = await _assignmentController.DeleteAssignment(id);
+
+            //Assert
+            var conflictResult = Assert.IsType<ConflictObjectResult>(result);
+            var response = Assert.IsType<GeneralBoolResponse>(conflictResult.Value);
+            Assert.False(response.Success);
+        }
+
+        [Fact]
+        public async Task DeleteAssignment_WhenSuccess_ReturnsTrue()
+        {
+            //Arrange
+            var id = Guid.NewGuid();
+            _assignmentServiceMock.Setup(x => x.DeleteAssignment(id)).ReturnsAsync(true);
+
+            //Act
+            var result = await _assignmentController.DeleteAssignment(id);
+
+            //Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            var response = Assert.IsType<GeneralBoolResponse>(okResult.Value);
+            Assert.True(response.Success);
+        }
+
+        [Fact]
+        public async Task DeleteAssignment_WhenException_ReturnsError()
+        {
+            //Arrange
+            var id = Guid.NewGuid();
+            _assignmentServiceMock.Setup(x => x.DeleteAssignment(id)).ThrowsAsync(new Exception());
+
+            //Act
+            var result = await _assignmentController.DeleteAssignment(id);
+
+            //Assert
+            var conflictResult = Assert.IsType<ConflictObjectResult>(result);
+            var response = Assert.IsType<GeneralBoolResponse>(conflictResult.Value);
+            Assert.False(response.Success);
+        }
     }
 }
