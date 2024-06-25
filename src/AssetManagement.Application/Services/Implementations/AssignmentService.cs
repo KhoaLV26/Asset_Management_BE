@@ -127,11 +127,6 @@ namespace AssetManagement.Application.Services.Implementations
             var parameter = Expression.Parameter(typeof(Assignment), "x");
             var conditions = new List<Expression>();
             // Parse state parameter to enum
-
-            var isDeleteCondition = Expression.Equal(Expression.Property(parameter, nameof(Assignment.IsDeleted)),
-                Expression.Constant(false));
-            conditions.Add(isDeleteCondition);
-
             if (!string.IsNullOrEmpty(state))
             {
                 if (state.ToLower() != "all")
@@ -150,18 +145,48 @@ namespace AssetManagement.Application.Services.Implementations
                     }
                 }
             }
+            else
+            {
+                // Default states: Accepted, Waiting for acceptance
+                var acceptedCondition = Expression.Equal(
+                    Expression.Property(parameter, nameof(Assignment.Status)),
+                    Expression.Constant(EnumAssignmentStatus.Accepted)
+                );
 
+                var waitingForAcceptance = Expression.Equal(
+                    Expression.Property(parameter, nameof(Assignment.Status)),
+                    Expression.Constant(EnumAssignmentStatus.WaitingForAcceptance)
+                );
+
+                var defaultStateCondition = Expression.OrElse(acceptedCondition, waitingForAcceptance);
+
+                conditions.Add(defaultStateCondition);
+            }
             // Add search conditions
             if (!string.IsNullOrEmpty(search))
             {
                 var searchCondition = Expression.OrElse(
-                    Expression.Call(assetNameProperty, nameof(string.Contains), Type.EmptyTypes, Expression.Constant(search)),
-                    Expression.OrElse(
-                        Expression.Call(assetCodeProperty, nameof(string.Contains), Type.EmptyTypes, Expression.Constant(search)),
-                        Expression.Call(usernameProperty, nameof(string.Contains), Type.EmptyTypes, Expression.Constant(search))
+                    Expression.Call(
+                        Expression.Property(parameter, nameof(Assignment.Asset.AssetCode)),
+                        nameof(string.Contains),
+                        Type.EmptyTypes,
+                        Expression.Constant(search)
+                    ),
+                    Expression.Call(
+                        Expression.Property(parameter, nameof(Assignment.Asset.AssetName)),
+                        nameof(string.Contains),
+                        Type.EmptyTypes,
+                        Expression.Constant(search)
                     )
-            );
-                conditions.Add(searchCondition);
+
+                );
+                var userNameCondition = Expression.Call(
+                    Expression.Property(parameter, nameof(Assignment.UserTo.Username)),
+                    nameof(string.Contains),
+                    Type.EmptyTypes,
+                    Expression.Constant(search)
+                );
+                conditions.Add(Expression.OrElse(searchCondition, userNameCondition));
             }
             // Add date conditions
             if (assignedDate.HasValue)
