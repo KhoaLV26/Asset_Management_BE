@@ -159,7 +159,7 @@ namespace AssetManagement.Test.Unit.AssignmentServiceTest
         }
 
         [Fact]
-        public void GetFilterQuery_NoFilters_ReturnsNullExpression()
+        public void GetFilterQuery_NoFilters_ReturnsNotDeletedExpression()
         {
             // Arrange
             DateTime? assignedDate = null;
