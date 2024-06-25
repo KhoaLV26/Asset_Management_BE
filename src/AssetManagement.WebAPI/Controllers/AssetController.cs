@@ -202,5 +202,24 @@ namespace AssetManagement.WebAPI.Controllers
                 });
             }
         }
+
+        [HttpGet("export-to-excel")]
+        [Authorize(Roles = RoleConstant.ADMIN)]
+        public async Task<IActionResult> ExportToExcel()
+        {
+            try
+            {
+                var file = await _assetService.ExportToExcelAsync(LocationID);
+                return File(file, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "AssetReport.xlsx");
+            }
+            catch (Exception ex)
+            {
+                return Conflict(new GeneralBoolResponse
+                {
+                    Success = false,
+                    Message = ex.Message
+                });
+            }
+        }
     }
 }
