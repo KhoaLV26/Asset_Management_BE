@@ -78,7 +78,7 @@ namespace AssetManagement.Application.Services.Implementations
             var assignments = await _unitOfWork.AssignmentRepository.GetAllAsync(pageNumber, filter, orderBy, includeProperties,
                 prioritizeCondition);
 
-            return (assignments.items.Select(a => new AssignmentResponse
+            return (assignments.items.Where(a => !a.IsDeleted).Select(a => new AssignmentResponse
             {
                 Id = a.Id,
                 AssignedTo = a.AssignedTo,
@@ -96,8 +96,11 @@ namespace AssetManagement.Application.Services.Implementations
 
         public async Task<AssignmentResponse> GetAssignmentDetailAsync(Guid id)
         {
-            var assignment = await _unitOfWork.AssignmentRepository.GetAssignmentDetailAsync(id);
-            if (assignment == null)
+            var assignment = await _unitOfWork.AssignmentRepository.GetAsync(a => a.Id == id,
+                     a => a.UserTo,
+                     a => a.UserBy,
+                     a => a.Asset);
+            if (assignment == null || assignment.IsDeleted == false)
             {
                 return null;
             }
@@ -151,12 +154,6 @@ namespace AssetManagement.Application.Services.Implementations
             // Add search conditions
             if (!string.IsNullOrEmpty(search))
             {
-                var assetProperty = Expression.Property(parameter, nameof(Assignment.Asset));
-                var assetCodeProperty = Expression.Property(assetProperty, nameof(Asset.AssetCode));
-                var assetNameProperty = Expression.Property(assetProperty, nameof(Asset.AssetName));
-                var userToProperty = Expression.Property(parameter, nameof(Assignment.UserTo));
-                var usernameProperty = Expression.Property(userToProperty, nameof(User.Username));
-
                 var searchCondition = Expression.OrElse(
                     Expression.Call(assetNameProperty, nameof(string.Contains), Type.EmptyTypes, Expression.Constant(search)),
                     Expression.OrElse(
@@ -166,7 +163,7 @@ namespace AssetManagement.Application.Services.Implementations
             );
                 conditions.Add(searchCondition);
             }
-
+            // Add date conditions
             if (assignedDate.HasValue)
             {
                 var assignedDateValue = assignedDate.Value.Date;
@@ -175,7 +172,7 @@ namespace AssetManagement.Application.Services.Implementations
                 var dateCondition = Expression.Equal(datePropertyDate, Expression.Constant(assignedDateValue));
                 conditions.Add(dateCondition);
             }
-
+            // Combine all conditions with AndAlso
             if (conditions.Any())
             {
                 var combinedCondition = conditions.Aggregate((left, right) => Expression.AndAlso(left, right));
