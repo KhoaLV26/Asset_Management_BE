@@ -211,8 +211,34 @@ namespace AssetManagement.WebAPI.Controllers
             }
         }
 
+
+        [HttpPut("{id}")]
+        [Authorize(Roles = RoleConstant.ADMIN)]
+
+        public async Task<IActionResult> UpdateAssignment(Guid id, [FromForm] AssignmentRequest assignmentRequest)
+        {
+            var response = new GeneralBoolResponse();
+            try
+            {
+                var result = await _assignmentService.UpdateAssignment(id, assignmentRequest);
+                if (result == false)
+                {
+                    response.Success = false;
+                    response.Message = "Update fail";
+                    return Conflict(response);
+                }
+                response.Success = true;
+                response.Message = "Update successfully";
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                response.Success = false;
+                response.Message = ex.Message;
+                return Conflict(response);
+
         [HttpGet("user/{userId}")]
-        [Authorize]
+        [Authorize(Roles = RoleConstant.ADMIN)]
         public async Task<IActionResult> AdminGetUserAssignmentAsync(int pageNumber, Guid userId)
         {
             try
@@ -241,6 +267,7 @@ namespace AssetManagement.WebAPI.Controllers
                     Success = false,
                     Message = ex.Message,
                 });
+
             }
         }
     }
