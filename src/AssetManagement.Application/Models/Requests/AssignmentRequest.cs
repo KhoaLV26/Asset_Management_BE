@@ -14,7 +14,7 @@ namespace AssetManagement.Application.Models.Requests
         public Guid AssignedBy { get; set; }
         public DateTime AssignedDate { get; set; }
         public Guid AssetId { get; set; }
-        public string Note { get; set; }
+        public string? Note { get; set; }
         public EnumAssignmentStatus Status { get; set; }
     }
 }
