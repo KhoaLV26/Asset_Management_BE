@@ -147,6 +147,7 @@ namespace AssetManagement.WebAPI.Controllers
         }
 
         [HttpPut("{id}")]
+        [Authorize(Roles = RoleConstant.ADMIN)]
         public async Task<IActionResult> Put(Guid id, EditUserRequest request)
         {
             try

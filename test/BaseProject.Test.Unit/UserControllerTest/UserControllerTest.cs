@@ -1,6 +1,7 @@
 ﻿using AssetManagement.Application.Models.Requests;
 using AssetManagement.Application.Models.Responses;
 using AssetManagement.Application.Services;
+using AssetManagement.Domain.Enums;
 using AssetManagement.Domain.Models;
 using AssetManagement.WebAPI.Controllers;
 using Microsoft.AspNetCore.Http;
@@ -9,9 +10,7 @@ using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Moq;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Security.Claims;
-using System.Text;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -380,6 +379,96 @@ namespace AssetManagement.Test.Unit.UserControllerTest
 
             // Assert
             Assert.IsType<ConflictObjectResult>(result);
+        }
+
+        [Fact]
+        public async Task Get_WithValidId_ReturnsOkResultWithUser()
+        {
+            // Arrange
+            var userId = Guid.NewGuid();
+            var expected = new UserDetailResponse
+            {
+                DateOfBirth = DateOnly.FromDateTime(DateTime.Now),
+                FirstName = "Huy",
+                LastName = "Phuc",
+                Gender = EnumGender.Male,
+                DateJoined = DateOnly.FromDateTime(DateTime.Now),
+                RoleId = Guid.NewGuid()
+            };
+
+            _userServiceMock.Setup(service => service.GetUserDetailAsync(userId))
+                .ReturnsAsync(expected);
+
+            // Act
+            var result = await _controller.Get(userId);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            var response = Assert.IsType<GeneralGetResponse>(okResult.Value);
+            Assert.True(response.Success);
+            Assert.Equal("User retrieve successfully.", response.Message);
+        }
+
+        [Fact]
+        public async Task Get_WithException_ReturnsConflictResult()
+        {
+            // Arrange
+            var userId = Guid.NewGuid();
+            var exceptionMessage = "An error occurred";
+
+            _userServiceMock.Setup(service => service.GetUserDetailAsync(userId))
+                .ThrowsAsync(new Exception(exceptionMessage));
+
+            // Act
+            var result = await _controller.Get(userId);
+
+            // Assert
+            var conflictResult = Assert.IsType<ConflictObjectResult>(result);
+            var response = Assert.IsType<GeneralGetResponse>(conflictResult.Value);
+            Assert.False(response.Success);
+            Assert.Equal(exceptionMessage, response.Message);
+        }
+        
+        [Fact]
+        public async Task Put_NotExistId_ReturnsConflictResult()
+        {
+            // Arrange
+            var userId = Guid.NewGuid();
+            var exceptionMessage = "An error occurred";
+
+            _userServiceMock.Setup(service => service.UpdateUserAsync(userId,It.IsAny<EditUserRequest>()))
+                .ThrowsAsync(new ArgumentException(exceptionMessage));
+            // Act
+            var result = await _controller.Put(userId,It.IsAny<EditUserRequest>());
+
+            // Assert
+            var conflictResult = Assert.IsType<ConflictObjectResult>(result);
+            var response = Assert.IsType<GeneralGetResponse>(conflictResult.Value);
+            Assert.False(response.Success);
+            Assert.Equal(exceptionMessage, response.Message);
+        }
+        
+        [Fact]
+        public async Task Put_ExistId_ReturnsOkResult()
+        {
+            // Arrange
+            var userId = Guid.NewGuid();
+            var staffCode = "SD00001";
+            var updateResponse = new UpdateUserResponse
+            {
+                StaffCode = staffCode
+            };
+
+            _userServiceMock.Setup(service => service.UpdateUserAsync(userId, It.IsAny<EditUserRequest>()))
+                .ReturnsAsync(updateResponse);
+            // Act
+            var result = await _controller.Put(userId,It.IsAny<EditUserRequest>());
+
+            // Assert
+            var conflictResult = Assert.IsType<OkObjectResult>(result);
+            var response = Assert.IsType<GeneralGetResponse>(conflictResult.Value);
+            Assert.True(response.Success);
+            //Assert.Equal(, response.Data);
         }
     }
 }
