@@ -78,7 +78,7 @@ namespace AssetManagement.Application.Services.Implementations
             var assignments = await _unitOfWork.AssignmentRepository.GetAllAsync(pageNumber, filter, orderBy, includeProperties,
                 prioritizeCondition);
 
-            return (assignments.items.Where(a => !a.IsDeleted).Select(a => new AssignmentResponse
+            return (assignments.items.Select(a => new AssignmentResponse
             {
                 Id = a.Id,
                 AssignedTo = a.AssignedTo,
@@ -206,6 +206,12 @@ namespace AssetManagement.Application.Services.Implementations
                 );
                 conditions.Add(Expression.OrElse(searchCondition, userNameCondition));
             }
+
+            // Add IsDelete
+            var isDeletedCondition = Expression.Equal(Expression.Property(parameter, nameof(Assignment.IsDeleted)),
+                Expression.Constant(false));
+            conditions.Add(isDeletedCondition);
+
             // Add date conditions
             if (assignedDate.HasValue)
             {
