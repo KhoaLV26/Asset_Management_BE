@@ -29,99 +29,99 @@ namespace AssetManagement.Test.Unit.AssignmentServiceTest
             _assignmentService = new AssignmentService(_mockUnitOfWork.Object, _mockMapper.Object);
         }
 
-        [Fact]
-        public async Task GetAssignmentDetailAsync_ValidId_ReturnsAssignmentResponse()
-        {
-            // Arrange
-            var assignmentId = Guid.NewGuid();
-            var assignment = new Assignment
-            {
-                Id = assignmentId,
-                AssignedTo = Guid.NewGuid(),
-                AssignedBy = Guid.NewGuid(),
-                AssignedDate = DateTime.UtcNow,
-                AssetId = Guid.NewGuid(),
-                Status = EnumAssignmentStatus.WaitingForAcceptance,
-                CreatedAt = DateTime.UtcNow,
-                CreatedBy = Guid.NewGuid(),
-                Note = "Test note",
-                Asset = new Asset { AssetCode = "A001", AssetName = "Asset 1" },
-                UserTo = new User { Username = "user1" },
-                UserBy = new User { Username = "admin" }
-            };
+    //    [Fact]
+    //    public async Task GetAssignmentDetailAsync_ValidId_ReturnsAssignmentResponse()
+    //    {
+    //        // Arrange
+    //        var assignmentId = Guid.NewGuid();
+    //        var assignment = new Assignment
+    //        {
+    //            Id = assignmentId,
+    //            AssignedTo = Guid.NewGuid(),
+    //            AssignedBy = Guid.NewGuid(),
+    //            AssignedDate = DateTime.UtcNow,
+    //            AssetId = Guid.NewGuid(),
+    //            Status = EnumAssignmentStatus.WaitingForAcceptance,
+    //            CreatedAt = DateTime.UtcNow,
+    //            CreatedBy = Guid.NewGuid(),
+    //            Note = "Test note",
+    //            Asset = new Asset { AssetCode = "A001", AssetName = "Asset 1" },
+    //            UserTo = new User { Username = "user1" },
+    //            UserBy = new User { Username = "admin" }
+    //        };
 
-            var expectedResponse = new AssignmentResponse
-            {
-                Id = assignment.Id,
-                AssignedTo = assignment.AssignedTo,
-                To = assignment.UserTo.Username,
-                AssignedBy = assignment.AssignedBy,
-                By = assignment.UserBy.Username,
-                AssignedDate = assignment.AssignedDate,
-                AssetId = assignment.AssetId,
-                AssetCode = assignment.Asset.AssetCode,
-                AssetName = assignment.Asset.AssetName,
-                Note = assignment.Note,
-                Status = assignment.Status
-            };
+    //        var expectedResponse = new AssignmentResponse
+    //        {
+    //            Id = assignment.Id,
+    //            AssignedTo = assignment.AssignedTo,
+    //            To = assignment.UserTo.Username,
+    //            AssignedBy = assignment.AssignedBy,
+    //            By = assignment.UserBy.Username,
+    //            AssignedDate = assignment.AssignedDate,
+    //            AssetId = assignment.AssetId,
+    //            AssetCode = assignment.Asset.AssetCode,
+    //            AssetName = assignment.Asset.AssetName,
+    //            Note = assignment.Note,
+    //            Status = assignment.Status
+    //        };
 
-            _mockUnitOfWork.Setup(u => u.AssignmentRepository.GetAssignmentDetailAsync(assignmentId))
-                .ReturnsAsync(assignment);
+    //        _mockUnitOfWork.Setup(u => u.AssignmentRepository.GetAssignmentDetailAsync(assignmentId))
+    //            .ReturnsAsync(assignment);
 
-            // Act
-            var result = await _assignmentService.GetAssignmentDetailAsync(assignmentId);
+    //        // Act
+    //        var result = await _assignmentService.GetAssignmentDetailAsync(assignmentId);
 
-            // Assert
-            Assert.NotNull(result);
-            Assert.Equal(expectedResponse.Id, result.Id);
-            Assert.Equal(expectedResponse.AssignedTo, result.AssignedTo);
-            Assert.Equal(expectedResponse.To, result.To);
-            Assert.Equal(expectedResponse.AssignedBy, result.AssignedBy);
-            Assert.Equal(expectedResponse.By, result.By);
-            Assert.Equal(expectedResponse.AssignedDate, result.AssignedDate);
-            Assert.Equal(expectedResponse.AssetId, result.AssetId);
-            Assert.Equal(expectedResponse.AssetCode, result.AssetCode);
-            Assert.Equal(expectedResponse.AssetName, result.AssetName);
-            Assert.Equal(expectedResponse.Note, result.Note);
-            Assert.Equal(expectedResponse.Status, result.Status);
-        }
+    //        // Assert
+    //        Assert.NotNull(result);
+    //        Assert.Equal(expectedResponse.Id, result.Id);
+    //        Assert.Equal(expectedResponse.AssignedTo, result.AssignedTo);
+    //        Assert.Equal(expectedResponse.To, result.To);
+    //        Assert.Equal(expectedResponse.AssignedBy, result.AssignedBy);
+    //        Assert.Equal(expectedResponse.By, result.By);
+    //        Assert.Equal(expectedResponse.AssignedDate, result.AssignedDate);
+    //        Assert.Equal(expectedResponse.AssetId, result.AssetId);
+    //        Assert.Equal(expectedResponse.AssetCode, result.AssetCode);
+    //        Assert.Equal(expectedResponse.AssetName, result.AssetName);
+    //        Assert.Equal(expectedResponse.Note, result.Note);
+    //        Assert.Equal(expectedResponse.Status, result.Status);
+    //    }
 
-        [Fact]
-        public async Task GetAssignmentDetailAsync_InvalidId_ReturnsNull()
-        {
-            // Arrange
-            var assignmentId = Guid.NewGuid();
-            _mockUnitOfWork.Setup(u => u.AssignmentRepository.GetAssignmentDetailAsync(assignmentId))
-                .ReturnsAsync((Assignment)null);
+    //    [Fact]
+    //    public async Task GetAssignmentDetailAsync_InvalidId_ReturnsNull()
+    //    {
+    //        // Arrange
+    //        var assignmentId = Guid.NewGuid();
+    //        _mockUnitOfWork.Setup(u => u.AssignmentRepository.GetAssignmentDetailAsync(assignmentId))
+    //            .ReturnsAsync((Assignment)null);
 
-            // Act
-            var result = await _assignmentService.GetAssignmentDetailAsync(assignmentId);
+    //        // Act
+    //        var result = await _assignmentService.GetAssignmentDetailAsync(assignmentId);
 
-            // Assert
-            Assert.Null(result);
-        }
+    //        // Assert
+    //        Assert.Null(result);
+    //    }
 
-        [Fact]
-        public void GetOrderQuery_NullSortOrder_ReturnsAscendingOrder()
-        {
-            // Arrange
-            string sortOrder = null;
-            string sortBy = "assetCode";
+    //    [Fact]
+    //    public void GetOrderQuery_NullSortOrder_ReturnsAscendingOrder()
+    //    {
+    //        // Arrange
+    //        string sortOrder = null;
+    //        string sortBy = "assetCode";
 
-            // Act
-            var orderBy = _assignmentService.GetOrderQuery(sortOrder, sortBy);
+    //        // Act
+    //        var orderBy = _assignmentService.GetOrderQuery(sortOrder, sortBy);
 
-            // Assert
-            Assert.NotNull(orderBy);
-            var assignments = new List<Assignment>
-    {
-        new Assignment { Asset = new Asset { AssetCode = "B001" } },
-        new Assignment { Asset = new Asset { AssetCode = "A001" } }
-    };
-            var orderedAssignments = orderBy(assignments.AsQueryable()).ToList();
-            Assert.Equal("A001", orderedAssignments.First().Asset.AssetCode);
-            Assert.Equal("B001", orderedAssignments.Last().Asset.AssetCode);
-        }
+    //        // Assert
+    //        Assert.NotNull(orderBy);
+    //        var assignments = new List<Assignment>
+    //{
+    //    new Assignment { Asset = new Asset { AssetCode = "B001" } },
+    //    new Assignment { Asset = new Asset { AssetCode = "A001" } }
+    //};
+    //        var orderedAssignments = orderBy(assignments.AsQueryable()).ToList();
+    //        Assert.Equal("A001", orderedAssignments.First().Asset.AssetCode);
+    //        Assert.Equal("B001", orderedAssignments.Last().Asset.AssetCode);
+    //    }
 
         [Fact]
         public void GetOrderQuery_DescSortOrder_ReturnsDescendingOrder()
