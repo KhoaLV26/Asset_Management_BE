@@ -75,10 +75,15 @@ namespace AssetManagement.Application.Services.Implementations
                 prioritizeCondition = u => u.Id == newAssignmentId;
             }
 
-            var assignments = await _unitOfWork.AssignmentRepository.GetAllAsync(pageNumber, filter, orderBy, includeProperties,
-                prioritizeCondition);
+            var includes = "UserTo,UserBy,Asset";
+            if (!string.IsNullOrEmpty(includeProperties))
+            {
+                includes = $"{includes},{includeProperties}";
+            }
 
-            return (assignments.items.Select(a => new AssignmentResponse
+            var assignments = await _unitOfWork.AssignmentRepository.GetAllAsync(pageNumber, filter, orderBy, includes, prioritizeCondition);
+
+            return (assignments.items.Where(a => !a.IsDeleted).Select(a => new AssignmentResponse
             {
                 Id = a.Id,
                 AssignedTo = a.AssignedTo,
@@ -140,10 +145,10 @@ namespace AssetManagement.Application.Services.Implementations
 
         public async Task<Expression<Func<Assignment, bool>>>? GetFilterQuery(DateTime? assignedDate, string? state, string? search)
         {
-            // Determine the filtering criteria
             Expression<Func<Assignment, bool>>? filter = null;
             var parameter = Expression.Parameter(typeof(Assignment), "x");
             var conditions = new List<Expression>();
+
             // Parse state parameter to enum
             if (!string.IsNullOrEmpty(state))
             {
@@ -180,37 +185,23 @@ namespace AssetManagement.Application.Services.Implementations
 
                 conditions.Add(defaultStateCondition);
             }
+
             // Add search conditions
             if (!string.IsNullOrEmpty(search))
             {
-                var searchCondition = Expression.OrElse(
-                    Expression.Call(
-                        Expression.Property(parameter, nameof(Assignment.Asset.AssetCode)),
-                        nameof(string.Contains),
-                        Type.EmptyTypes,
-                        Expression.Constant(search)
-                    ),
-                    Expression.Call(
-                        Expression.Property(parameter, nameof(Assignment.Asset.AssetName)),
-                        nameof(string.Contains),
-                        Type.EmptyTypes,
-                        Expression.Constant(search)
-                    )
+                var assetCodeProperty = Expression.Property(Expression.Property(parameter, nameof(Assignment.Asset)), nameof(Asset.AssetCode));
+                var assetNameProperty = Expression.Property(Expression.Property(parameter, nameof(Assignment.Asset)), nameof(Asset.AssetName));
+                var userToUsernameProperty = Expression.Property(Expression.Property(parameter, nameof(Assignment.UserTo)), nameof(User.Username));
 
+                var searchCondition = Expression.OrElse(
+                    Expression.Call(assetCodeProperty, nameof(string.Contains), Type.EmptyTypes, Expression.Constant(search)),
+                    Expression.Call(assetNameProperty, nameof(string.Contains), Type.EmptyTypes, Expression.Constant(search))
                 );
-                var userNameCondition = Expression.Call(
-                    Expression.Property(parameter, nameof(Assignment.UserTo.Username)),
-                    nameof(string.Contains),
-                    Type.EmptyTypes,
-                    Expression.Constant(search)
-                );
+
+                var userNameCondition = Expression.Call(userToUsernameProperty, nameof(string.Contains), Type.EmptyTypes, Expression.Constant(search));
+
                 conditions.Add(Expression.OrElse(searchCondition, userNameCondition));
             }
-
-            // Add IsDelete
-            var isDeletedCondition = Expression.Equal(Expression.Property(parameter, nameof(Assignment.IsDeleted)),
-                Expression.Constant(false));
-            conditions.Add(isDeletedCondition);
 
             // Add date conditions
             if (assignedDate.HasValue)
@@ -221,12 +212,14 @@ namespace AssetManagement.Application.Services.Implementations
                 var dateCondition = Expression.Equal(datePropertyDate, Expression.Constant(assignedDateValue));
                 conditions.Add(dateCondition);
             }
+
             // Combine all conditions with AndAlso
             if (conditions.Any())
             {
                 var combinedCondition = conditions.Aggregate((left, right) => Expression.AndAlso(left, right));
                 filter = Expression.Lambda<Func<Assignment, bool>>(combinedCondition, parameter);
             }
+
             return filter;
         }
 
