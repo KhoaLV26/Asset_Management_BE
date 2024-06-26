@@ -50,7 +50,6 @@ namespace AssetManagement.Infrastructure.UnitOfWork
         {
             return await _context.SaveChangesAsync();
         }
-
         public int Commit()
         {
             return _context.SaveChanges();
