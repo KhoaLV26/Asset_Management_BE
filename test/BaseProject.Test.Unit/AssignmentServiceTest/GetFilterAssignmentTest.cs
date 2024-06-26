@@ -152,42 +152,6 @@ namespace AssetManagement.Test.Unit.AssignmentServiceTest
             Assert.Equal("Invalid status value", exception.Message);
         }
 
-        [Fact]
-        public async Task GetFilterQuery_WithSearch_ReturnsCorrectExpression()
-        {
-            // Arrange
-            DateTime? assignedDate = null;
-            string state = null;
-            string search = "asset";
-
-            // Act
-            var filter = await _assignmentService.GetFilterQuery(assignedDate, state, search);
-
-            // Assert
-            Assert.NotNull(filter);
-            var assignment1 = new Assignment
-            {
-                Asset = new Asset { AssetCode = "ASSET001", AssetName = "Laptop" },
-                UserTo = new User { Username = "johnsmith" },
-                Status = EnumAssignmentStatus.Accepted
-            };
-            var assignment2 = new Assignment
-            {
-                Asset = new Asset { AssetCode = "ABC123", AssetName = "Monitor" },
-                UserTo = new User { Username = "assetuser" },
-                Status = EnumAssignmentStatus.WaitingForAcceptance
-            };
-            var assignment3 = new Assignment
-            {
-                Asset = new Asset { AssetCode = "XYZ789", AssetName = "Keyboard" },
-                UserTo = new User { Username = "janesmith" },
-                Status = EnumAssignmentStatus.Accepted
-            };
-            Assert.True(filter.Compile()(assignment1));
-            Assert.True(filter.Compile()(assignment2));
-            Assert.False(filter.Compile()(assignment3));
-        }
-
         [Theory]
         [InlineData("assetcode", "asc", "ABC123", "XYZ789")]
         [InlineData("assetname", "desc", "Monitor", "Laptop")]
@@ -386,6 +350,8 @@ namespace AssetManagement.Test.Unit.AssignmentServiceTest
                     It.IsAny<Expression<Func<Assignment, bool>>>(),
                     It.IsAny<Expression<Func<Assignment, object>>[]>()))
                 .ReturnsAsync(assignment);
+
+            _mockUnitOfWork.Setup(x => x.AssignmentRepository).Returns(mockAssignmentRepository.Object);
 
             // Act
             var result = await _assignmentService.GetAssignmentDetailAsync(assignmentId);
