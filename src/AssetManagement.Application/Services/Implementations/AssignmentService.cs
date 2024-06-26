@@ -56,7 +56,6 @@ namespace AssetManagement.Application.Services.Implementations
             Expression<Func<Assignment, bool>> filter = await GetFilterQuery(assignedDate, state, search);
             Expression<Func<Assignment, bool>> prioritizeCondition = null;
 
-
             if (newAssignmentId.HasValue)
             {
                 prioritizeCondition = u => u.Id == newAssignmentId;
