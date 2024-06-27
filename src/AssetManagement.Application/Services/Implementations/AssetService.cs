@@ -337,40 +337,32 @@ namespace AssetManagement.Application.Services.Implementations
             {
                 throw new ArgumentException("Asset not exist");
             }
+        
             if (!string.IsNullOrEmpty(assetRequest.AssetName))
             {
                 currentAsset.AssetName = assetRequest.AssetName;
             }
-
+        
             if (!string.IsNullOrEmpty(assetRequest.Specification))
             {
                 currentAsset.Specification = assetRequest.Specification;
             }
-
-            if (assetRequest.InstallDate == DateOnly.MinValue)
+        
+            if (assetRequest.InstallDate != null && assetRequest.InstallDate != DateOnly.MinValue)
             {
                 currentAsset.InstallDate = assetRequest.InstallDate;
             }
-
-            if (!string.IsNullOrEmpty(assetRequest.AssetName))
-            {
-                currentAsset.AssetName = assetRequest.AssetName;
-            }
-
-            if (!string.IsNullOrEmpty(assetRequest.Specification))
-            {
-                currentAsset.Specification = assetRequest.Specification;
-            }
-
-            if (Enum.IsDefined(typeof(EnumAssetStatus), assetRequest.Status))
+        
+            if (assetRequest.Status != null)
             {
                 currentAsset.Status = assetRequest.Status;
             }
-
+        
+            await _unitOfWork.CommitAsync();
+        
             var category = await _unitOfWork.CategoryRepository.GetAsync(x => x.Id == currentAsset.CategoryId);
             var categoryName = category?.Name;
-
-            await _unitOfWork.CommitAsync();
+        
             return new AssetResponse
             {
                 Id = currentAsset.Id,
