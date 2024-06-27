@@ -94,6 +94,30 @@ namespace AssetManagement.WebAPI.Controllers
             }
         }
 
+        [HttpGet("{id}")]
+        [Authorize]
+        public async Task<IActionResult> GetAssetId(Guid id)
+        {
+            try
+            {
+                var asset = await _assetService.GetAssetByIdAsync(id);
+                return Ok(new GeneralGetResponse
+                {
+                    Success = true,
+                    Message = "Asset retrived successfully.",
+                    Data = asset
+                });
+            }
+            catch (Exception ex)
+            {
+                return Conflict(new GeneralGetResponse
+                {
+                    Success = false,
+                    Message = ex.Message
+                });
+            }
+        }
+
         [HttpPut("{id}")]
         [Authorize(Roles = RoleConstant.ADMIN)]
         public async Task<IActionResult> UpdateAsset(Guid id, AssetUpdateRequest assetRequest)
