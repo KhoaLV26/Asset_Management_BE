@@ -5,6 +5,8 @@ using AssetManagement.Domain.Entities;
 using AssetManagement.Domain.Enums;
 using AssetManagement.Domain.Interfaces;
 using AutoMapper;
+using ClosedXML.Excel;
+using DocumentFormat.OpenXml.Office2013.Word;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -411,6 +413,7 @@ namespace AssetManagement.Application.Services.Implementations
                 WaitingForRecycling = assets.Count(asset => asset.CategoryId == category.Id && asset.Status == EnumAssetStatus.WaitingForRecycling),
                 Recycled = assets.Count(asset => asset.CategoryId == category.Id && asset.Status == EnumAssetStatus.Recycled)
             }).AsQueryable();
+            sortBy ??= "Category";
             var orderBy = GetOrderReportQuery(sortOrder, sortBy);
             if (orderBy != null)
             {
@@ -458,6 +461,56 @@ namespace AssetManagement.Application.Services.Implementations
                     break;
             }
             return orderBy;
+        }
+
+        public async Task<byte[]> ExportToExcelAsync(Guid locationId)
+        {
+            var categories = await _unitOfWork.CategoryRepository.GetAllAsync(c => !c.IsDeleted);
+            var assets = await _unitOfWork.AssetRepository.GetAllAsync(a => a.LocationId == locationId && !a.IsDeleted);
+
+            var reports = categories.Select(category => new ReportResponse
+            {
+                Category = category.Name,
+                Total = assets.Count(asset => asset.CategoryId == category.Id),
+                Assigned = assets.Count(asset => asset.CategoryId == category.Id && asset.Status == EnumAssetStatus.Assigned),
+                Available = assets.Count(asset => asset.CategoryId == category.Id && asset.Status == EnumAssetStatus.Available),
+                NotAvailable = assets.Count(asset => asset.CategoryId == category.Id && asset.Status == EnumAssetStatus.NotAvailable),
+                WaitingForRecycling = assets.Count(asset => asset.CategoryId == category.Id && asset.Status == EnumAssetStatus.WaitingForRecycling),
+                Recycled = assets.Count(asset => asset.CategoryId == category.Id && asset.Status == EnumAssetStatus.Recycled)
+            }).ToList();
+
+            using (var workbook = new XLWorkbook())
+            {
+                var worksheet = workbook.Worksheets.Add("Reports");
+
+                var properties = typeof(ReportResponse).GetProperties();
+
+                // Add headers
+                for (int i = 0; i < properties.Length; i++)
+                {
+                    worksheet.Cell(1, i + 1).Value = properties[i].Name;
+                }
+
+                // Add data
+                int row = 2;
+                foreach (var report in reports)
+                {
+                    worksheet.Cell(row, 1).Value = report.Category;
+                    worksheet.Cell(row, 2).Value = report.Total;
+                    worksheet.Cell(row, 3).Value = report.Available;
+                    worksheet.Cell(row, 4).Value = report.NotAvailable;
+                    worksheet.Cell(row, 5).Value = report.Assigned;
+                    worksheet.Cell(row, 6).Value = report.WaitingForRecycling;
+                    worksheet.Cell(row, 7).Value = report.Recycled;
+                    row++;
+                }
+
+                using (var stream = new System.IO.MemoryStream())
+                {
+                    workbook.SaveAs(stream);
+                    return stream.ToArray();
+                }
+            }
         }
     }
 }

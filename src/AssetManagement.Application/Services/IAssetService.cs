@@ -22,5 +22,7 @@ namespace AssetManagement.Application.Services
         Task<AssetResponse> UpdateAsset(Guid id, AssetUpdateRequest assetRequest);
 
         Task<(IEnumerable<ReportResponse>, int count)> GetReports(string? sortOrder, string? sortBy, Guid locationId, int pageNumber = 1);
+
+        Task<byte[]> ExportToExcelAsync(Guid locationId);
     }
 }

@@ -214,8 +214,7 @@ namespace AssetManagement.WebAPI.Controllers
 
         [HttpPut("{id}")]
         [Authorize(Roles = RoleConstant.ADMIN)]
-
-        public async Task<IActionResult> UpdateAssignment(Guid id, [FromForm] AssignmentRequest assignmentRequest)
+        public async Task<IActionResult> UpdateAssignment(Guid id, [FromBody] AssignmentRequest assignmentRequest)
         {
             var response = new GeneralBoolResponse();
             try
@@ -236,6 +235,8 @@ namespace AssetManagement.WebAPI.Controllers
                 response.Success = false;
                 response.Message = ex.Message;
                 return Conflict(response);
+            }
+        }
 
         [HttpGet("user/{userId}")]
         [Authorize(Roles = RoleConstant.ADMIN)]
@@ -267,7 +268,6 @@ namespace AssetManagement.WebAPI.Controllers
                     Success = false,
                     Message = ex.Message,
                 });
-
             }
         }
     }
