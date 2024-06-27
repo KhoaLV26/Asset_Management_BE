@@ -95,6 +95,7 @@ namespace AssetManagement.WebAPI.Controllers
         }
 
         [HttpGet("{id}")]
+        [Authorize]
         public async Task<IActionResult> GetAssetId(Guid id)
         {
             try
@@ -114,6 +115,52 @@ namespace AssetManagement.WebAPI.Controllers
                     Success = false,
                     Message = ex.Message
                 });
+            }
+        }
+
+        [HttpPut("{id}")]
+        [Authorize(Roles = RoleConstant.ADMIN)]
+        public async Task<IActionResult> UpdateAsset(Guid id, AssetUpdateRequest assetRequest)
+        {
+            var response = new GeneralGetResponse();
+            try
+            {
+                var result = await _assetService.UpdateAsset(id, assetRequest);
+                response.Success = true;
+                response.Message = "Update successfully";
+                response.Data = result;
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                response.Success = false;
+                response.Message = ex.Message;
+                return Conflict(response);
+            }
+        }
+
+        [HttpPut("response/{id}")]
+        [Authorize]
+        public async Task<IActionResult> ResponseAsset(Guid id)
+        {
+            var response = new GeneralGetResponse();
+            var assetRequest = new AssetUpdateRequest
+            {
+                Status = EnumAssetStatus.Available
+            };
+            try
+            {
+                var result = await _assetService.UpdateAsset(id, assetRequest);
+                response.Success = true;
+                response.Message = "Update successfully";
+                response.Data = result;
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                response.Success = false;
+                response.Message = ex.Message;
+                return Conflict(response);
             }
         }
 
@@ -150,26 +197,6 @@ namespace AssetManagement.WebAPI.Controllers
             }
         }
 
-        [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateAsset(Guid id, AssetUpdateRequest assetRequest)
-        {
-            var response = new GeneralGetResponse();
-            try
-            {
-                var result = await _assetService.UpdateAsset(id, assetRequest);
-                response.Success = true;
-                response.Message = "Update successfully";
-                response.Data = result;
-                return Ok(response);
-            }
-            catch (Exception ex)
-            {
-                response.Success = false;
-                response.Message = ex.Message;
-                return Conflict(response);
-            }
-        }
-
         [HttpGet("reports")]
         [Authorize(Roles = RoleConstant.ADMIN)]
         public async Task<IActionResult> GetReports(int pageNumber, string? sortOrder, string? sortBy)
@@ -199,6 +226,25 @@ namespace AssetManagement.WebAPI.Controllers
                 {
                     Success = false,
                     Message = ex.Message,
+                });
+            }
+        }
+
+        [HttpGet("export-to-excel")]
+        [Authorize(Roles = RoleConstant.ADMIN)]
+        public async Task<IActionResult> ExportToExcel()
+        {
+            try
+            {
+                var file = await _assetService.ExportToExcelAsync(LocationID);
+                return File(file, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "AssetReport.xlsx");
+            }
+            catch (Exception ex)
+            {
+                return Conflict(new GeneralBoolResponse
+                {
+                    Success = false,
+                    Message = ex.Message
                 });
             }
         }

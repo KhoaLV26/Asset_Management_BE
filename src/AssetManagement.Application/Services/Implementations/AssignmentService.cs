@@ -75,10 +75,15 @@ namespace AssetManagement.Application.Services.Implementations
                 prioritizeCondition = u => u.Id == newAssignmentId;
             }
 
-            var assignments = await _unitOfWork.AssignmentRepository.GetAllAsync(pageNumber, filter, orderBy, includeProperties,
-                prioritizeCondition);
+            var includes = "UserTo,UserBy,Asset";
+            if (!string.IsNullOrEmpty(includeProperties))
+            {
+                includes = $"{includes},{includeProperties}";
+            }
 
-            return (assignments.items.Where(a => !a.IsDeleted).Select(a => new AssignmentResponse
+            var assignments = await _unitOfWork.AssignmentRepository.GetAllAsync(pageNumber, filter, orderBy, includes, prioritizeCondition);
+
+            return (assignments.items.Select(a => new AssignmentResponse
             {
                 Id = a.Id,
                 AssignedTo = a.AssignedTo,
@@ -100,7 +105,7 @@ namespace AssetManagement.Application.Services.Implementations
                      a => a.UserTo,
                      a => a.UserBy,
                      a => a.Asset);
-            if (assignment == null || assignment.IsDeleted == false)
+            if (assignment == null || assignment.IsDeleted == true)
             {
                 return null;
             }
@@ -121,12 +126,71 @@ namespace AssetManagement.Application.Services.Implementations
             };
         }
 
+        public async Task<AssignmentResponse> UpdateAssignment(Guid id, AssignmentRequest assignmentRequest)
+        {
+            var currentAssignment = await _unitOfWork.AssignmentRepository.GetAsync(a => a.Id == id, a => a.UserTo,
+                     a => a.UserBy,
+                     a => a.Asset);
+            if (currentAssignment == null)
+            {
+                throw new ArgumentException("Assignment not exist");
+            }
+            if (assignmentRequest.AssignedTo != Guid.Empty)
+            {
+                currentAssignment.AssetId = assignmentRequest.AssetId;
+            }
+
+            if (assignmentRequest.AssignedBy != Guid.Empty)
+            {
+                currentAssignment.AssignedBy = assignmentRequest.AssignedBy;
+            }
+
+            if (assignmentRequest.AssignedDate != DateTime.MinValue)
+            {
+                currentAssignment.AssignedDate = assignmentRequest.AssignedDate;
+            }
+
+            if (assignmentRequest.AssetId != Guid.Empty)
+            {
+                var asset = await _unitOfWork.AssetRepository.GetAsync(a => a.Id == assignmentRequest.AssetId);
+                if (asset == null)
+                {
+                    throw new ArgumentException("The asset does not exist");
+                }
+                currentAssignment.AssetId = assignmentRequest.AssetId;
+            }
+
+            if (Enum.IsDefined(typeof(EnumAssignmentStatus), assignmentRequest.Status))
+            {
+                currentAssignment.Status = assignmentRequest.Status;
+            }
+
+            currentAssignment.Note = assignmentRequest.Note;
+
+            await _unitOfWork.CommitAsync();
+
+            return new AssignmentResponse
+            {
+                Id = currentAssignment.Id,
+                AssignedTo = currentAssignment.AssignedTo,
+                To = currentAssignment.UserTo.Username,
+                AssignedBy = currentAssignment.AssignedBy,
+                By = currentAssignment.UserBy.Username,
+                AssignedDate = currentAssignment.AssignedDate,
+                AssetId = currentAssignment.AssetId,
+                AssetCode = currentAssignment.Asset.AssetCode,
+                AssetName = currentAssignment.Asset.AssetName,
+                Note = currentAssignment.Note,
+                Status = currentAssignment.Status
+            };        
+        }
+
         public async Task<Expression<Func<Assignment, bool>>>? GetFilterQuery(DateTime? assignedDate, string? state, string? search)
         {
-            // Determine the filtering criteria
             Expression<Func<Assignment, bool>>? filter = null;
             var parameter = Expression.Parameter(typeof(Assignment), "x");
             var conditions = new List<Expression>();
+
             // Parse state parameter to enum
             if (!string.IsNullOrEmpty(state))
             {
@@ -163,32 +227,27 @@ namespace AssetManagement.Application.Services.Implementations
 
                 conditions.Add(defaultStateCondition);
             }
+
             // Add search conditions
             if (!string.IsNullOrEmpty(search))
             {
-                var searchCondition = Expression.OrElse(
-                    Expression.Call(
-                        Expression.Property(parameter, nameof(Assignment.Asset.AssetCode)),
-                        nameof(string.Contains),
-                        Type.EmptyTypes,
-                        Expression.Constant(search)
-                    ),
-                    Expression.Call(
-                        Expression.Property(parameter, nameof(Assignment.Asset.AssetName)),
-                        nameof(string.Contains),
-                        Type.EmptyTypes,
-                        Expression.Constant(search)
-                    )
+                var assetCodeProperty = Expression.Property(Expression.Property(parameter, nameof(Assignment.Asset)), nameof(Asset.AssetCode));
+                var assetNameProperty = Expression.Property(Expression.Property(parameter, nameof(Assignment.Asset)), nameof(Asset.AssetName));
+                var userToUsernameProperty = Expression.Property(Expression.Property(parameter, nameof(Assignment.UserTo)), nameof(User.Username));
 
+                var isDeletedCondition = Expression.Equal(Expression.Property(parameter, nameof(Assignment.IsDeleted)),Expression.Constant(false));
+                conditions.Add(isDeletedCondition);
+
+                var searchCondition = Expression.OrElse(
+                    Expression.Call(assetCodeProperty, nameof(string.Contains), Type.EmptyTypes, Expression.Constant(search)),
+                    Expression.Call(assetNameProperty, nameof(string.Contains), Type.EmptyTypes, Expression.Constant(search))
                 );
-                var userNameCondition = Expression.Call(
-                    Expression.Property(parameter, nameof(Assignment.UserTo.Username)),
-                    nameof(string.Contains),
-                    Type.EmptyTypes,
-                    Expression.Constant(search)
-                );
+
+                var userNameCondition = Expression.Call(userToUsernameProperty, nameof(string.Contains), Type.EmptyTypes, Expression.Constant(search));
+
                 conditions.Add(Expression.OrElse(searchCondition, userNameCondition));
             }
+
             // Add date conditions
             if (assignedDate.HasValue)
             {
@@ -198,12 +257,14 @@ namespace AssetManagement.Application.Services.Implementations
                 var dateCondition = Expression.Equal(datePropertyDate, Expression.Constant(assignedDateValue));
                 conditions.Add(dateCondition);
             }
+
             // Combine all conditions with AndAlso
             if (conditions.Any())
             {
                 var combinedCondition = conditions.Aggregate((left, right) => Expression.AndAlso(left, right));
                 filter = Expression.Lambda<Func<Assignment, bool>>(combinedCondition, parameter);
             }
+
             return filter;
         }
 
@@ -302,7 +363,7 @@ namespace AssetManagement.Application.Services.Implementations
             return filter;
         }
 
-        public async Task<(IEnumerable<AssignmentResponse> data, int totalCount)> GetUserAssignmentAsync(int pageNumber, Guid userId, string? sortOrder,
+        public async Task<(IEnumerable<AssignmentResponse> data, int totalCount)> GetUserAssignmentAsync(int pageNumber, Guid userId, string? sortOrder = "desc",
          string? sortBy = "assigneddate")
         {
             Func<IQueryable<Assignment>, IOrderedQueryable<Assignment>>? orderBy = GetOrderQuery(sortOrder, sortBy);

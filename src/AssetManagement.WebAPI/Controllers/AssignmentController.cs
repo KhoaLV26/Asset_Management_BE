@@ -3,6 +3,7 @@ using AssetManagement.Application.Services;
 using AssetManagement.Application.Services.Implementations;
 using AssetManagement.Domain.Constants;
 using AssetManagement.Domain.Entities;
+using AssetManagement.Domain.Enums;
 using AssetManagement.Domain.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -191,6 +192,94 @@ namespace AssetManagement.WebAPI.Controllers
                     {
                         Success = true,
                         Message = "Assignments retrieved successfully.",
+                        Data = assignments.data,
+                        TotalCount = assignments.totalCount
+                    });
+                }
+                return Conflict(new GeneralGetsResponse
+                {
+                    Success = false,
+                    Message = "No data.",
+                });
+            }
+            catch (Exception ex)
+            {
+                return Conflict(new GeneralGetsResponse
+                {
+                    Success = false,
+                    Message = ex.Message,
+                });
+            }
+        }
+
+
+        [HttpPut("{id}")]
+        [Authorize(Roles = RoleConstant.ADMIN)]
+        public async Task<IActionResult> UpdateAssignment(Guid id, [FromBody] AssignmentRequest assignmentRequest)
+        {
+            var response = new GeneralBoolResponse();
+            try
+            {
+                var result = await _assignmentService.UpdateAssignment(id, assignmentRequest);
+                response.Success = true;
+                response.Message = "Update successfully";
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                response.Success = false;
+                response.Message = ex.Message;
+                return Conflict(response);
+            }
+        }
+
+        [HttpPut("response/{id}")]
+        [Authorize]
+        public async Task<IActionResult> ResponseAssignment(Guid id, string accepted)
+        {
+            var response = new GeneralBoolResponse();
+            AssignmentRequest assignmentRequest;
+            if (accepted.ToLower() == "true")
+            {
+                assignmentRequest = new AssignmentRequest
+                {
+                    Status = EnumAssignmentStatus.Accepted
+                };
+            } else
+            {
+                assignmentRequest = new AssignmentRequest
+                {
+                    Status = EnumAssignmentStatus.Declined
+                };
+            }
+            try
+            {
+                var result = await _assignmentService.UpdateAssignment(id, assignmentRequest);
+                response.Success = true;
+                response.Message = "Update successfully";
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                response.Success = false;
+                response.Message = ex.Message;
+                return Conflict(response);
+            }
+        }
+
+        [HttpGet("user/{userId}")]
+        [Authorize(Roles = RoleConstant.ADMIN)]
+        public async Task<IActionResult> AdminGetUserAssignmentAsync(int pageNumber, Guid userId)
+        {
+            try
+            {
+                var assignments = await _assignmentService.GetUserAssignmentAsync(pageNumber == 0 ? 1 : pageNumber, userId, "", "");
+                if (assignments.data.Any())
+                {
+                    return Ok(new GeneralGetsResponse
+                    {
+                        Success = true,
+                        Message = "Assignments of user retrieved successfully.",
                         Data = assignments.data,
                         TotalCount = assignments.totalCount
                     });
