@@ -1,16 +1,16 @@
 ﻿using AssetManagement.Application.Models.Requests;
 using AssetManagement.Application.Models.Responses;
 using AssetManagement.Application.Services;
+using AssetManagement.Domain.Enums;
 using AssetManagement.Domain.Models;
 using AssetManagement.WebAPI.Controllers;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Moq;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Security.Claims;
-using System.Text;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -308,5 +308,167 @@ namespace AssetManagement.Test.Unit.UserControllerTest
         //    Assert.False(response.Success);
         //    Assert.Equal(exceptionMessage, response.Message);
         //}
+
+        [Fact]
+        public async Task DisableUser_Success_ReturnsOkResult()
+        {
+            // Arrange
+            var userId = Guid.NewGuid();
+            _userServiceMock.Setup(s => s.DisableUser(userId))
+                .ReturnsAsync(true);
+
+            // Act
+            var result = await _controller.DisableUser(userId);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            var response = Assert.IsType<GeneralBoolResponse>(okResult.Value);
+            Assert.True(response.Success);
+            Assert.Equal("User disabled successfully.", response.Message);
+        }
+
+        [Fact]
+        public async Task DisableUser_Failure_ReturnsConflict()
+        {
+            // Arrange
+            var userId = Guid.NewGuid();
+            _userServiceMock.Setup(s => s.DisableUser(userId))
+                .ReturnsAsync(false);
+
+            // Act
+            var result = await _controller.DisableUser(userId);
+
+            // Assert
+            var conflictResult = Assert.IsType<ConflictObjectResult>(result);
+            var response = Assert.IsType<GeneralBoolResponse>(conflictResult.Value);
+            Assert.False(response.Success);
+            Assert.Equal("User have valid assignment", response.Message);
+        }
+
+        [Fact]
+        public async Task DisableUser_Exception_ReturnsConflict()
+        {
+            // Arrange
+            var userId = Guid.NewGuid();
+            var exceptionMessage = "An unexpected error occurred.";
+            _userServiceMock.Setup(s => s.DisableUser(userId))
+                .ThrowsAsync(new Exception(exceptionMessage));
+
+            // Act
+            var result = await _controller.DisableUser(userId);
+
+            // Assert
+            var conflictResult = Assert.IsType<ConflictObjectResult>(result);
+            var response = Assert.IsType<GeneralBoolResponse>(conflictResult.Value);
+            Assert.False(response.Success);
+            Assert.Equal(exceptionMessage, response.Message);
+        }
+
+        [Fact]
+        public void DisableUser_Unauthorized_ReturnsUnauthorized()
+        {
+            // Arrange
+            var userId = Guid.NewGuid();
+            var controller = new UsersController(_userServiceMock.Object);
+            controller.ControllerContext = new ControllerContext();
+            controller.ControllerContext.HttpContext = new DefaultHttpContext();
+            controller.ControllerContext.HttpContext.User = new ClaimsPrincipal(new ClaimsIdentity());
+
+            // Act
+            var result = controller.DisableUser(userId).Result;
+
+            // Assert
+            Assert.IsType<ConflictObjectResult>(result);
+        }
+
+        [Fact]
+        public async Task Get_WithValidId_ReturnsOkResultWithUser()
+        {
+            // Arrange
+            var userId = Guid.NewGuid();
+            var expected = new UserDetailResponse
+            {
+                DateOfBirth = DateOnly.FromDateTime(DateTime.Now),
+                FirstName = "Huy",
+                LastName = "Phuc",
+                Gender = EnumGender.Male,
+                DateJoined = DateOnly.FromDateTime(DateTime.Now),
+                RoleId = Guid.NewGuid()
+            };
+
+            _userServiceMock.Setup(service => service.GetUserDetailAsync(userId))
+                .ReturnsAsync(expected);
+
+            // Act
+            var result = await _controller.Get(userId);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            var response = Assert.IsType<GeneralGetResponse>(okResult.Value);
+            Assert.True(response.Success);
+            Assert.Equal("User retrieve successfully.", response.Message);
+        }
+
+        [Fact]
+        public async Task Get_WithException_ReturnsConflictResult()
+        {
+            // Arrange
+            var userId = Guid.NewGuid();
+            var exceptionMessage = "An error occurred";
+
+            _userServiceMock.Setup(service => service.GetUserDetailAsync(userId))
+                .ThrowsAsync(new Exception(exceptionMessage));
+
+            // Act
+            var result = await _controller.Get(userId);
+
+            // Assert
+            var conflictResult = Assert.IsType<ConflictObjectResult>(result);
+            var response = Assert.IsType<GeneralGetResponse>(conflictResult.Value);
+            Assert.False(response.Success);
+            Assert.Equal(exceptionMessage, response.Message);
+        }
+        
+        [Fact]
+        public async Task Put_NotExistId_ReturnsConflictResult()
+        {
+            // Arrange
+            var userId = Guid.NewGuid();
+            var exceptionMessage = "An error occurred";
+
+            _userServiceMock.Setup(service => service.UpdateUserAsync(userId,It.IsAny<EditUserRequest>()))
+                .ThrowsAsync(new ArgumentException(exceptionMessage));
+            // Act
+            var result = await _controller.Put(userId,It.IsAny<EditUserRequest>());
+
+            // Assert
+            var conflictResult = Assert.IsType<ConflictObjectResult>(result);
+            var response = Assert.IsType<GeneralGetResponse>(conflictResult.Value);
+            Assert.False(response.Success);
+            Assert.Equal(exceptionMessage, response.Message);
+        }
+        
+        [Fact]
+        public async Task Put_ExistId_ReturnsOkResult()
+        {
+            // Arrange
+            var userId = Guid.NewGuid();
+            var staffCode = "SD00001";
+            var updateResponse = new UpdateUserResponse
+            {
+                StaffCode = staffCode
+            };
+
+            _userServiceMock.Setup(service => service.UpdateUserAsync(userId, It.IsAny<EditUserRequest>()))
+                .ReturnsAsync(updateResponse);
+            // Act
+            var result = await _controller.Put(userId,It.IsAny<EditUserRequest>());
+
+            // Assert
+            var conflictResult = Assert.IsType<OkObjectResult>(result);
+            var response = Assert.IsType<GeneralGetResponse>(conflictResult.Value);
+            Assert.True(response.Success);
+            //Assert.Equal(, response.Data);
+        }
     }
 }

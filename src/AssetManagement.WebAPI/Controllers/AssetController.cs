@@ -117,6 +117,39 @@ namespace AssetManagement.WebAPI.Controllers
             }
         }
 
+        [HttpDelete("{id}")]
+        [Authorize(Roles = RoleConstant.ADMIN)]
+        public async Task<IActionResult> DeleteAsset(Guid id)
+        {
+            try
+            {
+                var result = await _assetService.DeleteAssetAsync(id);
+                if (result == null)
+                {
+                    return Conflict(new GeneralBoolResponse
+                    {
+                        Success = false,
+                        Message = "Asset delete failed."
+                    });
+                }
+
+                return Ok(new GeneralGetResponse
+                {
+                    Success = true,
+                    Message = "Asset delete successfully.",
+                    Data = result
+                });
+            }
+            catch (Exception ex)
+            {
+                return Conflict(new GeneralBoolResponse
+                {
+                    Success = false,
+                    Message = ex.Message
+                });
+            }
+        }
+
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateAsset(Guid id, AssetUpdateRequest assetRequest)
         {
@@ -134,6 +167,58 @@ namespace AssetManagement.WebAPI.Controllers
                 response.Success = false;
                 response.Message = ex.Message;
                 return Conflict(response);
+            }
+        }
+
+        [HttpGet("reports")]
+        [Authorize(Roles = RoleConstant.ADMIN)]
+        public async Task<IActionResult> GetReports(int pageNumber, string? sortOrder, string? sortBy)
+        {
+            try
+            {
+                var (reports, count) = await _assetService.GetReports(sortOrder, sortBy, LocationID, pageNumber);
+                if (reports.Any())
+                {
+                    return Ok(new GeneralGetsResponse
+                    {
+                        Success = true,
+                        Message = "Reports retrieved successfully.",
+                        Data = reports,
+                        TotalCount = count
+                    });
+                }
+                return Conflict(new GeneralGetsResponse
+                {
+                    Success = false,
+                    Message = "No data.",
+                });
+            }
+            catch (Exception ex)
+            {
+                return Conflict(new GeneralGetsResponse
+                {
+                    Success = false,
+                    Message = ex.Message,
+                });
+            }
+        }
+
+        [HttpGet("export-to-excel")]
+        [Authorize(Roles = RoleConstant.ADMIN)]
+        public async Task<IActionResult> ExportToExcel()
+        {
+            try
+            {
+                var file = await _assetService.ExportToExcelAsync(LocationID);
+                return File(file, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "AssetReport.xlsx");
+            }
+            catch (Exception ex)
+            {
+                return Conflict(new GeneralBoolResponse
+                {
+                    Success = false,
+                    Message = ex.Message
+                });
             }
         }
     }

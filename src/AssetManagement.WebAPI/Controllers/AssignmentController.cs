@@ -24,6 +24,7 @@ namespace AssetManagement.WebAPI.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = RoleConstant.ADMIN)]
         public async Task<IActionResult> CreateAssignment([FromBody] AssignmentRequest assignmentRequest)
         {
             if (!ModelState.IsValid)
@@ -72,6 +73,7 @@ namespace AssetManagement.WebAPI.Controllers
         }
 
         [HttpGet]
+        [Authorize(Roles = RoleConstant.ADMIN)]
         public async Task<IActionResult> GetAllAssignmentAsync(int pageNumber, DateTime? assignedDate, string? state, string? search, string? sortOrder, string? sortBy = "assetCode", Guid? newAssignmentId = null)
         {
             try
@@ -106,6 +108,7 @@ namespace AssetManagement.WebAPI.Controllers
         }
 
         [HttpGet("{id}")]
+        [Authorize(Roles = RoleConstant.ADMIN)]
         public async Task<IActionResult> GetAssignmentDetail(Guid id)
         {
             try
@@ -169,6 +172,95 @@ namespace AssetManagement.WebAPI.Controllers
                 {
                     Success = false,
                     Message = ex.Message
+                });
+            }
+        }
+
+        [HttpGet("user")]
+        [Authorize]
+        public async Task<IActionResult> GetUserAssignmentAsync(int pageNumber, string? sortOrder, string? sortBy = "assigneddate")
+        {
+            try
+            {
+                Guid userId = UserID;
+
+                var assignments = await _assignmentService.GetUserAssignmentAsync(pageNumber == 0 ? 1 : pageNumber, userId, sortOrder, sortBy);
+                if (assignments.data.Any())
+                {
+                    return Ok(new GeneralGetsResponse
+                    {
+                        Success = true,
+                        Message = "Assignments retrieved successfully.",
+                        Data = assignments.data,
+                        TotalCount = assignments.totalCount
+                    });
+                }
+                return Conflict(new GeneralGetsResponse
+                {
+                    Success = false,
+                    Message = "No data.",
+                });
+            }
+            catch (Exception ex)
+            {
+                return Conflict(new GeneralGetsResponse
+                {
+                    Success = false,
+                    Message = ex.Message,
+                });
+            }
+        }
+
+
+        [HttpPut("{id}")]
+        [Authorize(Roles = RoleConstant.ADMIN)]
+        public async Task<IActionResult> UpdateAssignment(Guid id, [FromBody] AssignmentRequest assignmentRequest)
+        {
+            var response = new GeneralBoolResponse();
+            try
+            {
+                var result = await _assignmentService.UpdateAssignment(id, assignmentRequest);
+                response.Success = true;
+                response.Message = "Update successfully";
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                response.Success = false;
+                response.Message = ex.Message;
+                return Conflict(response);
+            }
+        }
+
+        [HttpGet("user/{userId}")]
+        [Authorize(Roles = RoleConstant.ADMIN)]
+        public async Task<IActionResult> AdminGetUserAssignmentAsync(int pageNumber, Guid userId)
+        {
+            try
+            {
+                var assignments = await _assignmentService.GetUserAssignmentAsync(pageNumber == 0 ? 1 : pageNumber, userId, "", "");
+                if (assignments.data.Any())
+                {
+                    return Ok(new GeneralGetsResponse
+                    {
+                        Success = true,
+                        Message = "Assignments of user retrieved successfully.",
+                        Data = assignments.data,
+                        TotalCount = assignments.totalCount
+                    });
+                }
+                return Conflict(new GeneralGetsResponse
+                {
+                    Success = false,
+                    Message = "No data.",
+                });
+            }
+            catch (Exception ex)
+            {
+                return Conflict(new GeneralGetsResponse
+                {
+                    Success = false,
+                    Message = ex.Message,
                 });
             }
         }

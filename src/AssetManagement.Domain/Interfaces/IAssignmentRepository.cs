@@ -8,6 +8,5 @@ namespace AssetManagement.Domain.Interfaces
     public interface IAssignmentRepository : IGenericRepository<Assignment>
     {
         Task<IEnumerable<Assignment>> GetAllAssignmentAsync();
-        Task<Assignment> GetAssignmentDetailAsync(Guid id);
     }
 }

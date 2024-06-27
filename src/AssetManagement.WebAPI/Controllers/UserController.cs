@@ -3,6 +3,7 @@ using AssetManagement.Application.Services;
 using AssetManagement.Domain.Constants;
 using AssetManagement.Domain.Entities;
 using AssetManagement.Domain.Models;
+using Azure;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System;
@@ -77,7 +78,7 @@ namespace AssetManagement.WebAPI.Controllers
         [HttpGet]
         [Authorize(Roles = RoleConstant.ADMIN)]
         public async Task<IActionResult> GetFilteredUsers(
-            [FromQuery] string? search  = "",
+            [FromQuery] string? search = "",
             [FromQuery] string? role = "",
             [FromQuery] string sortBy = "StaffCode",
             [FromQuery] string sortOrder = "asc",
@@ -118,6 +119,88 @@ namespace AssetManagement.WebAPI.Controllers
                 {
                     Success = false,
                     Message = ex.Message,
+                });
+            }
+        }
+
+        [HttpGet("{id}")]
+        public async Task<IActionResult> Get(Guid id)
+        {
+            try
+            {
+                var user = await _userService.GetUserDetailAsync(id);
+                return Ok(new GeneralGetResponse
+                {
+                    Data = user,
+                    Message = "User retrieve successfully.",
+                    Success = true
+                });
+            }
+            catch (Exception e)
+            {
+                return Conflict(new GeneralGetResponse
+                {
+                    Success = false,
+                    Message = e.Message
+                });
+            }
+        }
+
+        [HttpPut("{id}")]
+        [Authorize(Roles = RoleConstant.ADMIN)]
+        public async Task<IActionResult> Put(Guid id, EditUserRequest request)
+        {
+            try
+            {
+                var staffCode = await _userService.UpdateUserAsync(id, request);
+                return Ok(new GeneralGetResponse
+                {
+                    Data = staffCode,
+                    Message = "Update successfully",
+                    Success = true
+                });
+            }
+            catch (Exception e)
+            {
+                return Conflict(new GeneralGetResponse
+                {
+                    Success = false,
+                    Message = e.Message
+                });
+            }
+        }
+
+
+        [HttpDelete("{id}")]
+        [Authorize(Roles = RoleConstant.ADMIN)]
+        public async Task<IActionResult> DisableUser(Guid id)
+        {
+            try
+            {
+                var result = await _userService.DisableUser(id);
+                if (result)
+                {
+                    return Ok(new GeneralBoolResponse
+                    {
+                        Success = true,
+                        Message = "User disabled successfully."
+                    });
+                }
+                else
+                {
+                    return Conflict(new GeneralBoolResponse
+                    {
+                        Success = false,
+                        Message = "User have valid assignment"
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                return Conflict(new GeneralBoolResponse
+                {
+                    Success = false,
+                    Message = ex.Message
                 });
             }
         }

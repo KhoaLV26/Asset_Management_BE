@@ -1,14 +1,18 @@
 using AssetManagement.Application.Models.Requests;
 using AssetManagement.Application.Models.Responses;
+using AssetManagement.Domain.Constants;
 using AssetManagement.Domain.Entities;
 using AssetManagement.Domain.Enums;
 using AssetManagement.Domain.Interfaces;
 using AutoMapper;
+using ClosedXML.Excel;
+using DocumentFormat.OpenXml.Office2013.Word;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace AssetManagement.Application.Services.Implementations
 {
@@ -180,6 +184,12 @@ namespace AssetManagement.Application.Services.Implementations
             var locationCondition = Expression.Equal(Expression.Property(parameter, nameof(Asset.LocationId)),
                 Expression.Constant(nullableLocationId, typeof(Guid?)));
             conditions.Add(locationCondition);
+
+            // Add IsDelete
+            var isDeletedCondition = Expression.Equal(Expression.Property(parameter, nameof(Asset.IsDeleted)),
+                Expression.Constant(false));
+            conditions.Add(isDeletedCondition);
+
             // Parse state parameter to enum
             if (!string.IsNullOrEmpty(state))
             {
@@ -225,11 +235,6 @@ namespace AssetManagement.Application.Services.Implementations
                 conditions.Add(defaultStateCondition);
             }
 
-            // Add IsDelete
-            var isDeletedCondition = Expression.Equal(Expression.Property(parameter, nameof(Asset.IsDeleted)),
-                Expression.Constant(false));
-            conditions.Add(isDeletedCondition);
-            
             // Add search conditions
             if (!string.IsNullOrEmpty(search))
             {
@@ -270,6 +275,33 @@ namespace AssetManagement.Application.Services.Implementations
             return filter;
         }
 
+        public async Task<AssetResponse> DeleteAssetAsync(Guid id)
+        {
+            var asset = await _unitOfWork.AssetRepository.GetAsync(x => x.Id == id);
+            if (asset == null)
+            {
+                throw new Exception("Asset not found");
+            }
+
+            var detail = await GetAssetByIdAsync(id);
+            if (detail.AssignmentResponses != null && detail.AssignmentResponses.Count() > 0)
+            {
+                throw new Exception("This asset have historical assignment");
+            }
+            else
+            {
+                _unitOfWork.AssetRepository.SoftDelete(asset);
+                if (await _unitOfWork.CommitAsync() > 0)
+                {
+                    return _mapper.Map<AssetResponse>(asset);
+                }
+                else
+                {
+                    throw new Exception("Failed to delete asset");
+                }
+            }
+        }
+
         private Func<IQueryable<Asset>, IOrderedQueryable<Asset>>? GetOrderQuery(string? sortOrder, string? sortBy)
         {
             Func<IQueryable<Asset>, IOrderedQueryable<Asset>>? orderBy;
@@ -301,24 +333,164 @@ namespace AssetManagement.Application.Services.Implementations
         public async Task<AssetResponse> UpdateAsset(Guid id, AssetUpdateRequest assetRequest)
         {
             var currentAsset = await _unitOfWork.AssetRepository.GetAsync(x => x.Id == id);
-            if (currentAsset== null)
+            if (currentAsset == null)
             {
                 throw new ArgumentException("Asset not exist");
             }
-            currentAsset.AssetName = assetRequest.AssetName;
-            currentAsset.Specification = assetRequest.Specification;
-            currentAsset.InstallDate = assetRequest.InstallDate;
-            currentAsset.Status = assetRequest.Status;
-            _unitOfWork.AssetRepository.Update(currentAsset);
+
+            if (!string.IsNullOrEmpty(assetRequest.AssetName))
+            {
+                currentAsset.AssetName = assetRequest.AssetName;
+            }
+
+            if (!string.IsNullOrEmpty(assetRequest.Specification))
+            {
+                currentAsset.Specification = assetRequest.Specification;
+            }
+
+            if (assetRequest.InstallDate != null && assetRequest.InstallDate != DateOnly.MinValue)
+            {
+                currentAsset.InstallDate = assetRequest.InstallDate;
+            }
+
+            if (assetRequest.Status != null)
+            {
+                currentAsset.Status = assetRequest.Status;
+            }
+
             await _unitOfWork.CommitAsync();
+
+            var category = await _unitOfWork.CategoryRepository.GetAsync(x => x.Id == currentAsset.CategoryId);
+            var categoryName = category?.Name;
+
             return new AssetResponse
             {
+                Id = currentAsset.Id,
                 AssetCode = currentAsset.AssetCode,
                 AssetName = currentAsset.AssetName,
+                CategoryId = currentAsset.CategoryId,
+                CategoryName = currentAsset.Category.Name,
                 Specification = currentAsset.Specification,
                 InstallDate = currentAsset.InstallDate,
+                //LocationId = currentAsset.Location.Id,
                 Status = currentAsset.Status
             };
+        }
+
+
+        public async Task<(IEnumerable<ReportResponse>, int count)> GetReports(string? sortOrder, string? sortBy, Guid locationId, int pageNumber = 1)
+        {
+            var categories = await _unitOfWork.CategoryRepository.GetAllAsync(c => !c.IsDeleted);
+            var assets = await _unitOfWork.AssetRepository.GetAllAsync(a => a.LocationId == locationId && !a.IsDeleted);
+
+            var reports = categories.Select(category => new ReportResponse
+            {
+                Category = category.Name,
+                Total = assets.Count(asset => asset.CategoryId == category.Id),
+                Assigned = assets.Count(asset => asset.CategoryId == category.Id && asset.Status == EnumAssetStatus.Assigned),
+                Available = assets.Count(asset => asset.CategoryId == category.Id && asset.Status == EnumAssetStatus.Available),
+                NotAvailable = assets.Count(asset => asset.CategoryId == category.Id && asset.Status == EnumAssetStatus.NotAvailable),
+                WaitingForRecycling = assets.Count(asset => asset.CategoryId == category.Id && asset.Status == EnumAssetStatus.WaitingForRecycling),
+                Recycled = assets.Count(asset => asset.CategoryId == category.Id && asset.Status == EnumAssetStatus.Recycled)
+            }).AsQueryable();
+            sortBy ??= "Category";
+            var orderBy = GetOrderReportQuery(sortOrder, sortBy);
+            if (orderBy != null)
+            {
+                reports = orderBy(reports);
+            }
+            reports = reports.Skip((pageNumber - 1) * PageSizeConstant.PAGE_SIZE).Take(PageSizeConstant.PAGE_SIZE);
+            return (reports, categories.Count());
+        }
+
+        private Func<IQueryable<ReportResponse>, IOrderedQueryable<ReportResponse>>? GetOrderReportQuery(string? sortOrder, string? sortBy)
+        {
+            Func<IQueryable<ReportResponse>, IOrderedQueryable<ReportResponse>>? orderBy;
+            switch (sortBy?.ToLower())
+            {
+                case "total":
+                    orderBy = x => sortOrder != "desc" ? x.OrderBy(a => a.Total) : x.OrderByDescending(a => a.Total);
+                    break;
+
+                case "assigned":
+                    orderBy = x => sortOrder != "desc" ? x.OrderBy(a => a.Assigned) : x.OrderByDescending(a => a.Assigned);
+                    break;
+
+                case "available":
+                    orderBy = x => sortOrder != "desc" ? x.OrderBy(a => a.Available) : x.OrderByDescending(a => a.Available);
+                    break;
+
+                case "notavailable":
+                    orderBy = x => sortOrder != "desc" ? x.OrderBy(a => a.NotAvailable) : x.OrderByDescending(a => a.NotAvailable);
+                    break;
+
+                case "waitingforrecycling":
+                    orderBy = x => sortOrder != "desc" ? x.OrderBy(a => a.WaitingForRecycling) : x.OrderByDescending(a => a.WaitingForRecycling);
+                    break;
+
+                case "recycled":
+                    orderBy = x => sortOrder != "desc" ? x.OrderBy(a => a.Recycled) : x.OrderByDescending(a => a.Recycled);
+                    break;
+
+                case "category":
+                    orderBy = x => sortOrder != "desc" ? x.OrderBy(a => a.Category) : x.OrderByDescending(a => a.Category);
+                    break;
+
+                default:
+                    orderBy = null;
+                    break;
+            }
+            return orderBy;
+        }
+
+        public async Task<byte[]> ExportToExcelAsync(Guid locationId)
+        {
+            var categories = await _unitOfWork.CategoryRepository.GetAllAsync(c => !c.IsDeleted);
+            var assets = await _unitOfWork.AssetRepository.GetAllAsync(a => a.LocationId == locationId && !a.IsDeleted);
+
+            var reports = categories.Select(category => new ReportResponse
+            {
+                Category = category.Name,
+                Total = assets.Count(asset => asset.CategoryId == category.Id),
+                Assigned = assets.Count(asset => asset.CategoryId == category.Id && asset.Status == EnumAssetStatus.Assigned),
+                Available = assets.Count(asset => asset.CategoryId == category.Id && asset.Status == EnumAssetStatus.Available),
+                NotAvailable = assets.Count(asset => asset.CategoryId == category.Id && asset.Status == EnumAssetStatus.NotAvailable),
+                WaitingForRecycling = assets.Count(asset => asset.CategoryId == category.Id && asset.Status == EnumAssetStatus.WaitingForRecycling),
+                Recycled = assets.Count(asset => asset.CategoryId == category.Id && asset.Status == EnumAssetStatus.Recycled)
+            }).ToList();
+
+            using (var workbook = new XLWorkbook())
+            {
+                var worksheet = workbook.Worksheets.Add("Reports");
+
+                var properties = typeof(ReportResponse).GetProperties();
+
+                // Add headers
+                for (int i = 0; i < properties.Length; i++)
+                {
+                    worksheet.Cell(1, i + 1).Value = properties[i].Name;
+                }
+
+                // Add data
+                int row = 2;
+                foreach (var report in reports)
+                {
+                    worksheet.Cell(row, 1).Value = report.Category;
+                    worksheet.Cell(row, 2).Value = report.Total;
+                    worksheet.Cell(row, 3).Value = report.Available;
+                    worksheet.Cell(row, 4).Value = report.NotAvailable;
+                    worksheet.Cell(row, 5).Value = report.Assigned;
+                    worksheet.Cell(row, 6).Value = report.WaitingForRecycling;
+                    worksheet.Cell(row, 7).Value = report.Recycled;
+                    row++;
+                }
+
+                using (var stream = new System.IO.MemoryStream())
+                {
+                    workbook.SaveAs(stream);
+                    return stream.ToArray();
+                }
+            }
         }
     }
 }
