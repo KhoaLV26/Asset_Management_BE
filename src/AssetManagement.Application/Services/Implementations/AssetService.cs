@@ -381,6 +381,9 @@ namespace AssetManagement.Application.Services.Implementations
                 assetRequest.Status = currentAsset.Status;
             }
 
+            var category = await _unitOfWork.CategoryRepository.GetAsync(x => x.Id == currentAsset.CategoryId);
+            var categoryName = category?.Name;
+
             await _unitOfWork.CommitAsync();
             return new AssetResponse
             {
@@ -391,7 +394,7 @@ namespace AssetManagement.Application.Services.Implementations
                 CategoryName = currentAsset.Category.Name,
                 Specification = currentAsset.Specification,
                 InstallDate = currentAsset.InstallDate,
-                LocationId = currentAsset.Location.Id,
+                //LocationId = currentAsset.Location.Id,
                 Status = currentAsset.Status
             };
         }

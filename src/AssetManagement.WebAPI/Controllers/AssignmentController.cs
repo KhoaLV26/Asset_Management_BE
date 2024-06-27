@@ -236,6 +236,8 @@ namespace AssetManagement.WebAPI.Controllers
                 response.Success = false;
                 response.Message = ex.Message;
                 return Conflict(response);
+            }
+        }
 
         [HttpGet("user/{userId}")]
         [Authorize(Roles = RoleConstant.ADMIN)]
