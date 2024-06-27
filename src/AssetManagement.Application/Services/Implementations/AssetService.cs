@@ -341,27 +341,15 @@ namespace AssetManagement.Application.Services.Implementations
             {
                 currentAsset.AssetName = assetRequest.AssetName;
             }
-            else
-            {
-                assetRequest.AssetName = currentAsset.AssetName;
-            }
 
             if (!string.IsNullOrEmpty(assetRequest.Specification))
             {
                 currentAsset.Specification = assetRequest.Specification;
             }
-            else
-            {
-                assetRequest.Specification = currentAsset.Specification;
-            }
 
-            if (assetRequest.InstallDate != null)
+            if (assetRequest.InstallDate == DateOnly.MinValue)
             {
                 currentAsset.InstallDate = assetRequest.InstallDate;
-            }
-            else
-            {
-                assetRequest.InstallDate = currentAsset.InstallDate;
             }
 
             if (!string.IsNullOrEmpty(assetRequest.AssetName))
@@ -374,13 +362,9 @@ namespace AssetManagement.Application.Services.Implementations
                 currentAsset.Specification = assetRequest.Specification;
             }
 
-            if (assetRequest.Status != null)
+            if (Enum.IsDefined(typeof(EnumAssetStatus), assetRequest.Status))
             {
                 currentAsset.Status = assetRequest.Status;
-            }
-            else
-            {
-                assetRequest.Status = currentAsset.Status;
             }
 
             var category = await _unitOfWork.CategoryRepository.GetAsync(x => x.Id == currentAsset.CategoryId);
