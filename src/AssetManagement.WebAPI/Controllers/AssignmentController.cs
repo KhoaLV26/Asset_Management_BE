@@ -255,12 +255,6 @@ namespace AssetManagement.WebAPI.Controllers
             try
             {
                 var result = await _assignmentService.UpdateAssignment(id, assignmentRequest);
-                if (result == false)
-                {
-                    response.Success = false;
-                    response.Message = "Update fail";
-                    return Conflict(response);
-                }
                 response.Success = true;
                 response.Message = "Update successfully";
                 return Ok(response);
