@@ -94,26 +94,49 @@ namespace AssetManagement.WebAPI.Controllers
             }
         }
 
-        [HttpGet("{id}")]
-        public async Task<IActionResult> GetAssetId(Guid id)
+        [HttpPut("{id}")]
+        [Authorize(Roles = RoleConstant.ADMIN)]
+        public async Task<IActionResult> UpdateAsset(Guid id, AssetUpdateRequest assetRequest)
         {
+            var response = new GeneralGetResponse();
             try
             {
-                var asset = await _assetService.GetAssetByIdAsync(id);
-                return Ok(new GeneralGetResponse
-                {
-                    Success = true,
-                    Message = "Asset retrived successfully.",
-                    Data = asset
-                });
+                var result = await _assetService.UpdateAsset(id, assetRequest);
+                response.Success = true;
+                response.Message = "Update successfully";
+                response.Data = result;
+                return Ok(response);
             }
             catch (Exception ex)
             {
-                return Conflict(new GeneralGetResponse
-                {
-                    Success = false,
-                    Message = ex.Message
-                });
+                response.Success = false;
+                response.Message = ex.Message;
+                return Conflict(response);
+            }
+        }
+
+        [HttpPut("respone/{id}")]
+        [Authorize]
+        public async Task<IActionResult> ResponseAsset(Guid id)
+        {
+            var response = new GeneralGetResponse();
+            var assetRequest = new AssetUpdateRequest
+            {
+                Status = EnumAssetStatus.Available
+            };
+            try
+            {
+                var result = await _assetService.UpdateAsset(id, assetRequest);
+                response.Success = true;
+                response.Message = "Update successfully";
+                response.Data = result;
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                response.Success = false;
+                response.Message = ex.Message;
+                return Conflict(response);
             }
         }
 
@@ -147,26 +170,6 @@ namespace AssetManagement.WebAPI.Controllers
                     Success = false,
                     Message = ex.Message
                 });
-            }
-        }
-
-        [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateAsset(Guid id, AssetUpdateRequest assetRequest)
-        {
-            var response = new GeneralGetResponse();
-            try
-            {
-                var result = await _assetService.UpdateAsset(id, assetRequest);
-                response.Success = true;
-                response.Message = "Update successfully";
-                response.Data = result;
-                return Ok(response);
-            }
-            catch (Exception ex)
-            {
-                response.Success = false;
-                response.Message = ex.Message;
-                return Conflict(response);
             }
         }
 
