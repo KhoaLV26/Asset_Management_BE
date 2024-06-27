@@ -368,6 +368,7 @@ namespace AssetManagement.Application.Services.Implementations
                 WaitingForRecycling = assets.Count(asset => asset.CategoryId == category.Id && asset.Status == EnumAssetStatus.WaitingForRecycling),
                 Recycled = assets.Count(asset => asset.CategoryId == category.Id && asset.Status == EnumAssetStatus.Recycled)
             }).AsQueryable();
+            sortBy ??= "Category";
             var orderBy = GetOrderReportQuery(sortOrder, sortBy);
             if (orderBy != null)
             {
