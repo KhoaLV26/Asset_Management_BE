@@ -132,12 +132,32 @@ namespace AssetManagement.Application.Services.Implementations
             {
                 return false;
             }
-            currentAssignment.AssignedTo = assignmentRequest.AssignedTo;
-            currentAssignment.AssignedBy = assignmentRequest.AssignedBy;
-            currentAssignment.AssignedDate = assignmentRequest.AssignedDate;
-            currentAssignment.AssetId = assignmentRequest.AssetId;
+            if (assignmentRequest.AssignedTo != Guid.Empty)
+            {
+                currentAssignment.AssignedTo = assignmentRequest.AssignedTo;
+            }
+
+            if (assignmentRequest.AssignedBy != Guid.Empty)
+            {
+                currentAssignment.AssignedBy = assignmentRequest.AssignedBy;
+            }
+
+            if (assignmentRequest.AssignedDate == DateTime.MinValue)
+            {
+                currentAssignment.AssignedDate = assignmentRequest.AssignedDate;
+            }
+
+            if (assignmentRequest.AssetId != Guid.Empty)
+            {
+                currentAssignment.AssetId = assignmentRequest.AssetId;
+            }
+
+            if (Enum.IsDefined(typeof(EnumAssignmentStatus), assignmentRequest.Status))
+            {
+                currentAssignment.Status = assignmentRequest.Status;
+            }
+
             currentAssignment.Note = assignmentRequest.Note;
-            currentAssignment.Status = assignmentRequest.Status;
 
             _unitOfWork.AssignmentRepository.Update(currentAssignment);
             return await _unitOfWork.CommitAsync() > 0;
