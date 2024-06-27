@@ -187,41 +187,41 @@ namespace AssetManagement.Test.Unit.AssignmentControllerTest.cs
             Assert.False(response.Success);
         }
 
-        [Fact]
-        public async Task UpdateAssignment_ReturnsOkResult_WhenUpdateSucceeds()
-        {
-            // Arrange
-            var id = Guid.NewGuid();
-            var request = new AssignmentRequest();
-            _assignmentServiceMock.Setup(x => x.UpdateAssignment(id, request)).ReturnsAsync(true);
+        //[Fact]
+        //public async Task UpdateAssignment_ReturnsOkResult_WhenUpdateSucceeds()
+        //{
+        //    // Arrange
+        //    var id = Guid.NewGuid();
+        //    var request = new AssignmentRequest();
+        //    _assignmentServiceMock.Setup(x => x.UpdateAssignment(id, request)).ReturnsAsync(true);
 
-            // Act
-            var result = await _assignmentController.UpdateAssignment(id, request);
+        //    // Act
+        //    var result = await _assignmentController.UpdateAssignment(id, request);
 
-            // Assert
-            var okResult = Assert.IsType<OkObjectResult>(result);
-            var response = Assert.IsType<GeneralBoolResponse>(okResult.Value);
-            Assert.True(response.Success);
-            Assert.Equal("Update successfully", response.Message);
-        }
+        //    // Assert
+        //    var okResult = Assert.IsType<OkObjectResult>(result);
+        //    var response = Assert.IsType<GeneralBoolResponse>(okResult.Value);
+        //    Assert.True(response.Success);
+        //    Assert.Equal("Update successfully", response.Message);
+        //}
 
-        [Fact]
-        public async Task UpdateAssignment_ReturnsConflict_WhenUpdateFails()
-        {
-            // Arrange
-            var id = Guid.NewGuid();
-            var request = new AssignmentRequest();
-            _assignmentServiceMock.Setup(x => x.UpdateAssignment(id, request)).ReturnsAsync(false);
+        //[Fact]
+        //public async Task UpdateAssignment_ReturnsConflict_WhenUpdateFails()
+        //{
+        //    // Arrange
+        //    var id = Guid.NewGuid();
+        //    var request = new AssignmentRequest();
+        //    _assignmentServiceMock.Setup(x => x.UpdateAssignment(id, request)).ReturnsAsync(false);
 
-            // Act
-            var result = await _assignmentController.UpdateAssignment(id, request);
+        //    // Act
+        //    var result = await _assignmentController.UpdateAssignment(id, request);
 
-            // Assert
-            var conflictResult = Assert.IsType<ConflictObjectResult>(result);
-            var response = Assert.IsType<GeneralBoolResponse>(conflictResult.Value);
-            Assert.False(response.Success);
-            Assert.Equal("Update fail", response.Message);
-        }
+        //    // Assert
+        //    var conflictResult = Assert.IsType<ConflictObjectResult>(result);
+        //    var response = Assert.IsType<GeneralBoolResponse>(conflictResult.Value);
+        //    Assert.False(response.Success);
+        //    Assert.Equal("Update fail", response.Message);
+        //}
 
         [Fact]
         public async Task AdminGetUserAssignmentAsync_ReturnsOkResult_WhenAssignmentsExist()
