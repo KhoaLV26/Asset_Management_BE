@@ -480,7 +480,7 @@ namespace AssetManagement.Application.Services.Implementations
                 NotAvailable = assets.Count(asset => asset.CategoryId == category.Id && asset.Status == EnumAssetStatus.NotAvailable),
                 WaitingForRecycling = assets.Count(asset => asset.CategoryId == category.Id && asset.Status == EnumAssetStatus.WaitingForRecycling),
                 Recycled = assets.Count(asset => asset.CategoryId == category.Id && asset.Status == EnumAssetStatus.Recycled)
-            }).ToList();
+            }).OrderBy(r => r.Category);
 
             using (var workbook = new XLWorkbook())
             {
