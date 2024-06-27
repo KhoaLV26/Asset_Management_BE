@@ -80,7 +80,7 @@ namespace AssetManagement.WebAPI.Controllers
             {
                 Guid adminId = UserID;
 
-                var assignments = await _assignmentService.GetAllAssignmentAsync(pageNumber == 0 ? 1 : pageNumber, state: state, assignedDate, search, sortOrder, sortBy, "UserTo,UserBy,Asset", newAssignmentId);
+                var assignments = await _assignmentService.GetAllAssignmentAsync(pageNumber == 0 ? 1 : pageNumber, state: state, assignedDate, search, sortOrder, sortBy, "UserTo,UserBy,Asset,ReturnRequest", newAssignmentId);
                 if (assignments.data.Any())
                 {
                     return Ok(new GeneralGetsResponse

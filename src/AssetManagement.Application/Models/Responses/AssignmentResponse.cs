@@ -19,6 +19,7 @@ namespace AssetManagement.Application.Models.Responses
         public Guid AssetId { get; set; }
         public string AssetName { get; set; }
         public string AssetCode { get; set; }
+        public string Specification { get; set; }
         public string Note { get; set; }
         public EnumAssignmentStatus Status { get; set; }
     }

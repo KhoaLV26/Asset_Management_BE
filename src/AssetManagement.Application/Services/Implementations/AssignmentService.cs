@@ -115,6 +115,7 @@ namespace AssetManagement.Application.Services.Implementations
                 AssetId = assignment.AssetId,
                 AssetCode = assignment.Asset.AssetCode,
                 AssetName = assignment.Asset.AssetName,
+                Specification = assignment.Asset.Specification,
                 Note = assignment.Note,
                 Status = assignment.Status
             };
