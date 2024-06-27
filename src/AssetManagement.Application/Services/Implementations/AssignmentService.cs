@@ -125,16 +125,18 @@ namespace AssetManagement.Application.Services.Implementations
             };
         }
 
-        public async Task<bool> UpdateAssignment(Guid id, AssignmentRequest assignmentRequest)
+        public async Task<AssignmentResponse> UpdateAssignment(Guid id, AssignmentRequest assignmentRequest)
         {
-            var currentAssignment = await _unitOfWork.AssignmentRepository.GetAsync(x => x.Id == id);
+            var currentAssignment = await _unitOfWork.AssignmentRepository.GetAsync(a => a.Id == id, a => a.UserTo,
+                     a => a.UserBy,
+                     a => a.Asset);
             if (currentAssignment == null)
             {
-                return false;
+                throw new ArgumentException("Assignment not exist");
             }
             if (assignmentRequest.AssignedTo != Guid.Empty)
             {
-                currentAssignment.AssignedTo = assignmentRequest.AssignedTo;
+                currentAssignment.AssetId = assignmentRequest.AssetId;
             }
 
             if (assignmentRequest.AssignedBy != Guid.Empty)
@@ -142,13 +144,18 @@ namespace AssetManagement.Application.Services.Implementations
                 currentAssignment.AssignedBy = assignmentRequest.AssignedBy;
             }
 
-            if (assignmentRequest.AssignedDate == DateTime.MinValue)
+            if (assignmentRequest.AssignedDate != DateTime.MinValue)
             {
                 currentAssignment.AssignedDate = assignmentRequest.AssignedDate;
             }
 
             if (assignmentRequest.AssetId != Guid.Empty)
             {
+                var asset = await _unitOfWork.AssetRepository.GetAsync(a => a.Id == assignmentRequest.AssetId);
+                if (asset == null)
+                {
+                    throw new ArgumentException("The asset does not exist");
+                }
                 currentAssignment.AssetId = assignmentRequest.AssetId;
             }
 
@@ -159,8 +166,22 @@ namespace AssetManagement.Application.Services.Implementations
 
             currentAssignment.Note = assignmentRequest.Note;
 
-            _unitOfWork.AssignmentRepository.Update(currentAssignment);
-            return await _unitOfWork.CommitAsync() > 0;
+            await _unitOfWork.CommitAsync();
+
+            return new AssignmentResponse
+            {
+                Id = currentAssignment.Id,
+                AssignedTo = currentAssignment.AssignedTo,
+                To = currentAssignment.UserTo.Username,
+                AssignedBy = currentAssignment.AssignedBy,
+                By = currentAssignment.UserBy.Username,
+                AssignedDate = currentAssignment.AssignedDate,
+                AssetId = currentAssignment.AssetId,
+                AssetCode = currentAssignment.Asset.AssetCode,
+                AssetName = currentAssignment.Asset.AssetName,
+                Note = currentAssignment.Note,
+                Status = currentAssignment.Status
+            };        
         }
 
         public async Task<Expression<Func<Assignment, bool>>>? GetFilterQuery(DateTime? assignedDate, string? state, string? search)
@@ -212,6 +233,9 @@ namespace AssetManagement.Application.Services.Implementations
                 var assetCodeProperty = Expression.Property(Expression.Property(parameter, nameof(Assignment.Asset)), nameof(Asset.AssetCode));
                 var assetNameProperty = Expression.Property(Expression.Property(parameter, nameof(Assignment.Asset)), nameof(Asset.AssetName));
                 var userToUsernameProperty = Expression.Property(Expression.Property(parameter, nameof(Assignment.UserTo)), nameof(User.Username));
+
+                var isDeletedCondition = Expression.Equal(Expression.Property(parameter, nameof(Assignment.IsDeleted)),Expression.Constant(false));
+                conditions.Add(isDeletedCondition);
 
                 var searchCondition = Expression.OrElse(
                     Expression.Call(assetCodeProperty, nameof(string.Contains), Type.EmptyTypes, Expression.Constant(search)),
