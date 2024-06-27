@@ -241,11 +241,11 @@ namespace AssetManagement.WebAPI.Controllers
 
         [HttpPut("response/{id}")]
         [Authorize]
-        public async Task<IActionResult> ResponseAssignment(Guid id, bool accepted)
+        public async Task<IActionResult> ResponseAssignment(Guid id, string accepted)
         {
             var response = new GeneralBoolResponse();
             AssignmentRequest assignmentRequest;
-            if (accepted)
+            if (accepted.ToLower() == "true")
             {
                 assignmentRequest = new AssignmentRequest
                 {
