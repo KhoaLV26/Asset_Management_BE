@@ -214,8 +214,7 @@ namespace AssetManagement.WebAPI.Controllers
 
         [HttpPut("{id}")]
         [Authorize(Roles = RoleConstant.ADMIN)]
-
-        public async Task<IActionResult> UpdateAssignment(Guid id, [FromForm] AssignmentRequest assignmentRequest)
+        public async Task<IActionResult> UpdateAssignment(Guid id, [FromBody] AssignmentRequest assignmentRequest)
         {
             var response = new GeneralBoolResponse();
             try
@@ -269,7 +268,6 @@ namespace AssetManagement.WebAPI.Controllers
                     Success = false,
                     Message = ex.Message,
                 });
-
             }
         }
     }
