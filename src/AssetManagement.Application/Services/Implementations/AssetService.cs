@@ -337,18 +337,63 @@ namespace AssetManagement.Application.Services.Implementations
             {
                 throw new ArgumentException("Asset not exist");
             }
-            currentAsset.AssetName = assetRequest.AssetName;
-            currentAsset.Specification = assetRequest.Specification;
-            currentAsset.InstallDate = assetRequest.InstallDate;
-            currentAsset.Status = assetRequest.Status;
-            _unitOfWork.AssetRepository.Update(currentAsset);
+            if (!string.IsNullOrEmpty(assetRequest.AssetName))
+            {
+                currentAsset.AssetName = assetRequest.AssetName;
+            }
+            else
+            {
+                assetRequest.AssetName = currentAsset.AssetName;
+            }
+
+            if (!string.IsNullOrEmpty(assetRequest.Specification))
+            {
+                currentAsset.Specification = assetRequest.Specification;
+            }
+            else
+            {
+                assetRequest.Specification = currentAsset.Specification;
+            }
+
+            if (assetRequest.InstallDate != null)
+            {
+                currentAsset.InstallDate = assetRequest.InstallDate;
+            }
+            else
+            {
+                assetRequest.InstallDate = currentAsset.InstallDate;
+            }
+
+            if (!string.IsNullOrEmpty(assetRequest.AssetName))
+            {
+                currentAsset.AssetName = assetRequest.AssetName;
+            }
+
+            if (!string.IsNullOrEmpty(assetRequest.Specification))
+            {
+                currentAsset.Specification = assetRequest.Specification;
+            }
+
+            if (assetRequest.Status != null)
+            {
+                currentAsset.Status = assetRequest.Status;
+            }
+            else
+            {
+                assetRequest.Status = currentAsset.Status;
+            }
+
             await _unitOfWork.CommitAsync();
             return new AssetResponse
             {
+                Id = currentAsset.Id,
                 AssetCode = currentAsset.AssetCode,
                 AssetName = currentAsset.AssetName,
+                CategoryId = currentAsset.CategoryId,
+                CategoryName = currentAsset.Category.Name,
                 Specification = currentAsset.Specification,
                 InstallDate = currentAsset.InstallDate,
+                LocationId = currentAsset.Location.Id,
                 Status = currentAsset.Status
             };
         }
