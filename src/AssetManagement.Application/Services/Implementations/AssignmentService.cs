@@ -94,6 +94,7 @@ namespace AssetManagement.Application.Services.Implementations
                 AssetId = a.AssetId,
                 AssetCode = a.Asset.AssetCode,
                 AssetName = a.Asset.AssetName,
+                Specification = a.Asset.Specification,
                 Note = a.Note,
                 Status = a.Status
             }), assignments.totalCount);
@@ -137,7 +138,7 @@ namespace AssetManagement.Application.Services.Implementations
             }
             if (assignmentRequest.AssignedTo != Guid.Empty)
             {
-                currentAssignment.AssetId = assignmentRequest.AssetId;
+                currentAssignment.AssignedTo = assignmentRequest.AssignedTo;
             }
 
             if (assignmentRequest.AssignedBy != Guid.Empty)
