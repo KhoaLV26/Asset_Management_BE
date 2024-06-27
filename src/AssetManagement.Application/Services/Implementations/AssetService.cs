@@ -337,32 +337,32 @@ namespace AssetManagement.Application.Services.Implementations
             {
                 throw new ArgumentException("Asset not exist");
             }
-
+        
             if (!string.IsNullOrEmpty(assetRequest.AssetName))
             {
                 currentAsset.AssetName = assetRequest.AssetName;
             }
-
+        
             if (!string.IsNullOrEmpty(assetRequest.Specification))
             {
                 currentAsset.Specification = assetRequest.Specification;
             }
-
+        
             if (assetRequest.InstallDate != null && assetRequest.InstallDate != DateOnly.MinValue)
             {
                 currentAsset.InstallDate = assetRequest.InstallDate;
             }
-
+        
             if (assetRequest.Status != null)
             {
                 currentAsset.Status = assetRequest.Status;
             }
-
+        
             await _unitOfWork.CommitAsync();
-
+        
             var category = await _unitOfWork.CategoryRepository.GetAsync(x => x.Id == currentAsset.CategoryId);
             var categoryName = category?.Name;
-
+        
             return new AssetResponse
             {
                 Id = currentAsset.Id,
@@ -457,7 +457,7 @@ namespace AssetManagement.Application.Services.Implementations
                 NotAvailable = assets.Count(asset => asset.CategoryId == category.Id && asset.Status == EnumAssetStatus.NotAvailable),
                 WaitingForRecycling = assets.Count(asset => asset.CategoryId == category.Id && asset.Status == EnumAssetStatus.WaitingForRecycling),
                 Recycled = assets.Count(asset => asset.CategoryId == category.Id && asset.Status == EnumAssetStatus.Recycled)
-            }).ToList();
+            }).OrderBy(r => r.Category);
 
             using (var workbook = new XLWorkbook())
             {

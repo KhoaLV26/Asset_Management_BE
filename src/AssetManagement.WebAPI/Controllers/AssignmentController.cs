@@ -3,6 +3,7 @@ using AssetManagement.Application.Services;
 using AssetManagement.Application.Services.Implementations;
 using AssetManagement.Domain.Constants;
 using AssetManagement.Domain.Entities;
+using AssetManagement.Domain.Enums;
 using AssetManagement.Domain.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -220,6 +221,46 @@ namespace AssetManagement.WebAPI.Controllers
             try
             {
                 var result = await _assignmentService.UpdateAssignment(id, assignmentRequest);
+                response.Success = true;
+                response.Message = "Update successfully";
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                response.Success = false;
+                response.Message = ex.Message;
+                return Conflict(response);
+            }
+        }
+
+        [HttpPut("response/{id}")]
+        [Authorize]
+        public async Task<IActionResult> ResponseAssignment(Guid id, string accepted)
+        {
+            var response = new GeneralBoolResponse();
+            AssignmentRequest assignmentRequest;
+            if (accepted.ToLower() == "true")
+            {
+                assignmentRequest = new AssignmentRequest
+                {
+                    Status = EnumAssignmentStatus.Accepted
+                };
+            } else
+            {
+                assignmentRequest = new AssignmentRequest
+                {
+                    Status = EnumAssignmentStatus.Declined
+                };
+            }
+            try
+            {
+                var result = await _assignmentService.UpdateAssignment(id, assignmentRequest);
+                if (result == false)
+                {
+                    response.Success = false;
+                    response.Message = "Update fail";
+                    return Conflict(response);
+                }
                 response.Success = true;
                 response.Message = "Update successfully";
                 return Ok(response);
