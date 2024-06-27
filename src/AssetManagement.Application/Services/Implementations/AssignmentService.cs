@@ -382,6 +382,7 @@ namespace AssetManagement.Application.Services.Implementations
                 AssetId = a.AssetId,
                 AssetCode = a.Asset.AssetCode,
                 AssetName = a.Asset.AssetName,
+                Specification = a.Asset.Specification,
                 Note = a.Note,
                 Status = a.Status
             }), assignments.totalCount);
