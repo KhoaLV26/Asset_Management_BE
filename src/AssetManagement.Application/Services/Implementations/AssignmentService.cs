@@ -338,7 +338,7 @@ namespace AssetManagement.Application.Services.Implementations
             return filter;
         }
 
-        public async Task<(IEnumerable<AssignmentResponse> data, int totalCount)> GetUserAssignmentAsync(int pageNumber, Guid userId, string? sortOrder,
+        public async Task<(IEnumerable<AssignmentResponse> data, int totalCount)> GetUserAssignmentAsync(int pageNumber, Guid userId, string? sortOrder = "desc",
          string? sortBy = "assigneddate")
         {
             Func<IQueryable<Assignment>, IOrderedQueryable<Assignment>>? orderBy = GetOrderQuery(sortOrder, sortBy);
