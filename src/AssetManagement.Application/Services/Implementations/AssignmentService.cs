@@ -83,7 +83,7 @@ namespace AssetManagement.Application.Services.Implementations
 
             var assignments = await _unitOfWork.AssignmentRepository.GetAllAsync(pageNumber, filter, orderBy, includes, prioritizeCondition);
 
-            return (assignments.items.Where(a => !a.IsDeleted).Select(a => new AssignmentResponse
+            return (assignments.items.Select(a => new AssignmentResponse
             {
                 Id = a.Id,
                 AssignedTo = a.AssignedTo,
