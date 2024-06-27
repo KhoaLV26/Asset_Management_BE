@@ -139,7 +139,7 @@ namespace AssetManagement.WebAPI.Controllers
             }
         }
 
-        [HttpPut("respone/{id}")]
+        [HttpPut("response/{id}")]
         [Authorize]
         public async Task<IActionResult> ResponseAsset(Guid id)
         {
