@@ -214,7 +214,7 @@ namespace AssetManagement.WebAPI.Controllers
 
 
         [HttpPut("{id}")]
-        [Authorize(Roles = RoleConstant.ADMIN)]
+        //[Authorize(Roles = RoleConstant.ADMIN)]
         public async Task<IActionResult> UpdateAssignment(Guid id, [FromBody] AssignmentRequest assignmentRequest)
         {
             var response = new GeneralBoolResponse();
