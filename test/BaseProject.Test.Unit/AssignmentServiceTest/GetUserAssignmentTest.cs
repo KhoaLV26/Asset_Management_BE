@@ -115,7 +115,7 @@ namespace AssetManagement.Test.Unit.AssignmentServiceTest
                 .ReturnsAsync((new List<Assignment>(), 0));
 
             // Act
-            var result = await _assignmentService.GetUserAssignmentAsync(1, userId, null);
+            var result = await _assignmentService.GetUserAssignmentAsync(1, Guid.Empty, userId,  null);
 
             // Assert
             Assert.NotNull(result.data);
@@ -162,7 +162,7 @@ namespace AssetManagement.Test.Unit.AssignmentServiceTest
                 });
 
             // Act
-            var result = await _assignmentService.GetUserAssignmentAsync(2, userId, null); // Page 2, but only one assignment
+            var result = await _assignmentService.GetUserAssignmentAsync(2, Guid.Empty, userId, null); // Page 2, but only one assignment
 
             // Assert
             Assert.NotNull(result.data);
@@ -248,7 +248,7 @@ namespace AssetManagement.Test.Unit.AssignmentServiceTest
                 });
 
             // Act
-            var result = await _assignmentService.GetUserAssignmentAsync(1, userId, null);
+            var result = await _assignmentService.GetUserAssignmentAsync(1, Guid.Empty, userId,  null);
 
             // Assert
             Assert.NotNull(result.data);

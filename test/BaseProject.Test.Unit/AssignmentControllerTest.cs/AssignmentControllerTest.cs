@@ -230,7 +230,7 @@ namespace AssetManagement.Test.Unit.AssignmentControllerTest.cs
             int pageNumber = 1;
             var userId = Guid.NewGuid();
             var assignments = new List<AssignmentResponse> { new AssignmentResponse() };
-            _assignmentServiceMock.Setup(x => x.GetUserAssignmentAsync(pageNumber, userId, "", ""))
+            _assignmentServiceMock.Setup(x => x.GetUserAssignmentAsync(pageNumber, Guid.Empty, userId,  "", ""))
                 .ReturnsAsync((assignments, 1));
 
             // Act
@@ -251,7 +251,7 @@ namespace AssetManagement.Test.Unit.AssignmentControllerTest.cs
             // Arrange
             int pageNumber = 1;
             var userId = Guid.NewGuid();
-            _assignmentServiceMock.Setup(x => x.GetUserAssignmentAsync(pageNumber, userId, "", ""))
+            _assignmentServiceMock.Setup(x => x.GetUserAssignmentAsync(pageNumber, Guid.Empty, userId, "", ""))
                 .ReturnsAsync((new List<AssignmentResponse>(), 0));
 
             // Act
