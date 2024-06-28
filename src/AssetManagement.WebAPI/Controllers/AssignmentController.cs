@@ -179,13 +179,13 @@ namespace AssetManagement.WebAPI.Controllers
 
         [HttpGet("user")]
         [Authorize]
-        public async Task<IActionResult> GetUserAssignmentAsync(int pageNumber, string? sortOrder, string? sortBy = "assigneddate")
+        public async Task<IActionResult> GetUserAssignmentAsync(int pageNumber, string? sortOrder, Guid? newAssignmentId, string? sortBy = "assigneddate")
         {
             try
             {
                 Guid userId = UserID;
 
-                var assignments = await _assignmentService.GetUserAssignmentAsync(pageNumber == 0 ? 1 : pageNumber, userId, sortOrder, sortBy);
+                var assignments = await _assignmentService.GetUserAssignmentAsync(pageNumber == 0 ? 1 : pageNumber, newAssignmentId, userId, sortOrder, sortBy);
                 if (assignments.data.Any())
                 {
                     return Ok(new GeneralGetsResponse
@@ -273,7 +273,7 @@ namespace AssetManagement.WebAPI.Controllers
         {
             try
             {
-                var assignments = await _assignmentService.GetUserAssignmentAsync(pageNumber == 0 ? 1 : pageNumber, userId, "", "");
+                var assignments = await _assignmentService.GetUserAssignmentAsync(pageNumber == 0 ? 1 : pageNumber, Guid.Empty, userId, "", "");
                 if (assignments.data.Any())
                 {
                     return Ok(new GeneralGetsResponse
