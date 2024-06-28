@@ -364,12 +364,19 @@ namespace AssetManagement.Application.Services.Implementations
             return filter;
         }
 
-        public async Task<(IEnumerable<AssignmentResponse> data, int totalCount)> GetUserAssignmentAsync(int pageNumber, Guid userId, string? sortOrder = "desc",
+        public async Task<(IEnumerable<AssignmentResponse> data, int totalCount)> GetUserAssignmentAsync(int pageNumber, Guid? newAssignmentId, Guid userId, string? sortOrder = "desc",
          string? sortBy = "assigneddate")
         {
             Func<IQueryable<Assignment>, IOrderedQueryable<Assignment>>? orderBy = GetOrderQuery(sortOrder, sortBy);
             Expression<Func<Assignment, bool>> filter = await GetUserFilterQuery(userId);
-            var assignments = await _unitOfWork.AssignmentRepository.GetAllAsync(pageNumber, filter, orderBy, "UserTo,UserBy,Asset");
+            Expression<Func<Assignment, bool>> prioritizeCondition = null;
+
+            if (newAssignmentId.HasValue)
+            {
+                prioritizeCondition = u => u.Id == newAssignmentId;
+            }
+
+            var assignments = await _unitOfWork.AssignmentRepository.GetAllAsync(pageNumber, filter, orderBy, "UserTo,UserBy,Asset", prioritizeCondition);
 
             return (assignments.items.Select(a => new AssignmentResponse
             {
