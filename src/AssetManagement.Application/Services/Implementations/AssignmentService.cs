@@ -18,11 +18,13 @@ namespace AssetManagement.Application.Services.Implementations
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
+        private readonly IAssetService _assetService;
 
-        public AssignmentService(IUnitOfWork unitOfWork, IMapper mapper)
+        public AssignmentService(IUnitOfWork unitOfWork, IMapper mapper, IAssetService assetService)
         {
             _unitOfWork = unitOfWork;
             _mapper = mapper;
+            _assetService = assetService;
         }
 
         public async Task<AssignmentResponse> AddAssignmentAsync(AssignmentRequest request)
@@ -115,6 +117,8 @@ namespace AssetManagement.Application.Services.Implementations
                 Id = assignment.Id,
                 AssignedTo = assignment.AssignedTo,
                 To = assignment.UserTo.Username,
+                StaffCode = assignment.UserTo.StaffCode,
+                FullName = assignment.UserTo.FirstName + " " + assignment.UserTo.LastName,
                 AssignedBy = assignment.AssignedBy,
                 By = assignment.UserBy.Username,
                 AssignedDate = assignment.AssignedDate,
@@ -158,7 +162,9 @@ namespace AssetManagement.Application.Services.Implementations
                 {
                     throw new ArgumentException("The asset does not exist");
                 }
+                await _assetService.UpdateAsset(currentAssignment.AssetId, new AssetUpdateRequest { Status = EnumAssetStatus.Available });
                 currentAssignment.AssetId = assignmentRequest.AssetId;
+                await _assetService.UpdateAsset(assignmentRequest.AssetId, new AssetUpdateRequest { Status = EnumAssetStatus.Assigned });
             }
 
             if (Enum.IsDefined(typeof(EnumAssignmentStatus), assignmentRequest.Status))
@@ -183,7 +189,7 @@ namespace AssetManagement.Application.Services.Implementations
                 AssetName = currentAssignment.Asset.AssetName,
                 Note = currentAssignment.Note,
                 Status = currentAssignment.Status
-            };        
+            };
         }
 
         public async Task<Expression<Func<Assignment, bool>>>? GetFilterQuery(DateTime? assignedDate, string? state, string? search)
@@ -229,15 +235,15 @@ namespace AssetManagement.Application.Services.Implementations
                 conditions.Add(defaultStateCondition);
             }
 
+            var isDeletedCondition = Expression.Equal(Expression.Property(parameter, nameof(Assignment.IsDeleted)), Expression.Constant(false));
+            conditions.Add(isDeletedCondition);
+
             // Add search conditions
             if (!string.IsNullOrEmpty(search))
             {
                 var assetCodeProperty = Expression.Property(Expression.Property(parameter, nameof(Assignment.Asset)), nameof(Asset.AssetCode));
                 var assetNameProperty = Expression.Property(Expression.Property(parameter, nameof(Assignment.Asset)), nameof(Asset.AssetName));
                 var userToUsernameProperty = Expression.Property(Expression.Property(parameter, nameof(Assignment.UserTo)), nameof(User.Username));
-
-                var isDeletedCondition = Expression.Equal(Expression.Property(parameter, nameof(Assignment.IsDeleted)),Expression.Constant(false));
-                conditions.Add(isDeletedCondition);
 
                 var searchCondition = Expression.OrElse(
                     Expression.Call(assetCodeProperty, nameof(string.Contains), Type.EmptyTypes, Expression.Constant(search)),

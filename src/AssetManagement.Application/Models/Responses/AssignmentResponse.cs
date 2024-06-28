@@ -13,6 +13,8 @@ namespace AssetManagement.Application.Models.Responses
         public Guid Id { get; set; }
         public Guid AssignedTo { get; set; }
         public string To { get; set; }
+        public string StaffCode { get; set; }
+        public string FullName { get; set; }
         public Guid AssignedBy { get; set; }
         public string By { get; set; }
         public DateTime AssignedDate { get; set; }
