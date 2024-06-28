@@ -142,7 +142,9 @@ namespace AssetManagement.Application.Services.Implementations
             }
             if (assignmentRequest.AssignedTo != Guid.Empty)
             {
+                var userTo = _unitOfWork.UserRepository.GetAllAsync(u => u.Id == assignmentRequest.AssignedTo);
                 currentAssignment.AssignedTo = assignmentRequest.AssignedTo;
+                currentAssignment.UserTo = userTo.Result.FirstOrDefault();
             }
 
             if (assignmentRequest.AssignedBy != Guid.Empty)
