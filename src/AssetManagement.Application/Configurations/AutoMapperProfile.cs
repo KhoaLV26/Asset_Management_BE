@@ -32,8 +32,10 @@ namespace AssetManagement.Application.Configurations
             CreateMap<ReturnRequest, ReturnRequestResponse>()
                 .ForMember(dest => dest.AssetCode, opt => opt.MapFrom(src => src.Assignment.Asset.AssetCode))
                 .ForMember(dest => dest.AssetName, opt => opt.MapFrom(src => src.Assignment.Asset.AssetName))
-                .ForMember(dest => dest.AcceptanceByName, opt => opt.MapFrom(src => src.UserAccept.Username))
-                .ForMember(dest => dest.RequestedByName, opt => opt.MapFrom(src => src.Assignment.UserBy.Username));
+                .ForMember(dest => dest.AcceptanceByName, opt => opt.MapFrom(src => src.UserAccept != null ? src.UserAccept.Username : ""))
+                .ForMember(dest => dest.RequestedBy, opt => opt.MapFrom(src => src.Assignment.UserTo.Id))
+                .ForMember(dest => dest.RequestedByName, opt => opt.MapFrom(src => src.Assignment.UserTo.Username))
+                .ForMember(dest => dest.AssignedDate, opt => opt.MapFrom(src => src.Assignment.AssignedDate));
         }
     }
 }

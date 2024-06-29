@@ -12,14 +12,14 @@ namespace AssetManagement.Application.Models.Responses
     {
         public Guid Id { get; set; }
         public Guid AssignmentId { get; set; }
-        public string AssetCode { get; set; }
-        public string AssetName { get; set; }
-        public Guid AcceptanceBy { get; set; }
-        public string AcceptanceByName { get; set; }
+        public string AssetCode { get; set; } = string.Empty;
+        public string AssetName { get; set; } = string.Empty;
+        public Guid? AcceptanceBy { get; set; }
+        public string AcceptanceByName { get; set; } = string.Empty;
         public Guid RequestedBy { get; set; }
-        public string RequestedByName { get; set; }
+        public string RequestedByName { get; set; } = string.Empty;
         public DateTime AssignedDate { get; set; }
         public DateOnly ReturnDate { get; set; }
-        public string ReturnStatus { get; set; } = EnumReturnRequestStatus.WaitingForReturning.ToString();
+        public EnumReturnRequestStatus ReturnStatus { get; set; }
     }
 }

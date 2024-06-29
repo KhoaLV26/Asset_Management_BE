@@ -1,4 +1,5 @@
-﻿using AssetManagement.Application.Models.Responses;
+﻿using AssetManagement.Application.Models.Requests;
+using AssetManagement.Application.Models.Responses;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,6 +10,6 @@ namespace AssetManagement.Application.Services
 {
     public interface IRequestReturnService
     {
-        Task<IEnumerable<ReturnRequestResponse>> GetReturnRequestResponses(Guid locationId);
+        Task<(IEnumerable<ReturnRequestResponse>, int totalCount)> GetReturnRequestResponses(Guid locationId, ReturnFilterRequest requestFilter);
     }
 }
