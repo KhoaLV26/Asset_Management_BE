@@ -1,6 +1,7 @@
 ﻿using AssetManagement.Application.Models.Responses;
 using AssetManagement.Domain.Entities;
 using AssetManagement.Domain.Enums;
+using AssetManagement.Domain.Models;
 using AutoMapper;
 using System;
 using System.Collections.Generic;
@@ -27,6 +28,12 @@ namespace AssetManagement.Application.Configurations
                 .ForMember(dest => dest.CategoryName, opt => opt.MapFrom(src => src.Category.Name))
                 .ForMember(dest => dest.LocationName, opt => opt.MapFrom(src => src.Location.Name));
             CreateMap<Assignment, AssignmentResponse>();
+
+            CreateMap<ReturnRequest, ReturnRequestResponse>()
+                .ForMember(dest => dest.AssetCode, opt => opt.MapFrom(src => src.Assignment.Asset.AssetCode))
+                .ForMember(dest => dest.AssetName, opt => opt.MapFrom(src => src.Assignment.Asset.AssetName))
+                .ForMember(dest => dest.AcceptanceByName, opt => opt.MapFrom(src => src.UserAccept.Username))
+                .ForMember(dest => dest.RequestedByName, opt => opt.MapFrom(src => src.Assignment.UserBy.Username));
         }
     }
 }
