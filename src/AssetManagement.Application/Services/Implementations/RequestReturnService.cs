@@ -22,6 +22,7 @@ namespace AssetManagement.Application.Services.Implementations
 
         public Task<IEnumerable<ReturnRequestResponse>> GetReturnRequestResponses(Guid locationId)
         {
+            return null;
         }
     }
 }
