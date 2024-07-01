@@ -1,6 +1,9 @@
-﻿using System;
+﻿using AssetManagement.Domain.Entities;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
-using AssetManagement.Domain.Entities;
 
 namespace AssetManagement.Domain.Interfaces
 {

@@ -7,9 +7,10 @@ using AutoMapper;
 using DocumentFormat.OpenXml.Spreadsheet;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
-using AssetManagement.Domain.Enums;
 
 namespace AssetManagement.Application.Services.Implementations
 {
@@ -72,30 +73,6 @@ namespace AssetManagement.Application.Services.Implementations
                             null);
 
             return (_mapper.Map<IEnumerable<ReturnRequestResponse>>(returnRequests.items), returnRequests.totalCount);
-        }
-
-        public async Task CompleteReturnRequest(Guid id)
-        {
-            var returnRequest = await _unitOfWork.ReturnRequestRepository.GetAsync(x => x.Id == id,includeProperties: a => a.Assignment);
-            if (returnRequest == null)
-            {
-                throw new ArgumentException("Return request not exist");
-            }
-            if (returnRequest.ReturnStatus != EnumReturnRequestStatus.WaitingForReturning)
-            {
-                throw new ArgumentException("The request's status is not valid to complete");
-            }
-            returnRequest.ReturnStatus = EnumReturnRequestStatus.Completed;
-            returnRequest.ReturnDate = DateOnly.FromDateTime(DateTime.Now);
-            var asset = await _unitOfWork.AssetRepository.GetAsync(x => x.Id == returnRequest.Assignment.AssetId);
-            if (asset == null)
-            {
-                throw new ArgumentException("Asset not exist");
-            }
-            asset.Status = EnumAssetStatus.Available;
-            _unitOfWork.AssignmentRepository.SoftDelete(returnRequest.Assignment);
-            _unitOfWork.AssetRepository.Update(asset);
-            await _unitOfWork.CommitAsync();
         }
 
         public async Task<bool> CancelRequest(Guid id)
