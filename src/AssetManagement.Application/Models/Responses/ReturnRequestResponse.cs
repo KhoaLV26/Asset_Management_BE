@@ -18,7 +18,7 @@ namespace AssetManagement.Application.Models.Responses
         public string AcceptanceByName { get; set; } = string.Empty;
         public Guid RequestedBy { get; set; }
         public string RequestedByName { get; set; } = string.Empty;
-        public DateTime AssignedDate { get; set; }
+        public DateOnly AssignedDate { get; set; }
         public DateOnly ReturnDate { get; set; }
         public EnumReturnRequestStatus ReturnStatus { get; set; }
     }
