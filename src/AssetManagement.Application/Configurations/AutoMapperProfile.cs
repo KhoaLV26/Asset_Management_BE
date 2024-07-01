@@ -35,7 +35,7 @@ namespace AssetManagement.Application.Configurations
                 .ForMember(dest => dest.AcceptanceByName, opt => opt.MapFrom(src => src.UserAccept != null ? src.UserAccept.Username : ""))
                 .ForMember(dest => dest.RequestedBy, opt => opt.MapFrom(src => src.Assignment.UserTo.Id))
                 .ForMember(dest => dest.RequestedByName, opt => opt.MapFrom(src => src.Assignment.UserTo.Username))
-                .ForMember(dest => dest.AssignedDate, opt => opt.MapFrom(src => src.Assignment.AssignedDate));
+                .ForMember(dest => dest.AssignedDate, opt => opt.MapFrom(src => DateOnly.FromDateTime(src.Assignment.AssignedDate)));
         }
     }
 }
