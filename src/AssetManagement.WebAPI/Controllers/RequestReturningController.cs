@@ -1,5 +1,7 @@
 ﻿using AssetManagement.Application.Models.Requests;
 using AssetManagement.Application.Services;
+using AssetManagement.Application.Services.Implementations;
+using AssetManagement.Domain.Constants;
 using AssetManagement.Domain.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -59,6 +61,40 @@ namespace AssetManagement.WebAPI.Controllers
                     Success = true,
                     Message = "Complete return requests successfully",
                 });
+            }
+            catch (Exception ex)
+            {
+                return Conflict(new GeneralBoolResponse
+                {
+                    Success = false,
+                    Message = ex.Message
+                });
+            }
+        }
+                
+        [HttpDelete("{id}")]
+        [Authorize(Roles = RoleConstant.ADMIN)]
+        public async Task<IActionResult> CancelRequest(Guid id)
+        {
+            try
+            {
+                var result = await _requestReturnService.CancelRequest(id);
+                if (result)
+                {
+                    return Ok(new GeneralBoolResponse
+                    {
+                        Success = true,
+                        Message = "Request cancel successfully."
+                    });
+                }
+                else
+                {
+                    return Conflict(new GeneralBoolResponse
+                    {
+                        Success = false,
+                        Message = "User have valid assignment"
+                    });
+                }
             }
             catch (Exception ex)
             {
