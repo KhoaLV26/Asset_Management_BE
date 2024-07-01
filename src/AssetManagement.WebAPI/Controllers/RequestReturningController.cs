@@ -6,6 +6,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Threading.Tasks;
+using AssetManagement.Domain.Constants;
+using AssetManagement.Domain.Entities;
 
 namespace AssetManagement.WebAPI.Controllers
 {
@@ -33,6 +35,29 @@ namespace AssetManagement.WebAPI.Controllers
                     Message = "Get return requests successfully",
                     Data = returnRequests,
                     TotalCount = totalCount
+                });
+            }
+            catch (Exception ex)
+            {
+                return Conflict(new GeneralBoolResponse
+                {
+                    Success = false,
+                    Message = ex.Message
+                });
+            }
+        }
+
+        [HttpPut("CompleteRequest/{id}")]
+        [Authorize(Roles = RoleConstant.ADMIN)]
+        public async Task<IActionResult> CompleteRequest(Guid id)
+        {
+            try
+            {
+                await _requestReturnService.CompleteReturnRequest(id);
+                return Ok(new GeneralBoolResponse
+                {
+                    Success = true,
+                    Message = "Complete return requests successfully",
                 });
             }
             catch (Exception ex)

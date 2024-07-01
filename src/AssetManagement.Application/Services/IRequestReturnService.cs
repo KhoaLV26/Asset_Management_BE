@@ -11,5 +11,7 @@ namespace AssetManagement.Application.Services
     public interface IRequestReturnService
     {
         Task<(IEnumerable<ReturnRequestResponse>, int totalCount)> GetReturnRequestResponses(Guid locationId, ReturnFilterRequest requestFilter);
+        Task CompleteReturnRequest(Guid id);
+
     }
 }
