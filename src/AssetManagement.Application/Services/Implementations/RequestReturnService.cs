@@ -1,8 +1,10 @@
 ﻿using AssetManagement.Application.Models.Requests;
 using AssetManagement.Application.Models.Responses;
 using AssetManagement.Domain.Entities;
+using AssetManagement.Domain.Enums;
 using AssetManagement.Domain.Interfaces;
 using AutoMapper;
+using DocumentFormat.OpenXml.Spreadsheet;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -71,6 +73,26 @@ namespace AssetManagement.Application.Services.Implementations
                             null);
 
             return (_mapper.Map<IEnumerable<ReturnRequestResponse>>(returnRequests.items), returnRequests.totalCount);
+        }
+
+        public async Task<bool> CancelRequest(Guid id)
+        {
+            var request = await _unitOfWork.ReturnRequestRepository.GetAsync(r => r.Id == id);
+            if (request == null)
+            {
+                throw new ArgumentException("Request not found.");
+            }
+
+            if (request.ReturnStatus == EnumReturnRequestStatus.Completed)
+            {
+                throw new ArgumentException("Can't cancel request already completed");
+            }
+
+            request.IsDeleted = true;
+            _unitOfWork.ReturnRequestRepository.Update(request);
+
+            var result = await _unitOfWork.CommitAsync();
+            return result > 0;
         }
     }
 }
