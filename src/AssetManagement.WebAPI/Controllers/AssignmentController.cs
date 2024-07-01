@@ -1,8 +1,6 @@
 ﻿using AssetManagement.Application.Models.Requests;
 using AssetManagement.Application.Services;
-using AssetManagement.Application.Services.Implementations;
 using AssetManagement.Domain.Constants;
-using AssetManagement.Domain.Entities;
 using AssetManagement.Domain.Enums;
 using AssetManagement.Domain.Models;
 using Microsoft.AspNetCore.Authorization;
@@ -79,9 +77,9 @@ namespace AssetManagement.WebAPI.Controllers
         {
             try
             {
-                Guid adminId = UserID;
+                Guid locationId = LocationID;
 
-                var assignments = await _assignmentService.GetAllAssignmentAsync(pageNumber == 0 ? 1 : pageNumber, state: state, assignedDate, search, sortOrder, sortBy, "UserTo,UserBy,Asset,ReturnRequest", newAssignmentId);
+                var assignments = await _assignmentService.GetAllAssignmentAsync(pageNumber == 0 ? 1 : pageNumber, state: state, assignedDate, search, sortOrder, locationId, sortBy, "UserTo,UserBy,Asset,ReturnRequest", newAssignmentId);
                 if (assignments.data.Any())
                 {
                     return Ok(new GeneralGetsResponse

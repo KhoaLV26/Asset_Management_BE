@@ -65,11 +65,11 @@ namespace AssetManagement.Application.Services.Implementations
             }
         }
 
-        public async Task<(IEnumerable<AssignmentResponse> data, int totalCount)> GetAllAssignmentAsync(int pageNumber, string? state, DateTime? assignedDate, string? search, string? sortOrder,
+        public async Task<(IEnumerable<AssignmentResponse> data, int totalCount)> GetAllAssignmentAsync(int pageNumber, string? state, DateTime? assignedDate, string? search, string? sortOrder, Guid locationId,
          string? sortBy = "assetCode", string includeProperties = "", Guid? newAssignmentId = null)
         {
             Func<IQueryable<Assignment>, IOrderedQueryable<Assignment>>? orderBy = GetOrderQuery(sortOrder, sortBy);
-            Expression<Func<Assignment, bool>> filter = await GetFilterQuery(assignedDate, state, search);
+            Expression<Func<Assignment, bool>> filter = await GetFilterQuery(assignedDate, state, search, locationId);
             Expression<Func<Assignment, bool>> prioritizeCondition = null;
 
             if (newAssignmentId.HasValue)
@@ -89,9 +89,9 @@ namespace AssetManagement.Application.Services.Implementations
             {
                 Id = a.Id,
                 AssignedTo = a.AssignedTo,
-                To = a.UserTo.Username,
+                AssignedToName = a.UserTo.Username,
                 AssignedBy = a.AssignedBy,
-                By = a.UserBy.Username,
+                AssignedByName = a.UserBy.Username,
                 AssignedDate = a.AssignedDate,
                 AssetId = a.AssetId,
                 AssetCode = a.Asset.AssetCode,
@@ -116,11 +116,11 @@ namespace AssetManagement.Application.Services.Implementations
             {
                 Id = assignment.Id,
                 AssignedTo = assignment.AssignedTo,
-                To = assignment.UserTo.Username,
+                AssignedToName = assignment.UserTo.Username,
                 StaffCode = assignment.UserTo.StaffCode,
                 FullName = assignment.UserTo.FirstName + " " + assignment.UserTo.LastName,
                 AssignedBy = assignment.AssignedBy,
-                By = assignment.UserBy.Username,
+                AssignedByName = assignment.UserBy.Username,
                 AssignedDate = assignment.AssignedDate,
                 AssetId = assignment.AssetId,
                 AssetCode = assignment.Asset.AssetCode,
@@ -182,9 +182,9 @@ namespace AssetManagement.Application.Services.Implementations
             {
                 Id = currentAssignment.Id,
                 AssignedTo = currentAssignment.AssignedTo,
-                To = currentAssignment.UserTo.Username,
+                AssignedToName = currentAssignment.UserTo.Username,
                 AssignedBy = currentAssignment.AssignedBy,
-                By = currentAssignment.UserBy.Username,
+                AssignedByName = currentAssignment.UserBy.Username,
                 AssignedDate = currentAssignment.AssignedDate,
                 AssetId = currentAssignment.AssetId,
                 AssetCode = currentAssignment.Asset.AssetCode,
@@ -194,7 +194,7 @@ namespace AssetManagement.Application.Services.Implementations
             };
         }
 
-        public async Task<Expression<Func<Assignment, bool>>>? GetFilterQuery(DateTime? assignedDate, string? state, string? search)
+        public async Task<Expression<Func<Assignment, bool>>>? GetFilterQuery(DateTime? assignedDate, string? state, string? search, Guid locationId)
         {
             Expression<Func<Assignment, bool>>? filter = null;
             var parameter = Expression.Parameter(typeof(Assignment), "x");
@@ -239,6 +239,12 @@ namespace AssetManagement.Application.Services.Implementations
 
             var isDeletedCondition = Expression.Equal(Expression.Property(parameter, nameof(Assignment.IsDeleted)), Expression.Constant(false));
             conditions.Add(isDeletedCondition);
+            var locationProperty = Expression.Property(Expression.Property(parameter, nameof(Assignment.Asset)), nameof(Asset.LocationId));
+            var locationCondition = Expression.Equal(
+                locationProperty,
+                Expression.Constant(locationId,typeof(Guid?))
+            );
+            conditions.Add(locationCondition);
 
             // Add search conditions
             if (!string.IsNullOrEmpty(search))
@@ -390,9 +396,9 @@ namespace AssetManagement.Application.Services.Implementations
             {
                 Id = a.Id,
                 AssignedTo = a.AssignedTo,
-                To = a.UserTo.Username,
+                AssignedToName = a.UserTo.Username,
                 AssignedBy = a.AssignedBy,
-                By = a.UserBy.Username,
+                AssignedByName = a.UserBy.Username,
                 AssignedDate = a.AssignedDate,
                 AssetId = a.AssetId,
                 AssetCode = a.Asset.AssetCode,

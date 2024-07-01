@@ -30,6 +30,7 @@ namespace AssetManagement.Application
             services.AddScoped<IAssetService, AssetService>();
             services.AddScoped<ICategoryService, CategoryService>();
             services.AddScoped<IAssignmentService, AssignmentService>();
+            services.AddScoped<IRequestReturnService, RequestReturnService>();
         }
     }
 }

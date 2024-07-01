@@ -64,18 +64,13 @@ namespace AssetManagement.Infrastructure.Repositories
             Func<IQueryable<T>, IOrderedQueryable<T>>? orderBy = null, string includeProperties = "", Expression<Func<T, bool>>? prioritizeCondition = null)
         {
             IQueryable<T> query = _context.Set<T>();
-            if (filter != null)
-            {
-                query = query.Where(filter);
-            }
 
             foreach (var includeProperty in includeProperties.Split
-                         (new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
+                                     (new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
             {
                 query = query.Include(includeProperty);
             }
 
-            var totalCount = query.Count();
             List<T> prioritizedItems = new List<T>();
             List<T> nonPrioritizedItems = new List<T>();
 
@@ -85,24 +80,37 @@ namespace AssetManagement.Infrastructure.Repositories
                 var nonPrioritizedQuery = query.Where(Expression.Lambda<Func<T, bool>>(
                     Expression.Not(prioritizeCondition.Body), prioritizeCondition.Parameters));
 
+                if (filter != null)
+                {
+                    nonPrioritizedQuery = nonPrioritizedQuery.Where(filter);
+                }
+
                 if (orderBy != null)
                 {
                     nonPrioritizedQuery = orderBy(nonPrioritizedQuery);
                 }
 
                 prioritizedItems = await prioritizedQuery.ToListAsync();
+
                 nonPrioritizedItems = await nonPrioritizedQuery.ToListAsync();
             }
             else
             {
+                if (filter != null)
+                {
+                    query = query.Where(filter);
+                }
+
                 if (orderBy != null)
                 {
                     query = orderBy(query);
                 }
+
                 nonPrioritizedItems = await query.ToListAsync();
             }
 
             var items = prioritizedItems.Concat(nonPrioritizedItems).ToList();
+            var totalCount = items.Count();
 
             var paginatedItems = items.Skip((page - 1) * PageSizeConstant.PAGE_SIZE).Take(PageSizeConstant.PAGE_SIZE).ToList();
             return (paginatedItems, totalCount);

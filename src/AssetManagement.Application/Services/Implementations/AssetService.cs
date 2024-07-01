@@ -91,17 +91,6 @@ namespace AssetManagement.Application.Services.Implementations
             {
                 return null;
             }
-            //var assignmentResponses = asset.Assignments.Select(a => new AssignmentResponse
-            //{
-            //    Id = a.Id,
-            //    AssetId = a.AssetId,
-            //    AssignedBy = a.AssignedBy,
-            //    AssignedTo = a.AssignedTo,
-            //    AssignedDate = a.AssignedDate,
-            //    Status = a.Status,
-            //    By = a.UserBy.Username,
-            //    To = a.UserTo.Username
-            //}).ToList();
 
             return new AssetDetailResponse
             {
@@ -122,8 +111,8 @@ namespace AssetManagement.Application.Services.Implementations
                     AssignedTo = a.AssignedTo,
                     AssignedDate = a.AssignedDate,
                     Status = a.Status,
-                    By = a.UserBy.Username,
-                    To = a.UserTo.Username
+                    AssignedByName = a.UserBy.Username,
+                    AssignedToName = a.UserTo.Username
                 }).ToList()
             };
         }

@@ -12,7 +12,7 @@ namespace AssetManagement.Application.Services
     {
         Task<AssignmentResponse> AddAssignmentAsync(AssignmentRequest request);
 
-        Task<(IEnumerable<AssignmentResponse> data, int totalCount)> GetAllAssignmentAsync(int pageNumber, string? state, DateTime? assignedDate, string? search, string? sortOrder, string? sortBy = "assetCode", string includeProperties = "", Guid? newAssignmentId = null);
+        Task<(IEnumerable<AssignmentResponse> data, int totalCount)> GetAllAssignmentAsync(int pageNumber, string? state, DateTime? assignedDate, string? search, string? sortOrder, Guid locationId, string? sortBy = "assetCode", string includeProperties = "", Guid? newAssignmentId = null);
 
         Task<AssignmentResponse> GetAssignmentDetailAsync(Guid id);
 
