@@ -23,4 +23,10 @@
     <ProjectReference Include="..\..\src\AssetManagement.WebAPI\AssetManagement.WebAPI.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Remove="ReturnRequestControllerTest\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="ReturnRequestControllerTest\" />
+  </ItemGroup>
 </Project>

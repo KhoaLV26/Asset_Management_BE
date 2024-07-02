@@ -50,7 +50,6 @@ namespace AssetManagement.Application.Services.Implementations
                 AssignmentId = assignmentId,
                 Assignment = assignment,
                 ReturnStatus = EnumReturnRequestStatus.WaitingForReturning,
-                ReturnDate = DateOnly.FromDateTime(DateTime.Now),
                 CreatedBy = userId
             };
             _unitOfWork.ReturnRequestRepository.AddAsync(returnRequest);
