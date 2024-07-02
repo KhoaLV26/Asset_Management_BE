@@ -25,16 +25,26 @@ namespace AssetManagement.Application.Services.Implementations
             _mapper = mapper;
         }
 
-        public async Task<bool> CreateReturnRequest(Guid assignmentId, ReturnRequestDTO request)
+        public async Task<ReturnRequestResponse> UserCreateReturnRequestAsync(Guid assignmentId, Guid userId)
         {
             var assignment = await _unitOfWork.AssignmentRepository.GetAsync(a => a.Id == assignmentId,
                                  a => a.UserTo,
                                  a => a.UserBy,
                                  a => a.Asset); 
             
-            if (assignment == null || assignment.IsDeleted == true || assignment.Status != EnumAssignmentStatus.Accepted)
+            if (assignment == null || assignment.IsDeleted == true )
             {
-                throw new ArgumentException("Assignment not found or invalid!");
+                throw new ArgumentException("Assignment not found!");
+            }
+            
+            if (assignment.Status != EnumAssignmentStatus.Accepted)
+            {
+                throw new ArgumentException("Invalid assignment!");
+            }
+
+            if (assignment.AssignedTo != userId)
+            {
+                throw new ArgumentException("Not your assignment!");
             }
 
             var returnRequest = new ReturnRequest
@@ -42,10 +52,15 @@ namespace AssetManagement.Application.Services.Implementations
                 AssignmentId = assignmentId,
                 Assignment = assignment,
                 ReturnStatus = EnumReturnRequestStatus.WaitingForReturning,
-                ReturnDate = DateOnly.FromDateTime(DateTime.Now)
+                ReturnDate = DateOnly.FromDateTime(DateTime.Now),
+                CreatedBy = userId
             };
-            
-            return true;
+            _unitOfWork.ReturnRequestRepository.AddAsync(returnRequest);
+            if (await _unitOfWork.CommitAsync() < 1)
+            {
+                throw new ArgumentException("An error occurred while create return request.");
+            }
+            return _mapper.Map<ReturnRequestResponse>(returnRequest);
         }
 
         public async Task<(IEnumerable<ReturnRequestResponse>, int totalCount)> GetReturnRequestResponses(Guid locationId, ReturnFilterRequest requestFilter)
