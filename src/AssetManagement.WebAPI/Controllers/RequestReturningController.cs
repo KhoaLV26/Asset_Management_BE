@@ -8,7 +8,6 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Threading.Tasks;
-using AssetManagement.Domain.Constants;
 using AssetManagement.Domain.Entities;
 
 namespace AssetManagement.WebAPI.Controllers
@@ -22,6 +21,38 @@ namespace AssetManagement.WebAPI.Controllers
         public RequestReturningController(IRequestReturnService requestReturnService)
         {
             _requestReturnService = requestReturnService;
+        }
+
+        [HttpPost]
+        [Authorize(Roles = RoleConstant.ADMIN)]
+        public async Task<IActionResult> CreateReturnRequestAsync([FromBody] Guid assignmentId)
+        {
+            try
+            {
+                var returnRequest = await _requestReturnService.AddReturnRequestAsync(assignmentId);
+                if (returnRequest == null)
+                {
+                    return Conflict(new GeneralBoolResponse
+                    {
+                        Success = false,
+                        Message = "Return Request creation failed."
+                    });
+                }
+                return Ok(new GeneralCreateResponse
+                {
+                    Success = true,
+                    Message = "Return Request created successfully.",
+                    Data = returnRequest
+                });
+            }
+            catch (Exception ex)
+            {
+                return Conflict(new GeneralBoolResponse
+                {
+                    Success = false,
+                    Message = ex.Message
+                });
+            }
         }
 
         [HttpGet]
