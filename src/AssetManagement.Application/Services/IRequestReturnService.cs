@@ -14,5 +14,6 @@ namespace AssetManagement.Application.Services
         Task<(IEnumerable<ReturnRequestResponse>, int totalCount)> GetReturnRequestResponses(Guid locationId, ReturnFilterRequest requestFilter);
         Task CompleteReturnRequest(Guid id, Guid userId);
         Task<bool> CancelRequest(Guid id);
+        Task<ReturnRequestResponse> UserCreateReturnRequestAsync(Guid userId, Guid assignmentId);
     }
 }

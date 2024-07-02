@@ -9,6 +9,8 @@ using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Threading.Tasks;
 using AssetManagement.Domain.Entities;
+using Microsoft.AspNetCore.Mvc.ViewFeatures;
+using AssetManagement.Application.Models.Responses;
 
 namespace AssetManagement.WebAPI.Controllers
 {
@@ -17,10 +19,63 @@ namespace AssetManagement.WebAPI.Controllers
     public class RequestReturningController : BaseApiController
     {
         private readonly IRequestReturnService _requestReturnService;
+        private readonly IAssignmentService _assignmentService;
 
-        public RequestReturningController(IRequestReturnService requestReturnService)
+        public RequestReturningController(IRequestReturnService requestReturnService, IAssignmentService assignmentService)
         {
             _requestReturnService = requestReturnService;
+            _assignmentService = assignmentService;
+        }
+
+        [HttpPost]
+        [Authorize]
+        public async Task<IActionResult> UserCreateReturnRequest(Guid assignmentId)
+        {
+            Guid userId = UserID;
+            var assignment = await _assignmentService.GetAssignmentDetailAsync(assignmentId);
+            if (assignment == null)
+            {
+                return Conflict(new GeneralBoolResponse
+                {
+                    Success = false,
+                    Message = "Assignment not found!"
+                });
+            }
+            try
+            {
+                var returnResponse = await _requestReturnService.UserCreateReturnRequestAsync(assignmentId, userId);
+                _requestReturnService.UserCreateReturnRequestAsync(assignmentId, userId);
+                return Ok(new GeneralCreateResponse
+                {
+                    Success = true,
+                    Message = "Create return request successfully.",
+                    Data = returnResponse
+                });
+            }
+            catch (ArgumentException ex)
+            {
+                return Conflict(new GeneralCreateResponse
+                {
+                    Success = false,
+                    Message = ex.Message
+                });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Conflict(new GeneralBoolResponse
+                {
+                    Success = false,
+                    Message = ex.Message
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new GeneralBoolResponse
+                {
+                    Success = false,
+                    Message = "An error occurred while registering the user.",
+                });
+            }
         }
 
         [HttpPost("{assignmentId}")]
