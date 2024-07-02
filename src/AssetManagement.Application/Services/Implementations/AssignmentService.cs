@@ -101,7 +101,7 @@ namespace AssetManagement.Application.Services.Implementations
                 Status = a.Status
             }), assignments.totalCount);
         }
-        
+
         public async Task<AssignmentResponse> GetAssignmentDetailAsync(Guid id)
         {
             var assignment = await _unitOfWork.AssignmentRepository.GetAsync(a => a.Id == id,
