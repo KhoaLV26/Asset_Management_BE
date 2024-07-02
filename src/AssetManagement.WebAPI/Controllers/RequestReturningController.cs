@@ -19,12 +19,10 @@ namespace AssetManagement.WebAPI.Controllers
     public class RequestReturningController : BaseApiController
     {
         private readonly IRequestReturnService _requestReturnService;
-        private readonly IAssignmentService _assignmentService;
 
-        public RequestReturningController(IRequestReturnService requestReturnService, IAssignmentService assignmentService)
+        public RequestReturningController(IRequestReturnService requestReturnService)
         {
             _requestReturnService = requestReturnService;
-            _assignmentService = assignmentService;
         }
 
         [HttpPost]
@@ -170,7 +168,7 @@ namespace AssetManagement.WebAPI.Controllers
                     return Conflict(new GeneralBoolResponse
                     {
                         Success = false,
-                        Message = "User have valid assignment"
+                        Message = "Request cancel failed"
                     });
                 }
             }
