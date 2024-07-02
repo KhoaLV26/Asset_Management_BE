@@ -346,22 +346,8 @@ namespace AssetManagement.Application.Services.Implementations
             {
                 currentAsset.Status = assetRequest.Status;
             }
-        
+
             await _unitOfWork.CommitAsync();
-            var category = await _unitOfWork.CategoryRepository.GetAsync(x => x.Id == currentAsset.CategoryId);
-            var categoryName = category?.Name;
-        
-            var category = await _unitOfWork.CategoryRepository.GetAsync(x => x.Id == currentAsset.CategoryId);
-            var categoryName = category?.Name;
-        
-            var category = await _unitOfWork.CategoryRepository.GetAsync(x => x.Id == currentAsset.CategoryId);
-            var categoryName = category?.Name;
-        
-            var category = await _unitOfWork.CategoryRepository.GetAsync(x => x.Id == currentAsset.CategoryId);
-            var categoryName = category?.Name;
-        
-            var category = await _unitOfWork.CategoryRepository.GetAsync(x => x.Id == currentAsset.CategoryId);
-            var categoryName = category?.Name;
         
             return new AssetResponse
             {
