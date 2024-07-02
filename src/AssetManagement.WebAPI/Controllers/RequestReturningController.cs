@@ -23,7 +23,7 @@ namespace AssetManagement.WebAPI.Controllers
             _requestReturnService = requestReturnService;
         }
 
-        [HttpPost("{assiggnmentId}")]
+        [HttpPost("{assignmentId}")]
         [Authorize(Roles = RoleConstant.ADMIN)]
         public async Task<IActionResult> CreateReturnRequestAsync(Guid assignmentId)
         {
