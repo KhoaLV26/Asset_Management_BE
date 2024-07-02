@@ -122,7 +122,8 @@ namespace AssetManagement.Application.Services.Implementations
                 AssetName = assignment.Asset.AssetName,
                 Specification = assignment.Asset.Specification,
                 Note = assignment.Note,
-                Status = assignment.Status
+                Status = assignment.Status,
+                ReturnRequests = _mapper.Map<ReturnRequestResponse>(a.ReturnRequest)
             };
         }
 
@@ -175,7 +176,8 @@ namespace AssetManagement.Application.Services.Implementations
                 AssetCode = currentAssignment.Asset.AssetCode,
                 AssetName = currentAssignment.Asset.AssetName,
                 Note = currentAssignment.Note,
-                Status = currentAssignment.Status
+                Status = currentAssignment.Status,
+                ReturnRequests = _mapper.Map<ReturnRequestResponse>(a.ReturnRequest)
             };
         }
 
@@ -390,7 +392,8 @@ namespace AssetManagement.Application.Services.Implementations
                 AssetName = a.Asset.AssetName,
                 Specification = a.Asset.Specification,
                 Note = a.Note,
-                Status = a.Status
+                Status = a.Status,
+                ReturnRequests = _mapper.Map<ReturnRequestResponse>(a.ReturnRequest)
             }), assignments.totalCount);
         }
     }
