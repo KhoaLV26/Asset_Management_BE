@@ -72,7 +72,7 @@ namespace AssetManagement.WebAPI.Controllers
             }
         }
                 
-        [HttpDelete("{id}")]
+        [HttpDelete("CancelRequest/{id}")]
         [Authorize(Roles = RoleConstant.ADMIN)]
         public async Task<IActionResult> CancelRequest(Guid id)
         {
