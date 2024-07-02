@@ -2,6 +2,7 @@
 using AssetManagement.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using System;
 
 namespace AssetManagement.Infrastructure.DataAccess
 {
@@ -20,7 +21,10 @@ namespace AssetManagement.Infrastructure.DataAccess
             if (!optionsBuilder.IsConfigured)
             {
                 var ConnectionString = new ConfigurationBuilder().AddJsonFile("appsettings.json").Build().GetConnectionString("DefaultConnection");
-                optionsBuilder.UseSqlServer(ConnectionString);
+                optionsBuilder.UseSqlServer(ConnectionString, builder =>
+                {
+                    builder.EnableRetryOnFailure(5, TimeSpan.FromSeconds(10), null);
+                });
             }
         }
 
