@@ -55,7 +55,7 @@ namespace AssetManagement.WebAPI.Controllers
         {
             try
             {
-                await _requestReturnService.CompleteReturnRequest(id);
+                await _requestReturnService.CompleteReturnRequest(id, UserID);
                 return Ok(new GeneralBoolResponse
                 {
                     Success = true,
