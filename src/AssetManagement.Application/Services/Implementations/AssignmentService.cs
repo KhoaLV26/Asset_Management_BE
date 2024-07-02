@@ -77,13 +77,7 @@ namespace AssetManagement.Application.Services.Implementations
                 prioritizeCondition = u => u.Id == newAssignmentId;
             }
 
-            var includes = "UserTo,UserBy,Asset";
-            if (!string.IsNullOrEmpty(includeProperties))
-            {
-                includes = $"{includes},{includeProperties}";
-            }
-
-            var assignments = await _unitOfWork.AssignmentRepository.GetAllAsync(pageNumber, filter, orderBy, includes, prioritizeCondition);
+            var assignments = await _unitOfWork.AssignmentRepository.GetAllAsync(pageNumber, filter, orderBy, includeProperties, prioritizeCondition);
 
             return (assignments.items.Select(a => new AssignmentResponse
             {
@@ -98,8 +92,9 @@ namespace AssetManagement.Application.Services.Implementations
                 AssetName = a.Asset.AssetName,
                 Specification = a.Asset.Specification,
                 Note = a.Note,
-                Status = a.Status
-            }), assignments.totalCount);
+                Status = a.Status,
+                ReturnRequests = _mapper.Map<ReturnRequestResponse>(a.ReturnRequest)
+        }), assignments.totalCount);
         }
 
         public async Task<AssignmentResponse> GetAssignmentDetailAsync(Guid id)
