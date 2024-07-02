@@ -10,7 +10,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AssetManagement.Domain.Enums;
-using DocumentFormat.OpenXml.Office2010.Excel;
 
 namespace AssetManagement.Application.Services.Implementations
 {
