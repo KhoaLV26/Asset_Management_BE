@@ -32,15 +32,6 @@ namespace AssetManagement.WebAPI.Controllers
         public async Task<IActionResult> UserCreateReturnRequest(Guid assignmentId)
         {
             Guid userId = UserID;
-            var assignment = await _assignmentService.GetAssignmentDetailAsync(assignmentId);
-            if (assignment == null)
-            {
-                return Conflict(new GeneralBoolResponse
-                {
-                    Success = false,
-                    Message = "Assignment not found!"
-                });
-            }
             try
             {
                 var returnResponse = await _requestReturnService.UserCreateReturnRequestAsync(assignmentId, userId);
