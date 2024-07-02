@@ -1,71 +1,78 @@
-﻿//using AssetManagement.Application.Services.Implementations;
-//using AssetManagement.Domain.Entities;
-//using AssetManagement.Domain.Enums;
-//using AssetManagement.Domain.Interfaces;
-//using AutoMapper;
-//using Moq;
-//using System;
-//using System.Collections.Generic;
-//using System.Linq;
-//using System.Linq.Expressions;
-//using System.Text;
-//using System.Threading.Tasks;
-//using Xunit;
+﻿using AssetManagement.Application.Services;
+using AssetManagement.Application.Services.Implementations;
+using AssetManagement.Domain.Entities;
+using AssetManagement.Domain.Enums;
+using AssetManagement.Domain.Interfaces;
+using AutoMapper;
+using Moq;
+using System;
+using System.Linq.Expressions;
+using System.Threading.Tasks;
+using Xunit;
 
-//namespace AssetManagement.Test.Unit.AssignmentServiceTest
-//{
-//    public class DeleteAssignmentTest
-//    {
-//        private readonly Mock<IUnitOfWork> _unitOfWorkMock;
-//        private readonly Mock<IMapper> _mapperUnitOfWork;
-//        private readonly AssignmentService _assignmentService;
+namespace AssetManagement.Test.Unit.AssignmentServiceTest
+{
+    public class DeleteAssignmentTest
+    {
+        private readonly Mock<IUnitOfWork> _mockUnitOfWork;
+        private readonly Mock<IMapper> _mockMapper;
+        private readonly Mock<IAssetRepository> _mockAssetRepository;
+        private readonly Mock<IAssignmentRepository> _mockAssignmentRepository;
+        private readonly Mock<IAssetService> _mockAssetService;
 
-//        public DeleteAssignmentTest()
-//        {
-//            _unitOfWorkMock = new Mock<IUnitOfWork>();
-//            _mapperUnitOfWork = new Mock<IMapper>();
-//            _assignmentService = new AssignmentService(_unitOfWorkMock.Object, _mapperUnitOfWork.Object);
-//        }
 
-//        [Fact]
-//        public async Task DeleteAssignment_WhenAssignmentNotFound_ReturnsFalse()
-//        {
-//            //Arrange
-//            var id = Guid.NewGuid();
-//            _unitOfWorkMock.Setup(x => x.AssignmentRepository.GetAsync(It.IsAny<Expression<Func<Assignment, bool>>>(), It.IsAny<Expression<Func<Assignment, object>>[]>())).ReturnsAsync((Assignment)null);
+        public DeleteAssignmentTest()
+        {
+            _mockUnitOfWork = new Mock<IUnitOfWork>();
+            _mockMapper = new Mock<IMapper>();
+            _mockAssetRepository = new Mock<IAssetRepository>();
+            _mockAssignmentRepository = new Mock<IAssignmentRepository>();
+            _mockAssetService = new Mock<IAssetService>();
+            _mockUnitOfWork.Setup(uow => uow.AssetRepository).Returns(_mockAssetRepository.Object);
+            _mockUnitOfWork.Setup(uow => uow.AssignmentRepository).Returns(_mockAssignmentRepository.Object);
+        }
 
-//            //Act
-//            var result = await _assignmentService.DeleteAssignment(id);
+        [Fact]
+        public async Task DeleteAssignment_WhenAssignmentNotFound_ReturnsFalse()
+        {
+            // Arrange
+            var assignmentService = new AssignmentService(_mockUnitOfWork.Object, _mockMapper.Object, _mockAssetService.Object);
+            var id = Guid.NewGuid();
+            _mockUnitOfWork.Setup(x => x.AssignmentRepository.GetAsync(It.IsAny<Expression<Func<Assignment, bool>>>(), It.IsAny<Expression<Func<Assignment, object>>[]>())).ReturnsAsync((Assignment)null);
 
-//            //Assert
-//            Assert.False(result);
-//        }
+            // Act
+            var result = await assignmentService.DeleteAssignment(id);
 
-//        [Fact]
-//        public async Task DeleteAssignment_WhenSuccess_ReturnsTrue()
-//        {
-//            //Arrange
-//            var id = Guid.NewGuid();
-//            var assignment = new Assignment
-//            {
-//                Id = id,
-//                IsDeleted = false,
-//                Status = EnumAssignmentStatus.WaitingForAcceptance,
-//                Asset = new Asset
-//                {
-//                    Id = Guid.NewGuid(),
-//                    Status = EnumAssetStatus.Assigned
-//                }
-//            };
-//            _unitOfWorkMock.Setup(x => x.AssignmentRepository.GetAsync(It.IsAny<Expression<Func<Assignment, bool>>>(), It.IsAny<Expression<Func<Assignment, object>>[]>())).ReturnsAsync(assignment);
-//            _unitOfWorkMock.Setup(x => x.AssignmentRepository.SoftDelete(assignment)).Verifiable();
-//            _unitOfWorkMock.Setup(x => x.CommitAsync()).ReturnsAsync(1);
+            // Assert
+            Assert.False(result);
+        }
 
-//            //Act
-//            var result = await _assignmentService.DeleteAssignment(id);
+        [Fact]
+        public async Task DeleteAssignment_WhenSuccess_ReturnsTrue()
+        {
+            // Arrange
+            var assignmentService = new AssignmentService(_mockUnitOfWork.Object, _mockMapper.Object, _mockAssetService.Object);
+            var id = Guid.NewGuid();
+            var assignment = new Assignment
+            {
+                Id = id,
+                IsDeleted = false,
+                Status = EnumAssignmentStatus.WaitingForAcceptance,
+                Asset = new Asset
+                {
+                    Id = Guid.NewGuid(),
+                    Status = EnumAssetStatus.Assigned
+                }
+            };
+            _mockUnitOfWork.Setup(x => x.AssignmentRepository.GetAsync(It.IsAny<Expression<Func<Assignment, bool>>>(), It.IsAny<Expression<Func<Assignment, object>>[]>())).ReturnsAsync(assignment);
+            _mockUnitOfWork.Setup(x => x.AssignmentRepository.SoftDelete(assignment)).Verifiable();
+            _mockUnitOfWork.Setup(x => x.CommitAsync()).ReturnsAsync(1);
 
-//            //Assert
-//            Assert.True(result);
-//        }
-//    }
-//}
+            // Act
+            var result = await assignmentService.DeleteAssignment(id);
+
+            // Assert
+            Assert.True(result);
+        }
+    }
+}

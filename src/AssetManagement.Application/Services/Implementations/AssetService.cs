@@ -346,20 +346,12 @@ namespace AssetManagement.Application.Services.Implementations
             {
                 currentAsset.Status = assetRequest.Status;
             }
-        
-            await _unitOfWork.CommitAsync();
 
+            await _unitOfWork.CommitAsync();
+        
             return new AssetResponse
             {
-                Id = currentAsset.Id,
-                //AssetCode = currentAsset.AssetCode,
-                //AssetName = currentAsset.AssetName,
-                //CategoryId = currentAsset.CategoryId,
-                //CategoryName = currentAsset.Category.Name,
-                //Specification = currentAsset.Specification,
-                //InstallDate = currentAsset.InstallDate,
-                ////LocationId = currentAsset.Location.Id,
-                //Status = currentAsset.Status
+                AssetCode = currentAsset.AssetCode,
             };
         }
 
