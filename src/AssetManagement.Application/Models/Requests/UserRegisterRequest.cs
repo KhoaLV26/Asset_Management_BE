@@ -25,7 +25,7 @@ namespace AssetManagement.Application.Models.Requests
         public EnumGender Gender { get; set; }
 
         [Required]
-        public Guid RoleId { get; set; }
+        public Guid RoleId { get; set; } 
 
         public Guid CreateBy { get; set; }
     }

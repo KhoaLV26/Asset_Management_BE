@@ -24,6 +24,12 @@ namespace AssetManagement.Application.Services.Implementations
             _mapper = mapper;
         }
 
+        //public async Task<bool> CreateReturnRequest(ReturnRequestDTO request)
+        //{
+        //    var assignment = await _unitOfWork.AssignmentRepository.GetAsync(x => x.Id == request.AssignmentId, includeProperties: a => a.Asset, a => a);
+        //    return true;
+        //}
+
         public async Task<(IEnumerable<ReturnRequestResponse>, int totalCount)> GetReturnRequestResponses(Guid locationId, ReturnFilterRequest requestFilter)
         {
             Func<IQueryable<ReturnRequest>, IOrderedQueryable<ReturnRequest>> orderBy = null;
