@@ -348,10 +348,7 @@ namespace AssetManagement.Application.Services.Implementations
             }
         
             await _unitOfWork.CommitAsync();
-        
-            var category = await _unitOfWork.CategoryRepository.GetAsync(x => x.Id == currentAsset.CategoryId);
-            var categoryName = category?.Name;
-        
+
             return new AssetResponse
             {
                 Id = currentAsset.Id,
