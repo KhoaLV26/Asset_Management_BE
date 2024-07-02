@@ -348,18 +348,24 @@ namespace AssetManagement.Application.Services.Implementations
             }
         
             await _unitOfWork.CommitAsync();
-
+            var category = await _unitOfWork.CategoryRepository.GetAsync(x => x.Id == currentAsset.CategoryId);
+            var categoryName = category?.Name;
+        
+            var category = await _unitOfWork.CategoryRepository.GetAsync(x => x.Id == currentAsset.CategoryId);
+            var categoryName = category?.Name;
+        
+            var category = await _unitOfWork.CategoryRepository.GetAsync(x => x.Id == currentAsset.CategoryId);
+            var categoryName = category?.Name;
+        
+            var category = await _unitOfWork.CategoryRepository.GetAsync(x => x.Id == currentAsset.CategoryId);
+            var categoryName = category?.Name;
+        
+            var category = await _unitOfWork.CategoryRepository.GetAsync(x => x.Id == currentAsset.CategoryId);
+            var categoryName = category?.Name;
+        
             return new AssetResponse
             {
-                Id = currentAsset.Id,
-                //AssetCode = currentAsset.AssetCode,
-                //AssetName = currentAsset.AssetName,
-                //CategoryId = currentAsset.CategoryId,
-                //CategoryName = currentAsset.Category.Name,
-                //Specification = currentAsset.Specification,
-                //InstallDate = currentAsset.InstallDate,
-                ////LocationId = currentAsset.Location.Id,
-                //Status = currentAsset.Status
+                AssetCode = currentAsset.AssetCode,
             };
         }
 

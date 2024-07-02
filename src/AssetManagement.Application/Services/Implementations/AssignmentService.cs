@@ -139,9 +139,7 @@ namespace AssetManagement.Application.Services.Implementations
 
             if (assignmentRequest.AssignedTo != Guid.Empty)
             {
-                var userTo = _unitOfWork.UserRepository.GetAllAsync(u => u.Id == assignmentRequest.AssignedTo);
                 currentAssignment.AssignedTo = assignmentRequest.AssignedTo;
-                currentAssignment.UserTo = userTo.Result.First();
             }
 
             currentAssignment.AssignedBy = assignmentRequest.AssignedBy == Guid.Empty ? currentAssignment.AssignedBy : assignmentRequest.AssignedBy;
@@ -166,18 +164,7 @@ namespace AssetManagement.Application.Services.Implementations
 
             return new AssignmentResponse
             {
-                Id = currentAssignment.Id,
-                AssignedTo = currentAssignment.AssignedTo,
-                AssignedToName = currentAssignment.UserTo.Username,
-                AssignedBy = currentAssignment.AssignedBy,
-                AssignedByName = currentAssignment.UserBy.Username,
-                AssignedDate = currentAssignment.AssignedDate,
-                AssetId = currentAssignment.AssetId,
-                AssetCode = currentAssignment.Asset.AssetCode,
-                AssetName = currentAssignment.Asset.AssetName,
-                Note = currentAssignment.Note,
-                Status = currentAssignment.Status,
-                ReturnRequests = _mapper.Map<ReturnRequestResponse>(currentAssignment.ReturnRequest)
+                Id = currentAssignment.Id
             };
         }
 

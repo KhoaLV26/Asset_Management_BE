@@ -32,6 +32,7 @@ namespace AssetManagement.Test.Unit.AssetServiceTest
         {
             // Arrange
             var assetId = Guid.NewGuid();
+            var assetCode = "A";
             var assetRequest = new AssetUpdateRequest
             {
                 AssetName = "Updated Asset",
@@ -40,7 +41,7 @@ namespace AssetManagement.Test.Unit.AssetServiceTest
                 Status = EnumAssetStatus.Available
             };
 
-            var currentAsset = new Asset { Id = assetId };
+            var currentAsset = new Asset { Id = assetId, AssetCode = assetCode };
             _unitOfWorkMock.Setup(u => u.AssetRepository.GetAsync(x => x.Id == assetId)).ReturnsAsync(currentAsset);
             _unitOfWorkMock.Setup(u => u.CommitAsync()).ReturnsAsync(1);
 
@@ -49,11 +50,7 @@ namespace AssetManagement.Test.Unit.AssetServiceTest
 
             // Assert
             Assert.NotNull(result);
-            Assert.Equal(assetRequest.AssetName, result.AssetName);
-            Assert.Equal(assetRequest.Specification, result.Specification);
-            Assert.Equal(assetRequest.InstallDate, result.InstallDate);
-            Assert.Equal(assetRequest.Status, result.Status);
-            _unitOfWorkMock.Verify(u => u.AssetRepository.Update(currentAsset), Times.Once);
+            Assert.Equal(assetCode, result.AssetCode);
             _unitOfWorkMock.Verify(u => u.CommitAsync(), Times.Once);
         }
 

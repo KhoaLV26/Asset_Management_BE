@@ -65,9 +65,7 @@ namespace AssetManagement.WebAPI.Controllers
         {
             try
             {
-                Guid adminId = UserID;
-
-                var assets = await _assetService.GetAllAssetAsync(adminId, pageNumber == 0 ? 1 : pageNumber, state: state, category, search, sortOrder, sortBy, "Category", newAssetCode);
+                var assets = await _assetService.GetAllAssetAsync(UserID, pageNumber == 0 ? 1 : pageNumber, state: state, category, search, sortOrder, sortBy, "Category", newAssetCode);
                 if (assets.data.Any())
                 {
                     return Ok(new GeneralGetsResponse
@@ -104,7 +102,7 @@ namespace AssetManagement.WebAPI.Controllers
                 return Ok(new GeneralGetResponse
                 {
                     Success = true,
-                    Message = "Asset retrived successfully.",
+                    Message = "Asset retrieved successfully.",
                     Data = asset
                 });
             }

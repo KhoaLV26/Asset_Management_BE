@@ -195,7 +195,7 @@ namespace AssetManagement.Test.Unit.AssetControlletTest
             // Set up the controller context with a mocked user
             var claims = new List<Claim>
             {
-                new Claim("userId", adminId.ToString())
+                new Claim(ClaimTypes.Actor, adminId.ToString())
             };
             var identity = new ClaimsIdentity(claims);
             var principal = new ClaimsPrincipal(identity);
@@ -262,7 +262,7 @@ namespace AssetManagement.Test.Unit.AssetControlletTest
             var okResult = Assert.IsType<OkObjectResult>(result);
             var response = Assert.IsType<GeneralGetResponse>(okResult.Value);
             Assert.True(response.Success);
-            Assert.Equal("Asset retrived successfully.", response.Message);
+            Assert.Equal("Asset retrieved successfully.", response.Message);
             Assert.Null(response.Data);
         }
 
