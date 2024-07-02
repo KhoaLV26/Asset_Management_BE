@@ -93,8 +93,8 @@ namespace AssetManagement.Test.Unit.AssetServiceTest
             Assert.Equal(existingAsset.Assignments.First().AssignedTo, result.AssignmentResponses.First().AssignedTo);
             Assert.Equal(existingAsset.Assignments.First().AssignedDate, result.AssignmentResponses.First().AssignedDate);
             Assert.Equal(existingAsset.Assignments.First().Status, result.AssignmentResponses.First().Status);
-            Assert.Equal(existingAsset.Assignments.First().UserBy.Username, result.AssignmentResponses.First().AssignedByName);
-            Assert.Equal(existingAsset.Assignments.First().UserTo.Username, result.AssignmentResponses.First().AssignedToName);
+            Assert.Equal(existingAsset.Assignments.First().UserBy.Username, result.AssignmentResponses.First().By);
+            Assert.Equal(existingAsset.Assignments.First().UserTo.Username, result.AssignmentResponses.First().To);
         }
 
 

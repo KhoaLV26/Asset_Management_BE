@@ -101,7 +101,7 @@ namespace AssetManagement.Application.Services.Implementations
                 Status = a.Status
             }), assignments.totalCount);
         }
-
+        
         public async Task<AssignmentResponse> GetAssignmentDetailAsync(Guid id)
         {
             var assignment = await _unitOfWork.AssignmentRepository.GetAsync(a => a.Id == id,
@@ -140,6 +140,7 @@ namespace AssetManagement.Application.Services.Implementations
             {
                 throw new ArgumentException("Assignment not exist");
             }
+
             if (assignmentRequest.AssignedTo != Guid.Empty)
             {
                 var userTo = _unitOfWork.UserRepository.GetAllAsync(u => u.Id == assignmentRequest.AssignedTo);
@@ -147,15 +148,8 @@ namespace AssetManagement.Application.Services.Implementations
                 currentAssignment.UserTo = userTo.Result.First();
             }
 
-            if (assignmentRequest.AssignedBy != Guid.Empty)
-            {
-                currentAssignment.AssignedBy = assignmentRequest.AssignedBy;
-            }
-
-            if (assignmentRequest.AssignedDate != DateTime.MinValue)
-            {
-                currentAssignment.AssignedDate = assignmentRequest.AssignedDate;
-            }
+            currentAssignment.AssignedBy = assignmentRequest.AssignedBy == Guid.Empty ? currentAssignment.AssignedBy : assignmentRequest.AssignedBy;
+            currentAssignment.AssignedDate = assignmentRequest.AssignedDate == DateTime.MinValue ? currentAssignment.AssignedDate : assignmentRequest.AssignedDate;
 
             if (assignmentRequest.AssetId != Guid.Empty)
             {
@@ -169,11 +163,7 @@ namespace AssetManagement.Application.Services.Implementations
                 await _assetService.UpdateAsset(assignmentRequest.AssetId, new AssetUpdateRequest { Status = EnumAssetStatus.Assigned });
             }
 
-            if (Enum.IsDefined(typeof(EnumAssignmentStatus), assignmentRequest.Status))
-            {
-                currentAssignment.Status = assignmentRequest.Status;
-            }
-
+            currentAssignment.Status = Enum.IsDefined(typeof(EnumAssignmentStatus), assignmentRequest.Status) ? assignmentRequest.Status : currentAssignment.Status;
             currentAssignment.Note = assignmentRequest.Note;
 
             await _unitOfWork.CommitAsync();

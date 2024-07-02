@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AssetManagement.Domain.Enums;
+using DocumentFormat.OpenXml.Office2010.Excel;
 
 namespace AssetManagement.Application.Services.Implementations
 {
@@ -22,6 +23,29 @@ namespace AssetManagement.Application.Services.Implementations
         {
             _unitOfWork = unitOfWork;
             _mapper = mapper;
+        }
+
+        public async Task<bool> CreateReturnRequest(Guid assignmentId, ReturnRequestDTO request)
+        {
+            var assignment = await _unitOfWork.AssignmentRepository.GetAsync(a => a.Id == assignmentId,
+                                 a => a.UserTo,
+                                 a => a.UserBy,
+                                 a => a.Asset); 
+            
+            if (assignment == null || assignment.IsDeleted == true || assignment.Status != EnumAssignmentStatus.Accepted)
+            {
+                throw new ArgumentException("Assignment not found or invalid!");
+            }
+
+            var returnRequest = new ReturnRequest
+            {
+                AssignmentId = assignmentId,
+                Assignment = assignment,
+                ReturnStatus = EnumReturnRequestStatus.WaitingForReturning,
+                ReturnDate = DateOnly.FromDateTime(DateTime.Now)
+            };
+            
+            return true;
         }
 
         public async Task<(IEnumerable<ReturnRequestResponse>, int totalCount)> GetReturnRequestResponses(Guid locationId, ReturnFilterRequest requestFilter)
