@@ -37,8 +37,6 @@ namespace AssetManagement.Test.Unit.RequestReturningControllerTest
             _requestReturnServiceMock.Setup(service => service.UserCreateReturnRequestAsync(assignmentId, userId))
                 .ReturnsAsync(returnResponse);
 
-            //_requestReturningController.SetUserIdForTest(userId); // Assuming you have a method to set UserID in controller for testing
-
             _requestReturningController.ControllerContext = new ControllerContext
             {
                 HttpContext = new DefaultHttpContext
@@ -226,6 +224,38 @@ namespace AssetManagement.Test.Unit.RequestReturningControllerTest
             var response = Assert.IsType<GeneralBoolResponse>(conflictResult.Value);
             Assert.False(response.Success);
             Assert.Equal(exceptionMessage, response.Message);
+        }
+
+        [Fact]
+        public async Task CreateReturnRequestAsync_ReturnRequestIsNull_ReturnsConflict()
+        {
+            // Arrange
+            var assignmentId = Guid.NewGuid();
+            var adminId = Guid.NewGuid();
+
+            _requestReturnServiceMock.Setup(service => service.AddReturnRequestAsync(adminId, assignmentId))
+                .ReturnsAsync((ReturnRequestResponse)null);
+
+            _requestReturningController.ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext
+                {
+                    User = new ClaimsPrincipal(new ClaimsIdentity(new Claim[]
+                                {
+                        new Claim(ClaimTypes.Actor, adminId.ToString()),
+                        new Claim(ClaimTypes.NameIdentifier, "testuser")
+                                }, "mock"))
+                }
+            };
+
+            // Act
+            var result = await _requestReturningController.CreateReturnRequestAsync(assignmentId);
+
+            // Assert
+            var conflictResult = Assert.IsType<ConflictObjectResult>(result);
+            var response = Assert.IsType<GeneralBoolResponse>(conflictResult.Value);
+            Assert.False(response.Success);
+            Assert.Equal("Return Request creation failed.", response.Message);
         }
 
         [Fact]
