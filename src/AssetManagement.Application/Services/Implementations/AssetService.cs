@@ -352,14 +352,14 @@ namespace AssetManagement.Application.Services.Implementations
             return new AssetResponse
             {
                 Id = currentAsset.Id,
-                AssetCode = currentAsset.AssetCode,
-                AssetName = currentAsset.AssetName,
-                CategoryId = currentAsset.CategoryId,
-                CategoryName = currentAsset.Category.Name,
-                Specification = currentAsset.Specification,
-                InstallDate = currentAsset.InstallDate,
-                //LocationId = currentAsset.Location.Id,
-                Status = currentAsset.Status
+                //AssetCode = currentAsset.AssetCode,
+                //AssetName = currentAsset.AssetName,
+                //CategoryId = currentAsset.CategoryId,
+                //CategoryName = currentAsset.Category.Name,
+                //Specification = currentAsset.Specification,
+                //InstallDate = currentAsset.InstallDate,
+                ////LocationId = currentAsset.Location.Id,
+                //Status = currentAsset.Status
             };
         }
 
