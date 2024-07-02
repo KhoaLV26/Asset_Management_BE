@@ -1,5 +1,6 @@
 ﻿using AssetManagement.Domain.Enums;
 using System;
+using System.Collections.Generic;
 
 namespace AssetManagement.Application.Models.Responses
 {
@@ -19,5 +20,6 @@ namespace AssetManagement.Application.Models.Responses
         public string Specification { get; set; }
         public string Note { get; set; }
         public EnumAssignmentStatus Status { get; set; }
+        public ReturnRequestResponse? ReturnRequests { get; set; }
     }
 }

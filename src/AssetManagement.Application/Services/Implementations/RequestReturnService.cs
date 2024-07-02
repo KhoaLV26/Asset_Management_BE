@@ -4,12 +4,10 @@ using AssetManagement.Domain.Entities;
 using AssetManagement.Domain.Enums;
 using AssetManagement.Domain.Interfaces;
 using AutoMapper;
-using DocumentFormat.OpenXml.Spreadsheet;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using AssetManagement.Domain.Enums;
 
 namespace AssetManagement.Application.Services.Implementations
 {
@@ -24,11 +22,31 @@ namespace AssetManagement.Application.Services.Implementations
             _mapper = mapper;
         }
 
-        //public async Task<bool> CreateReturnRequest(ReturnRequestDTO request)
-        //{
-        //    var assignment = await _unitOfWork.AssignmentRepository.GetAsync(x => x.Id == request.AssignmentId, includeProperties: a => a.Asset, a => a);
-        //    return true;
-        //}
+        public async Task<ReturnRequestResponse> AddReturnRequestAsync(Guid assignmentId)
+        {
+            var assignment = await _unitOfWork.AssignmentRepository.GetAsync(a => a.Id == assignmentId);
+            if (assignment == null || assignment.Status != EnumAssignmentStatus.Accepted)
+            {
+                throw new ArgumentException("The assignment is not available for return request.");
+            }
+
+            var returnRequest = new ReturnRequest
+            {
+                Id = Guid.NewGuid(),
+                AssignmentId = assignmentId,
+                ReturnDate = DateOnly.FromDateTime(DateTime.Now),
+                ReturnStatus = EnumReturnRequestStatus.WaitingForReturning
+            };
+            await _unitOfWork.ReturnRequestRepository.AddAsync(returnRequest);
+            if (await _unitOfWork.CommitAsync() < 1)
+            {
+                throw new ArgumentException("An error occurred while create return request.");
+            }
+            else
+            {
+                return _mapper.Map<ReturnRequestResponse>(returnRequest);
+            }
+        }
 
         public async Task<(IEnumerable<ReturnRequestResponse>, int totalCount)> GetReturnRequestResponses(Guid locationId, ReturnFilterRequest requestFilter)
         {
@@ -99,9 +117,17 @@ namespace AssetManagement.Application.Services.Implementations
             {
                 throw new ArgumentException("Asset not exist");
             }
+
+            var assignment = await _unitOfWork.AssignmentRepository.GetAsync(x => x.Id == returnRequest.AssignmentId);
+            if (assignment == null)
+            {
+                throw new ArgumentException("Assignment not exist");
+            }
+
             asset.Status = EnumAssetStatus.Available;
-            _unitOfWork.AssignmentRepository.SoftDelete(returnRequest.Assignment);
+            assignment.Status = EnumAssignmentStatus.Returned;
             _unitOfWork.AssetRepository.Update(asset);
+            _unitOfWork.AssignmentRepository.Update(assignment);
             await _unitOfWork.CommitAsync();
         }
 
