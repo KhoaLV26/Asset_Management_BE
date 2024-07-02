@@ -4,6 +4,7 @@ using AssetManagement.Domain.Entities;
 using AssetManagement.Domain.Enums;
 using AssetManagement.Domain.Interfaces;
 using AutoMapper;
+using Microsoft.AspNetCore.Http.HttpResults;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -28,12 +29,12 @@ namespace AssetManagement.Application.Services.Implementations
                                  a => a.UserTo,
                                  a => a.UserBy,
                                  a => a.Asset); 
-            
+
             if (assignment == null || assignment.IsDeleted == true )
             {
                 throw new ArgumentException("Assignment not found!");
             }
-            
+
             if (assignment.Status != EnumAssignmentStatus.Accepted)
             {
                 throw new ArgumentException("Invalid assignment!");
@@ -58,6 +59,32 @@ namespace AssetManagement.Application.Services.Implementations
                 throw new ArgumentException("An error occurred while create return request.");
             }
             return _mapper.Map<ReturnRequestResponse>(returnRequest);
+        }
+
+        public async Task<ReturnRequestResponse> AddReturnRequestAsync(Guid adminId,Guid assignmentId)
+        {
+            var assignment = await _unitOfWork.AssignmentRepository.GetAsync(a => a.Id == assignmentId);
+            if (assignment == null || assignment.Status != EnumAssignmentStatus.Accepted)
+            {
+                throw new ArgumentException("The assignment is not available for return request.");
+            }
+
+            var returnRequest = new ReturnRequest
+            {
+                Id = Guid.NewGuid(),
+                AssignmentId = assignmentId,
+                ReturnStatus = EnumReturnRequestStatus.WaitingForReturning,
+                CreatedBy = adminId
+            };
+            await _unitOfWork.ReturnRequestRepository.AddAsync(returnRequest);
+            if (await _unitOfWork.CommitAsync() < 1)
+            {
+                throw new ArgumentException("An error occurred while create return request.");
+            }
+            else
+            {
+                return _mapper.Map<ReturnRequestResponse>(returnRequest);
+            }
         }
 
         public async Task<(IEnumerable<ReturnRequestResponse>, int totalCount)> GetReturnRequestResponses(Guid locationId, ReturnFilterRequest requestFilter)
