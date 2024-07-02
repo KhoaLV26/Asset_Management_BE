@@ -8,7 +8,6 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Threading.Tasks;
-using AssetManagement.Domain.Constants;
 using AssetManagement.Domain.Entities;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using AssetManagement.Application.Models.Responses;
@@ -79,6 +78,38 @@ namespace AssetManagement.WebAPI.Controllers
             }
         }
 
+        [HttpPost("{assignmentId}")]
+        [Authorize(Roles = RoleConstant.ADMIN)]
+        public async Task<IActionResult> CreateReturnRequestAsync(Guid assignmentId)
+        {
+            try
+            {
+                var returnRequest = await _requestReturnService.AddReturnRequestAsync(assignmentId);
+                if (returnRequest == null)
+                {
+                    return Conflict(new GeneralBoolResponse
+                    {
+                        Success = false,
+                        Message = "Return Request creation failed."
+                    });
+                }
+                return Ok(new GeneralCreateResponse
+                {
+                    Success = true,
+                    Message = "Return Request created successfully.",
+                    Data = returnRequest
+                });
+            }
+            catch (Exception ex)
+            {
+                return Conflict(new GeneralBoolResponse
+                {
+                    Success = false,
+                    Message = ex.Message
+                });
+            }
+        }
+
         [HttpGet]
         [Authorize]
         public async Task<IActionResult> GetReturnRequests([FromQuery] ReturnFilterRequest requestFilter)
@@ -110,7 +141,7 @@ namespace AssetManagement.WebAPI.Controllers
         {
             try
             {
-                await _requestReturnService.CompleteReturnRequest(id);
+                await _requestReturnService.CompleteReturnRequest(id, UserID);
                 return Ok(new GeneralBoolResponse
                 {
                     Success = true,

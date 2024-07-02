@@ -4,12 +4,10 @@ using AssetManagement.Domain.Entities;
 using AssetManagement.Domain.Enums;
 using AssetManagement.Domain.Interfaces;
 using AutoMapper;
-using DocumentFormat.OpenXml.Spreadsheet;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using AssetManagement.Domain.Enums;
 
 namespace AssetManagement.Application.Services.Implementations
 {
@@ -100,7 +98,7 @@ namespace AssetManagement.Application.Services.Implementations
             }
             var returnRequests = await _unitOfWork.ReturnRequestRepository
                 .GetAllAsync(requestFilter.PageNumber.Value,
-                            x => x.Assignment.UserBy.LocationId == locationId &&
+                            x => !x.IsDeleted && x.Assignment.UserBy.LocationId == locationId &&
                             (!requestFilter.Status.HasValue || requestFilter.Status == 0 || (requestFilter.Status != 0 && (int)x.ReturnStatus == requestFilter.Status.Value)) &&
                             (!requestFilter.ReturnDate.HasValue || x.ReturnDate == requestFilter.ReturnDate.Value) &&
                             (string.IsNullOrEmpty(requestFilter.SearchTerm) || x.Assignment.Asset.AssetCode.Contains(requestFilter.SearchTerm) ||
@@ -112,7 +110,7 @@ namespace AssetManagement.Application.Services.Implementations
             return (_mapper.Map<IEnumerable<ReturnRequestResponse>>(returnRequests.items), returnRequests.totalCount);
         }
 
-        public async Task CompleteReturnRequest(Guid id)
+        public async Task CompleteReturnRequest(Guid id, Guid userId)
         {
             var returnRequest = await _unitOfWork.ReturnRequestRepository.GetAsync(x => x.Id == id,includeProperties: a => a.Assignment);
             if (returnRequest == null)
@@ -125,14 +123,23 @@ namespace AssetManagement.Application.Services.Implementations
             }
             returnRequest.ReturnStatus = EnumReturnRequestStatus.Completed;
             returnRequest.ReturnDate = DateOnly.FromDateTime(DateTime.Now);
+            returnRequest.AcceptanceBy = userId;
             var asset = await _unitOfWork.AssetRepository.GetAsync(x => x.Id == returnRequest.Assignment.AssetId);
             if (asset == null)
             {
                 throw new ArgumentException("Asset not exist");
             }
+
+            var assignment = await _unitOfWork.AssignmentRepository.GetAsync(x => x.Id == returnRequest.AssignmentId);
+            if (assignment == null)
+            {
+                throw new ArgumentException("Assignment not exist");
+            }
+
             asset.Status = EnumAssetStatus.Available;
-            _unitOfWork.AssignmentRepository.SoftDelete(returnRequest.Assignment);
+            assignment.Status = EnumAssignmentStatus.Returned;
             _unitOfWork.AssetRepository.Update(asset);
+            _unitOfWork.AssignmentRepository.Update(assignment);
             await _unitOfWork.CommitAsync();
         }
 
