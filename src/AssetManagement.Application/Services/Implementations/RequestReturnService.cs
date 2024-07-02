@@ -86,7 +86,7 @@ namespace AssetManagement.Application.Services.Implementations
             }
             var returnRequests = await _unitOfWork.ReturnRequestRepository
                 .GetAllAsync(requestFilter.PageNumber.Value,
-                            x => x.Assignment.UserBy.LocationId == locationId &&
+                            x => !x.IsDeleted && x.Assignment.UserBy.LocationId == locationId &&
                             (!requestFilter.Status.HasValue || requestFilter.Status == 0 || (requestFilter.Status != 0 && (int)x.ReturnStatus == requestFilter.Status.Value)) &&
                             (!requestFilter.ReturnDate.HasValue || x.ReturnDate == requestFilter.ReturnDate.Value) &&
                             (string.IsNullOrEmpty(requestFilter.SearchTerm) || x.Assignment.Asset.AssetCode.Contains(requestFilter.SearchTerm) ||
@@ -98,7 +98,7 @@ namespace AssetManagement.Application.Services.Implementations
             return (_mapper.Map<IEnumerable<ReturnRequestResponse>>(returnRequests.items), returnRequests.totalCount);
         }
 
-        public async Task CompleteReturnRequest(Guid id)
+        public async Task CompleteReturnRequest(Guid id, Guid userId)
         {
             var returnRequest = await _unitOfWork.ReturnRequestRepository.GetAsync(x => x.Id == id,includeProperties: a => a.Assignment);
             if (returnRequest == null)
@@ -111,6 +111,7 @@ namespace AssetManagement.Application.Services.Implementations
             }
             returnRequest.ReturnStatus = EnumReturnRequestStatus.Completed;
             returnRequest.ReturnDate = DateOnly.FromDateTime(DateTime.Now);
+            returnRequest.AcceptanceBy = userId;
             var asset = await _unitOfWork.AssetRepository.GetAsync(x => x.Id == returnRequest.Assignment.AssetId);
             if (asset == null)
             {

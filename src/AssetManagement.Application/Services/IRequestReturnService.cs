@@ -12,7 +12,7 @@ namespace AssetManagement.Application.Services
     {
         Task<ReturnRequestResponse> AddReturnRequestAsync(Guid assignmentId);
         Task<(IEnumerable<ReturnRequestResponse>, int totalCount)> GetReturnRequestResponses(Guid locationId, ReturnFilterRequest requestFilter);
-        Task CompleteReturnRequest(Guid id);
+        Task CompleteReturnRequest(Guid id, Guid userId);
         Task<bool> CancelRequest(Guid id);
     }
 }

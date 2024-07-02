@@ -14,7 +14,7 @@ namespace AssetManagement.Domain.Entities
         public Assignment Assignment { get; set; }
         public Guid? AcceptanceBy { get; set; }
         public User? UserAccept { get; set; }
-        public DateOnly ReturnDate { get; set; }
+        public DateOnly? ReturnDate { get; set; }
         public EnumReturnRequestStatus ReturnStatus { get; set; } = EnumReturnRequestStatus.WaitingForReturning;
     }
 }
