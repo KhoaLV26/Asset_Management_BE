@@ -29,7 +29,8 @@ namespace AssetManagement.WebAPI.Controllers
         {
             try
             {
-                var returnRequest = await _requestReturnService.AddReturnRequestAsync(assignmentId);
+                Guid adminId = UserID;
+                var returnRequest = await _requestReturnService.AddReturnRequestAsync(adminId, assignmentId);
                 if (returnRequest == null)
                 {
                     return Conflict(new GeneralBoolResponse

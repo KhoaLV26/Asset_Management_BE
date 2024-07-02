@@ -10,7 +10,7 @@ namespace AssetManagement.Application.Services
 {
     public interface IRequestReturnService
     {
-        Task<ReturnRequestResponse> AddReturnRequestAsync(Guid assignmentId);
+        Task<ReturnRequestResponse> AddReturnRequestAsync(Guid adminId, Guid assignmentId);
         Task<(IEnumerable<ReturnRequestResponse>, int totalCount)> GetReturnRequestResponses(Guid locationId, ReturnFilterRequest requestFilter);
         Task CompleteReturnRequest(Guid id, Guid userId);
         Task<bool> CancelRequest(Guid id);
