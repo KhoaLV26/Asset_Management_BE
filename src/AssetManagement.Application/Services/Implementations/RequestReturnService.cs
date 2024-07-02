@@ -4,6 +4,7 @@ using AssetManagement.Domain.Entities;
 using AssetManagement.Domain.Enums;
 using AssetManagement.Domain.Interfaces;
 using AutoMapper;
+using Microsoft.AspNetCore.Http.HttpResults;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -22,7 +23,7 @@ namespace AssetManagement.Application.Services.Implementations
             _mapper = mapper;
         }
 
-        public async Task<ReturnRequestResponse> AddReturnRequestAsync(Guid assignmentId)
+        public async Task<ReturnRequestResponse> AddReturnRequestAsync(Guid adminId,Guid assignmentId)
         {
             var assignment = await _unitOfWork.AssignmentRepository.GetAsync(a => a.Id == assignmentId);
             if (assignment == null || assignment.Status != EnumAssignmentStatus.Accepted)
@@ -34,8 +35,8 @@ namespace AssetManagement.Application.Services.Implementations
             {
                 Id = Guid.NewGuid(),
                 AssignmentId = assignmentId,
-                ReturnDate = DateOnly.FromDateTime(DateTime.Now),
-                ReturnStatus = EnumReturnRequestStatus.WaitingForReturning
+                ReturnStatus = EnumReturnRequestStatus.WaitingForReturning,
+                CreatedBy = adminId
             };
             await _unitOfWork.ReturnRequestRepository.AddAsync(returnRequest);
             if (await _unitOfWork.CommitAsync() < 1)
