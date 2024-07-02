@@ -123,7 +123,7 @@ namespace AssetManagement.Application.Services.Implementations
                 Specification = assignment.Asset.Specification,
                 Note = assignment.Note,
                 Status = assignment.Status,
-                ReturnRequests = _mapper.Map<ReturnRequestResponse>(a.ReturnRequest)
+                ReturnRequests = _mapper.Map<ReturnRequestResponse>(assignment.ReturnRequest)
             };
         }
 
@@ -177,7 +177,7 @@ namespace AssetManagement.Application.Services.Implementations
                 AssetName = currentAssignment.Asset.AssetName,
                 Note = currentAssignment.Note,
                 Status = currentAssignment.Status,
-                ReturnRequests = _mapper.Map<ReturnRequestResponse>(a.ReturnRequest)
+                ReturnRequests = _mapper.Map<ReturnRequestResponse>(currentAssignment.ReturnRequest)
             };
         }
 
