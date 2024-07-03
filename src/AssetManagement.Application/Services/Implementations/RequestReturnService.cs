@@ -90,6 +90,8 @@ namespace AssetManagement.Application.Services.Implementations
 
             request.IsDeleted = true;
             _unitOfWork.ReturnRequestRepository.Update(request);
+            request.Assignment.Status = EnumAssignmentStatus.Accepted;
+            _unitOfWork.AssignmentRepository.Update(request.Assignment);
 
             var result = await _unitOfWork.CommitAsync();
             return result > 0;
