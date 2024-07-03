@@ -468,7 +468,6 @@ namespace AssetManagement.Test.Unit.UserControllerTest
             var conflictResult = Assert.IsType<OkObjectResult>(result);
             var response = Assert.IsType<GeneralGetResponse>(conflictResult.Value);
             Assert.True(response.Success);
-            //Assert.Equal(, response.Data);
         }
     }
 }

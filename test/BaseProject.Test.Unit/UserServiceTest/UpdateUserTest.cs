@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using AssetManagement.Application.Models.Requests;
 using AssetManagement.Application.Models.Responses;
 using AssetManagement.Application.Services.Implementations;
+using AssetManagement.Domain.Constants;
 using AssetManagement.Domain.Entities;
 using AssetManagement.Domain.Enums;
 using AssetManagement.Domain.Interfaces;
@@ -32,10 +33,16 @@ namespace AssetManagement.Test.Unit.UserServiceTest
         }
 
         [Fact]
-        public async Task UpdateUserAsync_UserFound_ReturnsCreatedAssetResponse()
+        public async Task UpdateUserAsync_PassAllConstraint_UpdateToDatabaseAndReturnsUpdateUserResponse()
         {
+            // Arrange
             var userId = Guid.NewGuid();
             var roleId = Guid.NewGuid();
+            var role = new Role
+            {
+                Id = roleId,
+                Name = RoleConstant.STAFF
+            };
             var user = new User
             {
                 Id = userId,
@@ -46,12 +53,11 @@ namespace AssetManagement.Test.Unit.UserServiceTest
                 Gender = EnumGender.Male,
                 DateJoined = DateOnly.FromDateTime(DateTime.Now),
                 RoleId = roleId,
-                IsDeleted = false
+                IsDeleted = false,
+                Role = role
             };
             var editUserRequest = new EditUserRequest
             {
-                FirstName = "Huy",
-                LastName = "Phuc",
                 DateJoined = DateOnly.FromDateTime(DateTime.Now),
                 DateOfBirth = DateOnly.FromDateTime(DateTime.Now),
                 Gender = EnumGender.Male,
@@ -61,9 +67,11 @@ namespace AssetManagement.Test.Unit.UserServiceTest
             {
                 StaffCode = "SD0001"
             };
-            _unitOfWorkMock.Setup(x => x.UserRepository.GetAsync(a => a.IsDeleted == false &&  a.Id == userId))
+            _unitOfWorkMock.Setup(x => x.UserRepository.GetAsync(a => a.IsDeleted == false &&  a.Id == userId, x=> x.Role))
                 .ReturnsAsync(user);
-            _unitOfWorkMock.Setup(u => u.UserRepository.Update(It.IsAny<User>()))
+            _unitOfWorkMock.Setup(x => x.RoleRepository.GetAsync(a => a.IsDeleted == false &&  a.Id == editUserRequest.RoleId))
+                .ReturnsAsync(role);
+            _unitOfWorkMock.Setup(u => u.UserRepository.Update(user))
                 .Verifiable();
             _unitOfWorkMock.Setup(u => u.CommitAsync())
                 .ReturnsAsync(1).Verifiable();
@@ -77,14 +85,108 @@ namespace AssetManagement.Test.Unit.UserServiceTest
         }
 
         [Fact]
-        public async Task UpdateUserAsync_UserNotFound_ThrowArgumentException()
+        public async Task UpdateUserAsync_AdminUpdateToStaff_ReturnsUpdateUserResponse()
         {
+            // Arrange
             var userId = Guid.NewGuid();
             var roleId = Guid.NewGuid();
+            var expectedMessage = "Cannot edit role from admin to staff.";
+            var role = new Role
+            {
+                Id = roleId,
+                Name = RoleConstant.STAFF
+            };
+            var user = new User
+            {
+                Id = userId,
+                StaffCode = "SD0001",
+                DateOfBirth = DateOnly.FromDateTime(DateTime.Now),
+                FirstName = "Huy",
+                LastName = "Phuc",
+                Gender = EnumGender.Male,
+                DateJoined = DateOnly.FromDateTime(DateTime.Now),
+                RoleId = roleId,
+                IsDeleted = false,
+                Role = new Role
+                {
+                    Id = new Guid(),
+                    Name = RoleConstant.ADMIN
+                }
+            };
+            var editUserRequest = new EditUserRequest
+            {
+                DateJoined = DateOnly.FromDateTime(DateTime.Now),
+                DateOfBirth = DateOnly.FromDateTime(DateTime.Now),
+                Gender = EnumGender.Male,
+                RoleId = roleId
+            };
+            
+            _unitOfWorkMock.Setup(x => x.UserRepository.GetAsync(a => a.IsDeleted == false && a.Id == userId, x => x.Role))
+                .ReturnsAsync(user);
+            _unitOfWorkMock.Setup(x => x.RoleRepository.GetAsync(a => a.IsDeleted == false && a.Id == editUserRequest.RoleId))
+                .ReturnsAsync(role);
+
+            // Act
+            var exception = await Assert.ThrowsAsync<ArgumentException>(async () => await _userService.UpdateUserAsync(userId, editUserRequest));
+
+            // Assert
+            Assert.Equal(expectedMessage, exception.Message);
+        }
+
+        [Fact]
+        public async Task UpdateUserAsync_RoleNotFound_ThrowArgumentExceptionWithMessage()
+        {
+            // Arrange
+            var userId = Guid.NewGuid();
+            var roleId = Guid.NewGuid();
+            var expectedMessage = "Role not found.";
+
+            var user = new User
+            {
+                Id = userId,
+                StaffCode = "SD0001",
+                DateOfBirth = DateOnly.FromDateTime(DateTime.Now),
+                FirstName = "Huy",
+                LastName = "Phuc",
+                Gender = EnumGender.Male,
+                DateJoined = DateOnly.FromDateTime(DateTime.Now),
+                RoleId = roleId,
+                IsDeleted = false,
+            };
+            var editUserRequest = new EditUserRequest
+            {
+                DateJoined = DateOnly.FromDateTime(DateTime.Now),
+                DateOfBirth = DateOnly.FromDateTime(DateTime.Now),
+                Gender = EnumGender.Male,
+                RoleId = roleId
+            };
+            
+            _unitOfWorkMock.Setup(x => x.UserRepository.GetAsync(a => a.IsDeleted == false &&  a.Id == userId, x=> x.Role))
+                .ReturnsAsync(user);
+            _unitOfWorkMock.Setup(x => x.RoleRepository.GetAsync(a => a.IsDeleted == false &&  a.Id == editUserRequest.RoleId))
+                .ReturnsAsync((Role?)null);
+
+            // Act
+            var exception = await Assert.ThrowsAsync<ArgumentException>(async () => await _userService.UpdateUserAsync(userId, editUserRequest));
+
+            // Assert
+            Assert.Equal(expectedMessage, exception.Message);
+        }
+
+        [Fact]
+        public async Task UpdateUserAsync_UserNotFound_ThrowArgumentExceptionWithMessage()
+        {
+            // Arrange
+            var userId = Guid.NewGuid();
+            var expectedMessage = "User not found.";
             _unitOfWorkMock.Setup(x => x.UserRepository.GetAsync(a => a.IsDeleted == false && a.Id == userId))!
                 .ReturnsAsync((User?)null);
-            // Act & Assert
-            await Assert.ThrowsAsync<ArgumentException>(async () => await _userService.UpdateUserAsync(userId,It.IsAny<EditUserRequest>()));
+
+            // Act
+            var exception = await Assert.ThrowsAsync<ArgumentException>(async () => await _userService.UpdateUserAsync(userId,It.IsAny<EditUserRequest>()));
+
+            // Assert
+            Assert.Equal(expectedMessage, exception.Message);
         }
     }
 }
