@@ -171,28 +171,19 @@ namespace AssetManagement.Application.Services.Implementations
 
         public async Task<bool> CancelRequest(Guid id)
         {
-            var request = await _unitOfWork.ReturnRequestRepository.GetAsync(r => r.Id == id);
+            var request = await _unitOfWork.ReturnRequestRepository
+                .GetAsync(r => !r.IsDeleted
+                            && r.Id == id
+                            && r.ReturnStatus != EnumReturnRequestStatus.Completed,
+                            r => r.Assignment);
+
             if (request == null)
             {
                 throw new ArgumentException("Request not found.");
             }
 
-            if (request.ReturnStatus == EnumReturnRequestStatus.Completed)
-            {
-                throw new ArgumentException("Can't cancel request already completed");
-            }
-
-            var assignment = await _unitOfWork.AssignmentRepository.GetAsync(a => a.Id == request.AssignmentId);
-            if (assignment == null)
-            {
-                throw new ArgumentException("Associated assignment not found.");
-            }
-
-            request.IsDeleted = true;
-            _unitOfWork.ReturnRequestRepository.Update(request);
-
-            assignment.Status = EnumAssignmentStatus.Accepted;
-            _unitOfWork.AssignmentRepository.Update(assignment);
+            _unitOfWork.ReturnRequestRepository.SoftDelete(request);
+            request.Assignment.Status = EnumAssignmentStatus.Accepted;
 
             var result = await _unitOfWork.CommitAsync();
             return result > 0;
