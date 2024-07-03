@@ -19,12 +19,14 @@ namespace AssetManagement.Application.Services.Implementations
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
         private readonly IAssetService _assetService;
+        private readonly IRequestReturnService _requestReturnService;
 
-        public AssignmentService(IUnitOfWork unitOfWork, IMapper mapper, IAssetService assetService)
+        public AssignmentService(IUnitOfWork unitOfWork, IMapper mapper, IAssetService assetService, IRequestReturnService requestReturnService)
         {
             _unitOfWork = unitOfWork;
             _mapper = mapper;
             _assetService = assetService;
+            _requestReturnService = requestReturnService;
         }
 
         public async Task<AssignmentResponse> AddAssignmentAsync(AssignmentRequest request)
@@ -47,7 +49,24 @@ namespace AssetManagement.Application.Services.Implementations
                 CreatedBy = request.AssignedBy,
                 Note = request.Note,
             };
-            await _unitOfWork.AssignmentRepository.AddAsync(assignment);
+
+            var isDeletedAsset = await _unitOfWork.AssetRepository.GetAsync(a => a.Id == assignment.AssetId);
+            var isDeletedUser = await _unitOfWork.UserRepository.GetAsync(a => a.Id == assignment.AssignedTo);
+            if (isDeletedAsset != null)
+            {
+                if (isDeletedUser != null)
+                {
+                    await _unitOfWork.AssignmentRepository.AddAsync(assignment);
+                }
+                else
+                {
+                    throw new ArgumentException("User does not exist");
+                }
+            }
+            else
+            {
+                throw new ArgumentException("Asset does not exist");
+            }
             if (await _unitOfWork.CommitAsync() < 1)
             {
                 throw new ArgumentException("An error occurred while create assignment.");
@@ -93,7 +112,7 @@ namespace AssetManagement.Application.Services.Implementations
                 Specification = a.Asset.Specification,
                 Note = a.Note,
                 Status = a.Status,
-                ReturnRequests = _mapper.Map<ReturnRequestResponse>(a.ReturnRequest)
+                ReturnRequests = _mapper.Map<ReturnRequestResponse>(_requestReturnService.GetReturnRequestResponses(locationId,))
         }), assignments.totalCount);
         }
 
@@ -137,11 +156,7 @@ namespace AssetManagement.Application.Services.Implementations
                 throw new ArgumentException("Assignment not exist");
             }
 
-            if (assignmentRequest.AssignedTo != Guid.Empty)
-            {
-                currentAssignment.AssignedTo = assignmentRequest.AssignedTo;
-            }
-
+            currentAssignment.AssignedTo = assignmentRequest.AssignedTo == Guid.Empty ? currentAssignment.AssignedTo : assignmentRequest.AssignedTo;
             currentAssignment.AssignedBy = assignmentRequest.AssignedBy == Guid.Empty ? currentAssignment.AssignedBy : assignmentRequest.AssignedBy;
             currentAssignment.AssignedDate = assignmentRequest.AssignedDate == DateTime.MinValue ? currentAssignment.AssignedDate : assignmentRequest.AssignedDate;
 
@@ -159,9 +174,24 @@ namespace AssetManagement.Application.Services.Implementations
 
             currentAssignment.Status = Enum.IsDefined(typeof(EnumAssignmentStatus), assignmentRequest.Status) ? assignmentRequest.Status : currentAssignment.Status;
             currentAssignment.Note = assignmentRequest.Note;
-
-            await _unitOfWork.CommitAsync();
-
+            
+            //Fix: Validate update fields 
+            var isDeletedAsset = await _unitOfWork.AssetRepository.GetAsync(a => a.Id == currentAssignment.AssetId);
+            var isDeletedUser = await _unitOfWork.UserRepository.GetAsync(a => a.Id == currentAssignment.AssignedTo);
+            if (isDeletedAsset != null)
+            {
+                if (isDeletedUser != null)
+                {
+                    await _unitOfWork.CommitAsync();
+                }
+                else
+                {
+                    throw new ArgumentException("User does not exist");
+                }
+            } else
+            {
+                throw new ArgumentException("Asset does not exist");
+            }
             return new AssignmentResponse
             {
                 Id = currentAssignment.Id
