@@ -318,14 +318,21 @@ namespace AssetManagement.Application.Services.Implementations
 
         public async Task<UpdateUserResponse> UpdateUserAsync(Guid id, EditUserRequest request)
         {
-            var user = await _unitOfWork.UserRepository.GetAsync(x => x.IsDeleted == false && x.Id == id);
+            var user = await _unitOfWork.UserRepository.GetAsync(x => x.IsDeleted == false && x.Id == id, includeProperties:x => x.Role);
             if (user == null)
             {
                 throw new ArgumentException("User not found.");
             }
+            var role = await _unitOfWork.RoleRepository.GetAsync(x => x.IsDeleted == false && x.Id == request.RoleId);
+            if (role == null)
+            {
+                throw new ArgumentException("Role not found.");
+            }
+            if (user.Role.Name == RoleConstant.ADMIN && role.Name == RoleConstant.STAFF)
+            {
+                throw new ArgumentException("Cannot edit role from admin to staff.");
+            }
             user.DateJoined = request.DateJoined;
-            user.FirstName = request.FirstName;
-            user.LastName = request.LastName;
             user.Gender = request.Gender;
             user.DateOfBirth = request.DateOfBirth;
             user.RoleId = request.RoleId;
