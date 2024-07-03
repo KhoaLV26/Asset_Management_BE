@@ -76,7 +76,11 @@ namespace AssetManagement.Infrastructure.Repositories
 
             if (prioritizeCondition != null)
             {
-                var prioritizedQuery = query.Where(prioritizeCondition);
+                var notDeletedExpression = Expression.Lambda<Func<T, bool>>(
+                    Expression.Not(Expression.Property(prioritizeCondition.Parameters[0], "IsDeleted")), 
+                    prioritizeCondition.Parameters);
+                
+                var prioritizedQuery = query.Where(prioritizeCondition).Where(notDeletedExpression);
                 var nonPrioritizedQuery = query.Where(Expression.Lambda<Func<T, bool>>(
                     Expression.Not(prioritizeCondition.Body), prioritizeCondition.Parameters));
 
