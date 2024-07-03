@@ -182,10 +182,17 @@ namespace AssetManagement.Application.Services.Implementations
                 throw new ArgumentException("Can't cancel request already completed");
             }
 
+            var assignment = await _unitOfWork.AssignmentRepository.GetAsync(a => a.Id == request.AssignmentId);
+            if (assignment == null)
+            {
+                throw new ArgumentException("Associated assignment not found.");
+            }
+
             request.IsDeleted = true;
             _unitOfWork.ReturnRequestRepository.Update(request);
-            request.Assignment.Status = EnumAssignmentStatus.Accepted;
-            _unitOfWork.AssignmentRepository.Update(request.Assignment);
+
+            assignment.Status = EnumAssignmentStatus.Accepted;
+            _unitOfWork.AssignmentRepository.Update(assignment);
 
             var result = await _unitOfWork.CommitAsync();
             return result > 0;
