@@ -28,9 +28,9 @@ namespace AssetManagement.Application.Services.Implementations
             var assignment = await _unitOfWork.AssignmentRepository.GetAsync(a => a.Id == assignmentId,
                                  a => a.UserTo,
                                  a => a.UserBy,
-                                 a => a.Asset); 
+                                 a => a.Asset);
 
-            if (assignment == null || assignment.IsDeleted == true )
+            if (assignment == null || assignment.IsDeleted == true)
             {
                 throw new ArgumentException("Assignment not found!");
             }
@@ -43,6 +43,17 @@ namespace AssetManagement.Application.Services.Implementations
             if (assignment.AssignedTo != userId)
             {
                 throw new ArgumentException("Not your assignment!");
+            }
+
+            var returnRequests = await _unitOfWork.ReturnRequestRepository.GetAllAsync(
+                page: 1,
+                filter: x => !x.IsDeleted && x.AssignmentId == assignmentId,
+                orderBy: null,
+                "",
+                null);
+            if (returnRequests.totalCount > 0)
+            {
+                throw new ArgumentException("A return request for this assignment already exists.");
             }
 
             var returnRequest = new ReturnRequest
@@ -60,12 +71,23 @@ namespace AssetManagement.Application.Services.Implementations
             return _mapper.Map<ReturnRequestResponse>(returnRequest);
         }
 
-        public async Task<ReturnRequestResponse> AddReturnRequestAsync(Guid adminId,Guid assignmentId)
+        public async Task<ReturnRequestResponse> AddReturnRequestAsync(Guid adminId, Guid assignmentId)
         {
-            var assignment = await _unitOfWork.AssignmentRepository.GetAsync(a => a.Id == assignmentId);
+            var assignment = await _unitOfWork.AssignmentRepository.GetAsync(a => a.Id == assignmentId && !a.IsDeleted);
             if (assignment == null || assignment.Status != EnumAssignmentStatus.Accepted)
             {
                 throw new ArgumentException("The assignment is not available for return request.");
+            }
+
+            var returnRequests = await _unitOfWork.ReturnRequestRepository.GetAllAsync(
+                    page: 1,
+                    filter: x => !x.IsDeleted && x.AssignmentId == assignmentId,
+                    orderBy: null,
+                    "",
+                    null);
+            if (returnRequests.totalCount > 0)
+            {
+                throw new ArgumentException("A return request for this assignment already exists.");
             }
 
             var returnRequest = new ReturnRequest
@@ -138,7 +160,7 @@ namespace AssetManagement.Application.Services.Implementations
 
         public async Task CompleteReturnRequest(Guid id, Guid userId)
         {
-            var returnRequest = await _unitOfWork.ReturnRequestRepository.GetAsync(x => x.Id == id,includeProperties: a => a.Assignment);
+            var returnRequest = await _unitOfWork.ReturnRequestRepository.GetAsync(x => x.Id == id, includeProperties: a => a.Assignment);
             if (returnRequest == null)
             {
                 throw new ArgumentException("Return request not exist");

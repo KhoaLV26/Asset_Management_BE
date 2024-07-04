@@ -30,8 +30,8 @@ namespace AssetManagement.Application.Services.Implementations
         public async Task<AssignmentResponse> AddAssignmentAsync(AssignmentRequest request)
         {
             var asset = await _unitOfWork.AssetRepository.GetAsync(a => a.Id == request.AssetId);
-            var assignTo = await _unitOfWork.UserRepository.GetAsync (u => u.Id == request.AssignedTo);
-            var assignBy = await _unitOfWork.UserRepository.GetAsync (u => u.Id == request.AssignedBy);
+            var assignTo = await _unitOfWork.UserRepository.GetAsync(u => u.Id == request.AssignedTo);
+            var assignBy = await _unitOfWork.UserRepository.GetAsync(u => u.Id == request.AssignedBy);
 
             if (asset == null || asset.Status != EnumAssetStatus.Available)
             {
@@ -92,7 +92,7 @@ namespace AssetManagement.Application.Services.Implementations
 
             var assignments = await _unitOfWork.AssignmentRepository.GetAllAsync(pageNumber, filter, orderBy, includeProperties, prioritizeCondition);
 
-            return (assignments.items.Select(a => new AssignmentResponse
+            var assignmentResponses = assignments.items.Select(a => new AssignmentResponse
             {
                 Id = a.Id,
                 AssignedTo = a.AssignedTo,
@@ -106,8 +106,22 @@ namespace AssetManagement.Application.Services.Implementations
                 Specification = a.Asset.Specification,
                 Note = a.Note,
                 Status = a.Status,
-                ReturnRequests = _mapper.Map<ReturnRequestResponse>(a.ReturnRequest)
-        }), assignments.totalCount);
+                ReturnRequests = new ReturnRequestResponse()
+            }).ToList();
+
+            foreach (var assignmentResponse in assignmentResponses)
+            {
+                var returnRequestsResult = await _unitOfWork.ReturnRequestRepository.GetAllAsync(
+                    page: 1,
+                    filter: x => !x.IsDeleted && x.AssignmentId == assignmentResponse.Id,
+                    orderBy: null,
+                    "",
+                    null);
+
+                assignmentResponse.ReturnRequests = _mapper.Map<ReturnRequestResponse>(returnRequestsResult.items.FirstOrDefault());
+            }
+
+            return (assignmentResponses, assignments.totalCount);
         }
 
         public async Task<AssignmentResponse> GetAssignmentDetailAsync(Guid id)
@@ -120,13 +134,18 @@ namespace AssetManagement.Application.Services.Implementations
             {
                 return null;
             }
-            return new AssignmentResponse
+            var returnRequestsResult = await _unitOfWork.ReturnRequestRepository.GetAllAsync(
+                    page: 1,
+                    filter: x => !x.IsDeleted && x.AssignmentId == id,
+                    orderBy: null,
+                    "",
+                    null);
+
+            var assignmentResponses = new AssignmentResponse
             {
                 Id = assignment.Id,
                 AssignedTo = assignment.AssignedTo,
                 AssignedToName = assignment.UserTo.Username,
-                StaffCode = assignment.UserTo.StaffCode,
-                FullName = assignment.UserTo.FirstName + " " + assignment.UserTo.LastName,
                 AssignedBy = assignment.AssignedBy,
                 AssignedByName = assignment.UserBy.Username,
                 AssignedDate = assignment.AssignedDate,
@@ -136,8 +155,10 @@ namespace AssetManagement.Application.Services.Implementations
                 Specification = assignment.Asset.Specification,
                 Note = assignment.Note,
                 Status = assignment.Status,
-                ReturnRequests = _mapper.Map<ReturnRequestResponse>(assignment.ReturnRequest)
+                ReturnRequests = _mapper.Map<ReturnRequestResponse>(returnRequestsResult.items.FirstOrDefault())
             };
+
+            return (assignmentResponses);
         }
 
         public async Task<AssignmentResponse> UpdateAssignment(Guid id, AssignmentRequest assignmentRequest)
@@ -229,7 +250,7 @@ namespace AssetManagement.Application.Services.Implementations
             var locationProperty = Expression.Property(Expression.Property(parameter, nameof(Assignment.Asset)), nameof(Asset.LocationId));
             var locationCondition = Expression.Equal(
                 locationProperty,
-                Expression.Constant(locationId,typeof(Guid?))
+                Expression.Constant(locationId, typeof(Guid?))
             );
             conditions.Add(locationCondition);
 
@@ -379,7 +400,7 @@ namespace AssetManagement.Application.Services.Implementations
 
             var assignments = await _unitOfWork.AssignmentRepository.GetAllAsync(pageNumber, filter, orderBy, "UserTo,UserBy,Asset,ReturnRequest", prioritizeCondition);
 
-            return (assignments.items.Select(a => new AssignmentResponse
+            var assignmentResponses = assignments.items.Select(a => new AssignmentResponse
             {
                 Id = a.Id,
                 AssignedTo = a.AssignedTo,
@@ -393,8 +414,22 @@ namespace AssetManagement.Application.Services.Implementations
                 Specification = a.Asset.Specification,
                 Note = a.Note,
                 Status = a.Status,
-                ReturnRequests = _mapper.Map<ReturnRequestResponse>(a.ReturnRequest)
-            }), assignments.totalCount);
+                ReturnRequests = new ReturnRequestResponse()
+            }).ToList();
+
+            foreach (var assignmentResponse in assignmentResponses)
+            {
+                var returnRequestsResult = await _unitOfWork.ReturnRequestRepository.GetAllAsync(
+                    page: 1,
+                    filter: x => !x.IsDeleted && x.AssignmentId == assignmentResponse.Id,
+                    orderBy: null,
+                    "",
+                    null);
+
+                assignmentResponse.ReturnRequests = _mapper.Map<ReturnRequestResponse>(returnRequestsResult.items.FirstOrDefault());
+            }
+
+            return (assignmentResponses, assignments.totalCount);
         }
     }
 }
