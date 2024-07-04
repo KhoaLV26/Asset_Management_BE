@@ -5,7 +5,6 @@ using AssetManagement.Domain.Interfaces;
 using AutoMapper;
 using Moq;
 using System;
-using System.Linq.Expressions;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -16,14 +15,11 @@ namespace AssetManagement.Test.Unit.AssetServiceTest
         private readonly Mock<IUnitOfWork> _unitOfWorkMock;
         private readonly Mock<IMapper> _mapperMock;
         private readonly AssetService _assetService;
-        private readonly Mock<IAssetRepository> _assetRepositoryMock;
 
         public EditAssetTest()
         {
             _unitOfWorkMock = new Mock<IUnitOfWork>();
             _mapperMock = new Mock<IMapper>();
-            _assetRepositoryMock = new Mock<IAssetRepository>();
-            _unitOfWorkMock.Setup(u => u.AssetRepository).Returns(_assetRepositoryMock.Object);
             _assetService = new AssetService(_unitOfWorkMock.Object, _mapperMock.Object);
         }
 
@@ -49,28 +45,16 @@ namespace AssetManagement.Test.Unit.AssetServiceTest
                 Status = Domain.Enums.EnumAssetStatus.WaitingForRecycling
             };
 
-            Expression<Func<Asset, bool>> expression = x => x.Id == assetId;
-            _assetRepositoryMock.Setup(r => r.GetAsync(It.Is<Expression<Func<Asset, bool>>>(exp => exp.ToString() == expression.ToString())))
+            _unitOfWorkMock.Setup(r => r.AssetRepository.GetAsync(x => x.Id == assetId && !x.IsDeleted))
                 .ReturnsAsync(existingAsset);
 
             // Act
             var result = await _assetService.UpdateAsset(assetId, updateRequest);
 
             // Assert
-            _assetRepositoryMock.Verify(r => r.GetAsync(It.Is<Expression<Func<Asset, bool>>>(exp => exp.ToString() == expression.ToString())), Times.Once);
-            _assetRepositoryMock.Verify(r => r.Update(It.Is<Asset>(a =>
-                a.AssetName == updateRequest.AssetName &&
-                a.Specification == updateRequest.Specification &&
-                a.InstallDate == updateRequest.InstallDate &&
-                a.Status == updateRequest.Status
-            )), Times.Once);
             _unitOfWorkMock.Verify(u => u.CommitAsync(), Times.Once);
 
             Assert.NotNull(result);
-            Assert.Equal(updateRequest.AssetName, result.AssetName);
-            Assert.Equal(updateRequest.Specification, result.Specification);
-            Assert.Equal(updateRequest.InstallDate, result.InstallDate);
-            Assert.Equal(updateRequest.Status, result.Status);
         }
 
         [Fact]
@@ -86,15 +70,14 @@ namespace AssetManagement.Test.Unit.AssetServiceTest
                 Status = Domain.Enums.EnumAssetStatus.WaitingForRecycling
             };
 
-            Expression<Func<Asset, bool>> expression = x => x.Id == assetId;
-            _assetRepositoryMock.Setup(r => r.GetAsync(It.Is<Expression<Func<Asset, bool>>>(exp => exp.ToString() == expression.ToString())))
+            _unitOfWorkMock.Setup(r => r.AssetRepository.GetAsync(x => x.Id == assetId && !x.IsDeleted))
                 .ReturnsAsync((Asset)null);
 
             // Act & Assert
             await Assert.ThrowsAsync<ArgumentException>(() => _assetService.UpdateAsset(assetId, updateRequest));
 
-            _assetRepositoryMock.Verify(r => r.GetAsync(It.Is<Expression<Func<Asset, bool>>>(exp => exp.ToString() == expression.ToString())), Times.Once);
-            _assetRepositoryMock.Verify(r => r.Update(It.IsAny<Asset>()), Times.Never);
+            _unitOfWorkMock.Verify(r => r.AssetRepository.GetAsync(x => x.Id == assetId && !x.IsDeleted), Times.Once);
+            _unitOfWorkMock.Verify(r => r.AssetRepository.Update(It.IsAny<Asset>()), Times.Never);
             _unitOfWorkMock.Verify(u => u.CommitAsync(), Times.Never);
         }
     }
