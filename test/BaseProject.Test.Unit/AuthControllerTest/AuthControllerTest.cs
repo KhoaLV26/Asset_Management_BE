@@ -1,224 +1,278 @@
-﻿//using AssetManagement.Application.Models.Requests;
-//using AssetManagement.Application.Models.Responses;
-//using AssetManagement.Application.Services;
-//using AssetManagement.Domain.Models;
-//using AssetManagement.Infrastructure.Services;
-//using AssetManagement.WebAPI.Controllers;
-//using Microsoft.AspNetCore.Http;
-//using Microsoft.AspNetCore.Mvc;
-//using Moq;
-//using System;
-//using System.Collections.Generic;
-//using System.Linq;
-//using System.Security.Claims;
-//using System.Text;
-//using System.Threading.Tasks;
-//using Xunit;
+﻿using AssetManagement.Application.Models.Requests;
+using AssetManagement.Application.Models.Responses;
+using AssetManagement.Application.Services;
+using AssetManagement.Domain.Models;
+using AssetManagement.Infrastructure.Services;
+using AssetManagement.WebAPI.Controllers;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Moq;
+using System;
+using System.Threading.Tasks;
+using Xunit;
 
-//namespace AssetManagement.Test.Unit.AuthControllerTest
-//{
-//    public class AuthControllerTest
-//    {
-//        private readonly Mock<IAuthService> _authServiceMock;
-//        private readonly Mock<IEmailService> _emailServiceMock;
-//        private readonly AuthController _controller;
+namespace AssetManagement.Test.Unit.AuthControllerTest
+{
+    public class AuthControllerTest
+    {
+        private readonly Mock<IAuthService> _authServiceMock;
+        private readonly Mock<IEmailService> _emailServiceMock;
+        private readonly AuthController _controller;
 
-//        public AuthControllerTest()
-//        {
-//            _authServiceMock = new Mock<IAuthService>();
-//            _emailServiceMock = new Mock<IEmailService>();
-//            _controller = new AuthController(_authServiceMock.Object, _emailServiceMock.Object);
-//        }
+        public AuthControllerTest()
+        {
+            _authServiceMock = new Mock<IAuthService>();
+            _emailServiceMock = new Mock<IEmailService>();
+            _controller = new AuthController(_authServiceMock.Object, _emailServiceMock.Object);
+        }
 
 
-//        [Fact]
-//        public async Task LoginAsync_InvalidCredentials_ReturnsConflict()
-//        {
-//            // Arrange
-//            var request = new UserLoginRequest
-//            {
-//                Username = "testuser",
-//                Password = "testpassword"
-//            };
-//            var exceptionMessage = "Invalid credentials";
+        [Fact]
+        public async Task LoginAsync_InvalidCredentials_ReturnsConflict()
+        {
+            // Arrange
+            var request = new UserLoginRequest
+            {
+                Username = "testuser",
+                Password = "testpassword"
+            };
+            var exceptionMessage = "Invalid credentials";
 
-//            _authServiceMock.Setup(a => a.LoginAsync(request.Username, request.Password))
-//                .ThrowsAsync(new Exception(exceptionMessage));
+            _authServiceMock.Setup(a => a.LoginAsync(request.Username, request.Password))
+                .ThrowsAsync(new Exception(exceptionMessage));
 
-//            // Act
-//            var result = await _controller.LoginAsync(request);
+            // Act
+            var result = await _controller.LoginAsync(request);
 
-//            // Assert
-//            var conflictResult = Assert.IsType<ConflictObjectResult>(result);
-//            var response = Assert.IsType<GeneralBoolResponse>(conflictResult.Value);
-//            Assert.False(response.Success);
-//            Assert.Equal(exceptionMessage, response.Message);
-//        }
+            // Assert
+            var conflictResult = Assert.IsType<ConflictObjectResult>(result);
+            var response = Assert.IsType<GeneralBoolResponse>(conflictResult.Value);
+            Assert.False(response.Success);
+            Assert.Equal(exceptionMessage, response.Message);
+        }
+        
+        [Fact]
+        public async Task LoginAsync_ValidCredentials_ReturnsOk()
+        {
+            // Arrange
+            var request = new UserLoginRequest
+            {
+                Username = "testuser",
+                Password = "testpassword"
+            };
+            var jwtToken = "jwtToken";
+            var tokenHash = "tokenHash";
+            var refreshToken = "refreshToken";
+            var getUserResponse = new GetUserResponse
+            {
 
-//        [Fact]
-//        public async Task LogoutAsync_ValidUser_ReturnsOkResult()
-//        {
-//            // Arrange
-//            var userId = Guid.NewGuid();
-//            var user = new ClaimsPrincipal(new ClaimsIdentity(new Claim[]
-//            {
-//        new Claim(ClaimTypes.NameIdentifier, userId.ToString())
-//            }));
-//            _controller.ControllerContext = new ControllerContext
-//            {
-//                HttpContext = new DefaultHttpContext { User = user }
-//            };
-//            _authServiceMock.Setup(a => a.LogoutAsync(userId))
-//                .ReturnsAsync(1);
+            };
+            var responses = (tokenHash, refreshToken, getUserResponse);
 
-//            // Act
-//            var result = await _controller.LogoutAsync();
+            _authServiceMock.Setup(a => a.LoginAsync(request.Username, request.Password))
+                .ReturnsAsync(responses);
 
-//            // Assert
-//            var conflictResult = Assert.IsType<ConflictObjectResult>(result);
-//            Assert.Equal("Value cannot be null. (Parameter 'input')", conflictResult.Value);
-//        }
+            // Act
+            var result = await _controller.LoginAsync(request);
 
-//        [Fact]
-//        public async Task LogoutAsync_InvalidUser_ReturnsConflict()
-//        {
-//            // Arrange
-//            var userId = Guid.NewGuid();
-//            var user = new ClaimsPrincipal(new ClaimsIdentity(new Claim[]
-//            {
-//        new Claim(ClaimTypes.NameIdentifier, userId.ToString())
-//            }));
-//            _controller.ControllerContext = new ControllerContext
-//            {
-//                HttpContext = new DefaultHttpContext { User = user }
-//            };
+            // Assert
+            var conflictResult = Assert.IsType<OkObjectResult>(result);
+            var response = Assert.IsType<GeneralGetResponse>(conflictResult.Value);
+            Assert.True(response.Success);
+            Assert.Equal(response.Message, "User logged in successfully");
+            
+        }
 
-//            _authServiceMock.Setup(a => a.LogoutAsync(userId))
-//                .ReturnsAsync(0);
+        [Fact]
+        public async Task ResetPasswordAsync_ValidRequest_ReturnsOkResult()
+        {
+            var userName = "userName";
+            var password = "password";
+            var refreshToken = "refreshToken";
+            // Arrange
+            var request = new UserResetPasswordRequest
+            {
+                Username = userName,
+                Password = password,
+                RefreshToken = refreshToken
+            };
+            
+            _authServiceMock.Setup(a => a.ResetPasswordAsync(request.Username, request.Password, request.RefreshToken))
+                .ReturnsAsync(1);
 
-//            // Act
-//            var result = await _controller.LogoutAsync();
+            // Act
+            var result = await _controller.ResetPasswordAsync(request);
 
-//            // Assert
-//            var conflictResult = Assert.IsType<ConflictObjectResult>(result);
-//            Assert.Equal("Value cannot be null. (Parameter 'input')", conflictResult.Value);
-//        }
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            var response = Assert.IsType<GeneralBoolResponse>(okResult.Value);
+            Assert.Equal("Password reset successfully", response.Message);
+        }
 
-//        [Fact]
-//        public async Task ResetPasswordAsync_ValidRequest_ReturnsOkResult()
-//        {
-//            // Arrange
-//            var request = new UserResetPasswordRequest
-//            {
-//                Username = "testuser",
-//                Password = "newpassword"
-//            };
+        [Fact]
+        public async Task ResetPasswordAsync_InvalidRequest_ReturnsConflict()
+        {
+            var userName = "userName";
+            var password = "password";
+            var refreshToken = "refreshToken";
+            // Arrange
+            var request = new UserResetPasswordRequest
+            {
+                Username = userName,
+                Password = password,
+                RefreshToken = refreshToken
+            };
+            var exceptionMessage = "Invalid request";
 
-//            _authServiceMock.Setup(a => a.ResetPasswordAsync(request.Username, request.Password))
-//                .ReturnsAsync(1);
+            _authServiceMock.Setup(a => a.ResetPasswordAsync(request.Username, request.Password, request.RefreshToken))
+                .ThrowsAsync(new Exception(exceptionMessage));
 
-//            // Act
-//            var result = await _controller.ResetPasswordAsync(request);
+            // Act
+            var result = await _controller.ResetPasswordAsync(request);
 
-//            // Assert
-//            var okResult = Assert.IsType<OkObjectResult>(result);
-//            var response = Assert.IsType<GeneralBoolResponse>(okResult.Value);
-//            Assert.Equal("Password reset successfully", response.Message);
-//        }
+            // Assert
+            var conflictResult = Assert.IsType<ConflictObjectResult>(result);
+            var response = Assert.IsType<GeneralBoolResponse>(conflictResult.Value);
+            Assert.False(response.Success);
+            Assert.Equal(exceptionMessage, response.Message);
+        }
 
-//        [Fact]
-//        public async Task ResetPasswordAsync_InvalidRequest_ReturnsConflict()
-//        {
-//            // Arrange
-//            var request = new UserResetPasswordRequest
-//            {
-//                Username = "testuser",
-//                Password = "newpassword"
-//            };
-//            var exceptionMessage = "Invalid request";
+        [Fact]
+        public async Task ChangePasswordAsync_ValidRequest_ReturnsOkResult()
+        {
+            var userName = "userName";
+            var newPassword = "newPassword";
+            var oldPassword = "oldPassword";
+            var refreshToken = "refreshToken";
+            var currentToken = "currentToken";
+            // Arrange
+            var request = new ChangePasswordRequest
+            {
+                Username = userName,
+                NewPassword = newPassword,
+                OldPassword = oldPassword,
+                RefreshToken = refreshToken
+            };
+            _controller.ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext
+                {
+                    Request =
+                    {
+                        Headers =
+                        {
+                            Authorization = currentToken
+                        }
+                    }
+                }
+            };
+            _authServiceMock.Setup(a => a.ChangePasswordAsync(request.Username, request.OldPassword, request.NewPassword, request.RefreshToken, currentToken))
+                .ReturnsAsync(1);
 
-//            _authServiceMock.Setup(a => a.ResetPasswordAsync(request.Username, request.Password))
-//                .ThrowsAsync(new Exception(exceptionMessage));
+            // Act
+            var result = await _controller.ChangePasswordAsync(request);
 
-//            // Act
-//            var result = await _controller.ResetPasswordAsync(request);
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            var response = Assert.IsType<GeneralBoolResponse>(okResult.Value);
+            Assert.Equal("Password changed successfully", response.Message);
+        }
 
-//            // Assert
-//            var conflictResult = Assert.IsType<ConflictObjectResult>(result);
-//            var response = Assert.IsType<GeneralBoolResponse>(conflictResult.Value);
-//            Assert.False(response.Success);
-//            Assert.Equal(exceptionMessage, response.Message);
-//        }
+        [Fact]
+        public async Task ChangePasswordAsync_InvalidRequest_ReturnsConflict()
+        {
+            // Arrange
+            var userName = "userName";
+            var newPassword = "newPassword";
+            var oldPassword = "oldPassword";
+            var refreshToken = "refreshToken";
+            var currentToken = "currentToken";
+            var exceptionMessage = "";
 
-//        [Fact]
-//        public async Task ChangePasswordAsync_ValidRequest_ReturnsOkResult()
-//        {
-//            // Arrange
-//            var request = new ChangePasswordRequest
-//            {
-//                Username = "testuser",
-//                OldPassword = "oldpassword",
-//                NewPassword = "newpassword"
-//            };
+            // Arrange
+            var request = new ChangePasswordRequest
+            {
+                Username = userName,
+                NewPassword = newPassword,
+                OldPassword = oldPassword,
+                RefreshToken = refreshToken
+            };
+            _controller.ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext
+                {
+                    Request =
+                    {
+                        Headers =
+                        {
+                            Authorization = currentToken
+                        }
+                    }
+                }
+            };
 
-//            _authServiceMock.Setup(a => a.ChangePasswordAsync(request.Username, request.OldPassword, request.NewPassword))
-//                .ReturnsAsync(1);
+            _authServiceMock.Setup(a => a.ChangePasswordAsync(request.Username, request.OldPassword, request.NewPassword, request.RefreshToken, currentToken))
+                .ThrowsAsync(new Exception(exceptionMessage));
 
-//            // Act
-//            var result = await _controller.ChangePasswordAsync(request);
+            // Act
+            var result = await _controller.ChangePasswordAsync(request);
 
-//            // Assert
-//            var okResult = Assert.IsType<OkObjectResult>(result);
-//            var response = Assert.IsType<GeneralBoolResponse>(okResult.Value);
-//            Assert.Equal("Password changed successfully", response.Message);
-//        }
+            // Assert
+            var conflictResult = Assert.IsType<ConflictObjectResult>(result);
+            var response = Assert.IsType<GeneralBoolResponse>(conflictResult.Value);
+            Assert.False(response.Success);
+            Assert.Equal(exceptionMessage, response.Message);
+        }
 
-//        [Fact]
-//        public async Task ChangePasswordAsync_InvalidRequest_ReturnsConflict()
-//        {
-//            // Arrange
-//            var request = new ChangePasswordRequest
-//            {
-//                Username = "testuser",
-//                OldPassword = "oldpassword",
-//                NewPassword = "newpassword"
-//            };
-//            var exceptionMessage = "Invalid request";
+        [Fact]
+        public async Task RefreshTokenAsync_InvalidRequest_ReturnsConflict()
+        {
+            // Arrange
+            var request = new RefreshTokenRequest
+            {
+                RefreshToken = "invalidRefreshToken"
+            };
+            var exceptionMessage = "Invalid refresh token";
 
-//            _authServiceMock.Setup(a => a.ChangePasswordAsync(request.Username, request.OldPassword, request.NewPassword))
-//                .ThrowsAsync(new Exception(exceptionMessage));
+            _authServiceMock.Setup(a => a.RefreshTokenAsync(request.RefreshToken))
+                .ThrowsAsync(new Exception(exceptionMessage));
 
-//            // Act
-//            var result = await _controller.ChangePasswordAsync(request);
+            // Act
+            var result = await _controller.RefreshTokenAsync(request);
 
-//            // Assert
-//            var conflictResult = Assert.IsType<ConflictObjectResult>(result);
-//            var response = Assert.IsType<GeneralBoolResponse>(conflictResult.Value);
-//            Assert.False(response.Success);
-//            Assert.Equal(exceptionMessage, response.Message);
-//        }
+            // Assert
+            var conflictResult = Assert.IsType<ConflictObjectResult>(result);
+            var response = Assert.IsType<GeneralBoolResponse>(conflictResult.Value);
+            Assert.False(response.Success);
+            Assert.Equal(exceptionMessage, response.Message);
+        }
+        
+        [Fact]
+        public async Task RefreshTokenAsync_ValidRequest_ReturnsOkResponse()
+        {
+            var jwtToken = "jwtToken";
+            var tokenHash = "tokenHash";
+            var getUserResponse = new GetUserResponse
+            {
 
-//        [Fact]
-//        public async Task RefreshTokenAsync_InvalidRequest_ReturnsConflict()
-//        {
-//            // Arrange
-//            var request = new RefreshTokenRequest
-//            {
-//                RefreshToken = "invalidRefreshToken"
-//            };
-//            var exceptionMessage = "Invalid refresh token";
+            };
+            // Arrange
+            var request = new RefreshTokenRequest
+            {
+                RefreshToken = "invalidRefreshToken"
+            };
+            var exceptionMessage = "Valid refresh token";
+            var responses = (It.IsAny<string>(), request.RefreshToken, getUserResponse);
+            _authServiceMock.Setup(a => a.RefreshTokenAsync(request.RefreshToken))
+                .ReturnsAsync(responses);
 
-//            _authServiceMock.Setup(a => a.RefreshTokenAsync(request.RefreshToken))
-//                .ThrowsAsync(new Exception(exceptionMessage));
+            // Act
+            var result = await _controller.RefreshTokenAsync(request);
 
-//            // Act
-//            var result = await _controller.RefreshTokenAsync(request);
-
-//            // Assert
-//            var conflictResult = Assert.IsType<ConflictObjectResult>(result);
-//            var response = Assert.IsType<GeneralBoolResponse>(conflictResult.Value);
-//            Assert.False(response.Success);
-//            Assert.Equal(exceptionMessage, response.Message);
-//        }
-//    }
-//}
+            // Assert
+            var conflictResult = Assert.IsType<OkObjectResult>(result);
+            var response = Assert.IsType<GeneralGetResponse>(conflictResult.Value);
+            Assert.True(response.Success);
+        }
+    }
+}

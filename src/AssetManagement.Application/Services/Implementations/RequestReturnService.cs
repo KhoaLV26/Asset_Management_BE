@@ -167,7 +167,7 @@ namespace AssetManagement.Application.Services.Implementations
 
         public async Task CompleteReturnRequest(Guid id, Guid userId)
         {
-            var returnRequest = await _unitOfWork.ReturnRequestRepository.GetAsync(x => x.Id == id, includeProperties: a => a.Assignment);
+            var returnRequest = await _unitOfWork.ReturnRequestRepository.GetAsync(x => x.Id == id && !x.IsDeleted, includeProperties: a => a.Assignment);
             if (returnRequest == null)
             {
                 throw new ArgumentException("Return request not exist");

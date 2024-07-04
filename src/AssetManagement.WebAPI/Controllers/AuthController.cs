@@ -1,7 +1,5 @@
 ﻿using AssetManagement.Application.Models.Requests;
 using AssetManagement.Application.Services;
-using AssetManagement.Domain.Constants;
-using AssetManagement.Domain.Entities;
 using AssetManagement.Domain.Models;
 using AssetManagement.Infrastructure.Services;
 using Microsoft.AspNetCore.Authorization;
