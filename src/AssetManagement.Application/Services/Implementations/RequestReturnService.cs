@@ -25,10 +25,8 @@ namespace AssetManagement.Application.Services.Implementations
 
         public async Task<ReturnRequestResponse> UserCreateReturnRequestAsync(Guid assignmentId, Guid userId)
         {
-            var assignment = await _unitOfWork.AssignmentRepository.GetAsync(a => a.Id == assignmentId,
-                                 a => a.UserTo,
-                                 a => a.UserBy,
-                                 a => a.Asset);
+            //Fix: Add a check for assignment.IsDeleted
+            var assignment = await _unitOfWork.AssignmentRepository.GetAsync(a => a.Id == assignmentId && a.IsDeleted == false); 
 
             if (assignment == null || assignment.IsDeleted == true)
             {
@@ -63,7 +61,15 @@ namespace AssetManagement.Application.Services.Implementations
                 ReturnStatus = EnumReturnRequestStatus.WaitingForReturning,
                 CreatedBy = userId
             };
-            _unitOfWork.ReturnRequestRepository.AddAsync(returnRequest);
+
+            var existedReturnRequest = await _unitOfWork.ReturnRequestRepository.GetAsync(a => a.AssignmentId == assignmentId);
+            if (existedReturnRequest == null)
+            {
+                _unitOfWork.ReturnRequestRepository.AddAsync(returnRequest);
+            } else
+            {
+                throw new Exception("Return request already existed!");
+            }
             if (await _unitOfWork.CommitAsync() < 1)
             {
                 throw new ArgumentException("An error occurred while create return request.");
