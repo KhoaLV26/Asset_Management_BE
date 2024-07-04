@@ -20,14 +20,12 @@ namespace AssetManagement.Application.Services.Implementations
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
         private readonly IAssetService _assetService;
-        private readonly IRequestReturnService _requestReturnService;
 
-        public AssignmentService(IUnitOfWork unitOfWork, IMapper mapper, IAssetService assetService, IRequestReturnService requestReturnService)
+        public AssignmentService(IUnitOfWork unitOfWork, IMapper mapper, IAssetService assetService)
         {
             _unitOfWork = unitOfWork;
             _mapper = mapper;
             _assetService = assetService;
-            _requestReturnService = requestReturnService;
         }
 
         public async Task<AssignmentResponse> AddAssignmentAsync(AssignmentRequest request)
