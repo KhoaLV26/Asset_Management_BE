@@ -113,7 +113,7 @@ namespace AssetManagement.Application.Services.Implementations
                     Status = a.Status,
                     AssignedByName = a.UserBy.Username,
                     AssignedToName = a.UserTo.Username
-                }).ToList()
+                }).Where(a => a.Status == EnumAssignmentStatus.Accepted || a.Status == EnumAssignmentStatus.Returned).ToList()
             };
         }
 

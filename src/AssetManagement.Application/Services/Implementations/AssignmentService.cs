@@ -19,12 +19,14 @@ namespace AssetManagement.Application.Services.Implementations
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
         private readonly IAssetService _assetService;
+        private readonly IRequestReturnService _requestReturnService;
 
-        public AssignmentService(IUnitOfWork unitOfWork, IMapper mapper, IAssetService assetService)
+        public AssignmentService(IUnitOfWork unitOfWork, IMapper mapper, IAssetService assetService, IRequestReturnService requestReturnService)
         {
             _unitOfWork = unitOfWork;
             _mapper = mapper;
             _assetService = assetService;
+            _requestReturnService = requestReturnService;
         }
 
         public async Task<AssignmentResponse> AddAssignmentAsync(AssignmentRequest request)
@@ -60,7 +62,24 @@ namespace AssetManagement.Application.Services.Implementations
                 CreatedBy = request.AssignedBy,
                 Note = request.Note,
             };
-            await _unitOfWork.AssignmentRepository.AddAsync(assignment);
+
+            var isDeletedAsset = await _unitOfWork.AssetRepository.GetAsync(a => a.Id == assignment.AssetId);
+            var isDeletedUser = await _unitOfWork.UserRepository.GetAsync(a => a.Id == assignment.AssignedTo);
+            if (isDeletedAsset != null)
+            {
+                if (isDeletedUser != null)
+                {
+                    await _unitOfWork.AssignmentRepository.AddAsync(assignment);
+                }
+                else
+                {
+                    throw new ArgumentException("User does not exist");
+                }
+            }
+            else
+            {
+                throw new ArgumentException("Asset does not exist");
+            }
             if (await _unitOfWork.CommitAsync() < 1)
             {
                 throw new ArgumentException("An error occurred while create assignment.");
@@ -90,6 +109,9 @@ namespace AssetManagement.Application.Services.Implementations
                 prioritizeCondition = u => u.Id == newAssignmentId;
             }
 
+            //var filter = new ;
+
+            //var returnRequest = _requestReturnService.Get
             var assignments = await _unitOfWork.AssignmentRepository.GetAllAsync(pageNumber, filter, orderBy, includeProperties, prioritizeCondition);
 
             var assignmentResponses = assignments.items.Select(a => new AssignmentResponse
@@ -149,6 +171,7 @@ namespace AssetManagement.Application.Services.Implementations
                 FullName = assignment.UserTo.FirstName + " " + assignment.UserTo.LastName,
                 AssignedBy = assignment.AssignedBy,
                 AssignedByName = assignment.UserBy.Username,
+                FullName = assignment.UserTo.FirstName + " " + assignment.UserTo.LastName,
                 AssignedDate = assignment.AssignedDate,
                 AssetId = assignment.AssetId,
                 AssetCode = assignment.Asset.AssetCode,
@@ -174,28 +197,74 @@ namespace AssetManagement.Application.Services.Implementations
 
             if (assignmentRequest.AssignedTo != Guid.Empty)
             {
+                var assignedTo = await _unitOfWork.UserRepository.GetAsync(a => a.Id == assignmentRequest.AssignedTo);
+                if (assignedTo == null)
+                {
+                    throw new ArgumentException("User does not exist!");
+                }
+                if (assignedTo.IsDeleted == true)
+                {
+                    throw new ArgumentException("User is not available!");
+                }
                 currentAssignment.AssignedTo = assignmentRequest.AssignedTo;
             }
+            else
+            {
+                currentAssignment.AssignedTo = currentAssignment.AssignedTo;
+            }
 
-            currentAssignment.AssignedBy = assignmentRequest.AssignedBy == Guid.Empty ? currentAssignment.AssignedBy : assignmentRequest.AssignedBy;
-            currentAssignment.AssignedDate = assignmentRequest.AssignedDate == DateTime.MinValue ? currentAssignment.AssignedDate : assignmentRequest.AssignedDate;
+            var oldAssignmentAsset = await _unitOfWork.AssetRepository.GetAsync(a => a.Id == currentAssignment.AssetId);
 
             if (assignmentRequest.AssetId != Guid.Empty)
             {
                 var asset = await _unitOfWork.AssetRepository.GetAsync(a => a.Id == assignmentRequest.AssetId);
                 if (asset == null)
                 {
-                    throw new ArgumentException("The asset does not exist");
+                    throw new ArgumentException("Asset does not exist!");
                 }
-                await _assetService.UpdateAsset(currentAssignment.AssetId, new AssetUpdateRequest { Status = EnumAssetStatus.Available });
+                if (asset.IsDeleted == true)
+                {
+                    throw new ArgumentException("Asset is not available!");
+                }
+                if (asset.Id != assignmentRequest.AssetId && asset.Status != EnumAssetStatus.Available)
+                {
+                    throw new ArgumentException("Asset is not available!");
+                }
+
                 currentAssignment.AssetId = assignmentRequest.AssetId;
-                await _assetService.UpdateAsset(assignmentRequest.AssetId, new AssetUpdateRequest { Status = EnumAssetStatus.Assigned });
+            }
+            else
+            {
+                currentAssignment.AssetId = currentAssignment.AssetId;
             }
 
+            currentAssignment.AssignedBy = assignmentRequest.AssignedBy == Guid.Empty ? currentAssignment.AssignedBy : assignmentRequest.AssignedBy;
+            currentAssignment.AssignedDate = assignmentRequest.AssignedDate == DateTime.MinValue ? currentAssignment.AssignedDate : assignmentRequest.AssignedDate;
             currentAssignment.Status = Enum.IsDefined(typeof(EnumAssignmentStatus), assignmentRequest.Status) ? assignmentRequest.Status : currentAssignment.Status;
             currentAssignment.Note = assignmentRequest.Note;
 
-            await _unitOfWork.CommitAsync();
+            _unitOfWork.AssignmentRepository.Update(currentAssignment);
+            if (await _unitOfWork.CommitAsync() < 1)
+            {
+                throw new ArgumentException("An error occurred while updating assignment.");
+            }
+            
+            //Update asset status
+            oldAssignmentAsset.Status = EnumAssetStatus.Available;
+            _unitOfWork.AssetRepository.Update(oldAssignmentAsset);
+
+            if (await _unitOfWork.CommitAsync() < 1)
+            {
+                throw new ArgumentException("The assignment was updated but failed to update old asset status.");
+            }
+
+            var currentAsset = await _unitOfWork.AssetRepository.GetAsync(a => a.Id == currentAssignment.AssetId);
+            currentAsset.Status = EnumAssetStatus.Assigned;
+            _unitOfWork.AssetRepository.Update(currentAsset);
+            if (await _unitOfWork.CommitAsync() < 1)
+            {
+                throw new ArgumentException("The assignment was updated but failed to update new asset status.");
+            }
 
             return new AssignmentResponse
             {
