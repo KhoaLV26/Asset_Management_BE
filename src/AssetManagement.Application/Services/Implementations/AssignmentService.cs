@@ -30,9 +30,22 @@ namespace AssetManagement.Application.Services.Implementations
         public async Task<AssignmentResponse> AddAssignmentAsync(AssignmentRequest request)
         {
             var asset = await _unitOfWork.AssetRepository.GetAsync(a => a.Id == request.AssetId);
+            var assignTo = await _unitOfWork.UserRepository.GetAsync (u => u.Id == request.AssignedTo);
+            var assignBy = await _unitOfWork.UserRepository.GetAsync (u => u.Id == request.AssignedBy);
+
             if (asset == null || asset.Status != EnumAssetStatus.Available)
             {
                 throw new ArgumentException("The asset is not available for assignment.");
+            }
+
+            if (asset.IsDeleted != false)
+            {
+                throw new ArgumentException("The asset is deleted.");
+            }
+
+            if (assignTo.IsDeleted != false || assignBy.IsDeleted != false)
+            {
+                throw new ArgumentException("The user is disabled.");
             }
 
             var assignment = new Assignment
