@@ -36,6 +36,7 @@ namespace AssetManagement.Infrastructure.DataAccess
         public virtual DbSet<Category> Categories { get; set; } = null!;
         public virtual DbSet<Location> Locations { get; set; } = null!;
         public virtual DbSet<ReturnRequest> ReturnRequests { get; set; } = null!;
+        public virtual DbSet<BlackListToken> BlackListTokens { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
