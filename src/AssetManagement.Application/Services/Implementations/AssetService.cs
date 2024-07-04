@@ -326,26 +326,11 @@ namespace AssetManagement.Application.Services.Implementations
             {
                 throw new ArgumentException("Asset not exist");
             }
-        
-            if (!string.IsNullOrEmpty(assetRequest.AssetName))
-            {
-                currentAsset.AssetName = assetRequest.AssetName;
-            }
-        
-            if (!string.IsNullOrEmpty(assetRequest.Specification))
-            {
-                currentAsset.Specification = assetRequest.Specification;
-            }
-        
-            if (assetRequest.InstallDate != null && assetRequest.InstallDate != DateOnly.MinValue)
-            {
-                currentAsset.InstallDate = assetRequest.InstallDate;
-            }
-        
-            if (assetRequest.Status != null)
-            {
-                currentAsset.Status = assetRequest.Status;
-            }
+
+            currentAsset.AssetName = assetRequest.AssetName == string.Empty ? currentAsset.AssetName : assetRequest.AssetName;
+            currentAsset.Specification = assetRequest.Specification == string.Empty ? currentAsset.Specification : assetRequest.Specification;
+            currentAsset.InstallDate = assetRequest.InstallDate == DateOnly.MinValue ? currentAsset.InstallDate : assetRequest.InstallDate;
+            currentAsset.Status = Enum.IsDefined(typeof(EnumAssetStatus), assetRequest.Status) ? assetRequest.Status : currentAsset.Status;
 
             await _unitOfWork.CommitAsync();
         

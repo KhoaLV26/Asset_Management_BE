@@ -24,6 +24,6 @@ namespace AssetManagement.Application.Models.Requests
         public string AssetName { get; set; } = string.Empty;
         public string Specification { get; set; } = string.Empty;
         public DateOnly InstallDate { get; set; }
-        public EnumAssetStatus Status { get; set; } = EnumAssetStatus.Available;
+        public EnumAssetStatus Status { get; set; }
     }
 }
