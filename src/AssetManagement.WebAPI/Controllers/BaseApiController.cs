@@ -12,6 +12,7 @@ namespace AssetManagement.WebAPI.Controllers
         protected Guid UserID => Guid.Parse(FindClaim(ClaimTypes.Actor));
         protected Guid LocationID => Guid.Parse(FindClaim(ClaimTypes.Locality));
         protected string UserName => FindClaim(ClaimTypes.NameIdentifier).ToString();
+        protected string CurrentToken => HttpContext.Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
 
         private string FindClaim(string claimName)
         {

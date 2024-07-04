@@ -23,7 +23,7 @@ namespace AssetManagement.Application.Services.Implementations
         private readonly IHelper _helper;
         private readonly IMapper _mapper;
 
-        public UserService (IUnitOfWork unitOfWork, ICryptographyHelper cryptographyHelper, IHelper helper, IMapper mapper)
+        public UserService(IUnitOfWork unitOfWork, ICryptographyHelper cryptographyHelper, IHelper helper, IMapper mapper)
         {
             _unitOfWork = unitOfWork;
             _cryptographyHelper = cryptographyHelper;
@@ -33,8 +33,7 @@ namespace AssetManagement.Application.Services.Implementations
 
         public async Task<UserRegisterResponse> AddUserAsync(UserRegisterRequest userRegisterRequest)
         {
-            
-            if (userRegisterRequest.DateOfBirth >= DateOnly.FromDateTime(DateTime.Now.AddYears(-18)))
+            if (userRegisterRequest.DateJoined.AddYears(-18) <= userRegisterRequest.DateOfBirth)
             {
                 throw new ArgumentException("User must be at least 18 years old");
             }
@@ -101,7 +100,6 @@ namespace AssetManagement.Application.Services.Implementations
             {
                 return _mapper.Map<UserRegisterResponse>(user);
             }
-
         }
 
         private async Task<string> GenerateNewStaffCode()
@@ -109,8 +107,7 @@ namespace AssetManagement.Application.Services.Implementations
             var lastUser = await _unitOfWork.UserRepository.GetAllAsync(u => true);
             var lastStaffCode = lastUser.OrderByDescending(u => u.StaffCode).FirstOrDefault()?.StaffCode ?? StaffCode.DEFAULT_STAFF_CODE;
             var newStaffCode = $"SD{(int.Parse(lastStaffCode.Substring(2)) + 1):D4}";
-            return  newStaffCode;
-
+            return newStaffCode;
         }
 
         public async Task<(IEnumerable<GetUserResponse> Items, int TotalCount)> GetFilteredUsersAsync(
@@ -143,15 +140,19 @@ namespace AssetManagement.Application.Services.Implementations
                 case "StaffCode":
                     orderBy = q => ascending ? q.OrderBy(u => u.StaffCode) : q.OrderByDescending(u => u.StaffCode);
                     break;
+
                 case "JoinedDate":
                     orderBy = q => ascending ? q.OrderBy(u => u.DateJoined) : q.OrderByDescending(u => u.DateJoined);
                     break;
+
                 case "Role":
                     orderBy = q => ascending ? q.OrderBy(u => u.Role.Name) : q.OrderByDescending(u => u.Role.Name);
                     break;
+
                 case "Username":
                     orderBy = q => ascending ? q.OrderBy(u => u.Username) : q.OrderByDescending(u => u.Username);
                     break;
+
                 default:
                     orderBy = q => ascending
                         ? q.OrderBy(u => u.FirstName).ThenBy(u => u.LastName)
@@ -276,7 +277,7 @@ namespace AssetManagement.Application.Services.Implementations
 
         public async Task<bool> DisableUser(Guid id)
         {
-            var user = await _unitOfWork.UserRepository.GetAsync(u => u.Id == id);
+            var user = await _unitOfWork.UserRepository.GetAsync(u => !u.IsDeleted && u.Id == id);
             if (user == null)
             {
                 throw new ArgumentException("User not found.");
@@ -292,6 +293,15 @@ namespace AssetManagement.Application.Services.Implementations
 
             user.IsDeleted = true;
             _unitOfWork.UserRepository.Update(user);
+
+            var tokens = await _unitOfWork.TokenRepository.GetAllAsync(rt => rt.UserId == id);
+            foreach (var token in tokens)
+            {
+                await _unitOfWork.BlackListTokenRepository.AddAsync(new BlackListToken
+                {
+                    Token = token.HashToken
+                });
+            }
 
             var result = await _unitOfWork.CommitAsync();
             return result > 0;
@@ -318,14 +328,21 @@ namespace AssetManagement.Application.Services.Implementations
 
         public async Task<UpdateUserResponse> UpdateUserAsync(Guid id, EditUserRequest request)
         {
-            var user = await _unitOfWork.UserRepository.GetAsync(x => x.IsDeleted == false && x.Id == id);
+            var user = await _unitOfWork.UserRepository.GetAsync(x => x.IsDeleted == false && x.Id == id, includeProperties: x => x.Role);
             if (user == null)
             {
                 throw new ArgumentException("User not found.");
             }
+            var role = await _unitOfWork.RoleRepository.GetAsync(x => x.IsDeleted == false && x.Id == request.RoleId);
+            if (role == null)
+            {
+                throw new ArgumentException("Role not found.");
+            }
+            if (user.Role.Name == RoleConstant.ADMIN && role.Name == RoleConstant.STAFF)
+            {
+                throw new ArgumentException("Cannot edit role from admin to staff.");
+            }
             user.DateJoined = request.DateJoined;
-            user.FirstName = request.FirstName;
-            user.LastName = request.LastName;
             user.Gender = request.Gender;
             user.DateOfBirth = request.DateOfBirth;
             user.RoleId = request.RoleId;

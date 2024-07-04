@@ -11,5 +11,6 @@ namespace AssetManagement.Application.Models.Requests
         [Required]
         [RegularExpression(RegexConstants.PASSWORD, ErrorMessage = ErrorMessage.ERROR_PASSWORD)]
         public string Password { get; set; } = string.Empty;
+        public string RefreshToken { get; set; } = string.Empty;
     }
 }

@@ -28,7 +28,7 @@ namespace AssetManagement.Application.Services.Implementations
             //Fix: Add a check for assignment.IsDeleted
             var assignment = await _unitOfWork.AssignmentRepository.GetAsync(a => a.Id == assignmentId && a.IsDeleted == false); 
 
-            if (assignment == null || assignment.IsDeleted == true )
+            if (assignment == null || assignment.IsDeleted == true)
             {
                 throw new ArgumentException("Assignment not found!");
             }
@@ -41,6 +41,17 @@ namespace AssetManagement.Application.Services.Implementations
             if (assignment.AssignedTo != userId)
             {
                 throw new ArgumentException("Not your assignment!");
+            }
+
+            var returnRequests = await _unitOfWork.ReturnRequestRepository.GetAllAsync(
+                page: 1,
+                filter: x => !x.IsDeleted && x.AssignmentId == assignmentId,
+                orderBy: null,
+                "",
+                null);
+            if (returnRequests.totalCount > 0)
+            {
+                throw new ArgumentException("A return request for this assignment already exists.");
             }
 
             var returnRequest = new ReturnRequest
@@ -66,12 +77,23 @@ namespace AssetManagement.Application.Services.Implementations
             return _mapper.Map<ReturnRequestResponse>(returnRequest);
         }
 
-        public async Task<ReturnRequestResponse> AddReturnRequestAsync(Guid adminId,Guid assignmentId)
+        public async Task<ReturnRequestResponse> AddReturnRequestAsync(Guid adminId, Guid assignmentId)
         {
-            var assignment = await _unitOfWork.AssignmentRepository.GetAsync(a => a.Id == assignmentId);
+            var assignment = await _unitOfWork.AssignmentRepository.GetAsync(a => a.Id == assignmentId && !a.IsDeleted);
             if (assignment == null || assignment.Status != EnumAssignmentStatus.Accepted)
             {
                 throw new ArgumentException("The assignment is not available for return request.");
+            }
+
+            var returnRequests = await _unitOfWork.ReturnRequestRepository.GetAllAsync(
+                    page: 1,
+                    filter: x => !x.IsDeleted && x.AssignmentId == assignmentId,
+                    orderBy: null,
+                    "",
+                    null);
+            if (returnRequests.totalCount > 0)
+            {
+                throw new ArgumentException("A return request for this assignment already exists.");
             }
 
             var returnRequest = new ReturnRequest
@@ -144,7 +166,7 @@ namespace AssetManagement.Application.Services.Implementations
 
         public async Task CompleteReturnRequest(Guid id, Guid userId)
         {
-            var returnRequest = await _unitOfWork.ReturnRequestRepository.GetAsync(x => x.Id == id,includeProperties: a => a.Assignment);
+            var returnRequest = await _unitOfWork.ReturnRequestRepository.GetAsync(x => x.Id == id, includeProperties: a => a.Assignment);
             if (returnRequest == null)
             {
                 throw new ArgumentException("Return request not exist");
@@ -177,19 +199,19 @@ namespace AssetManagement.Application.Services.Implementations
 
         public async Task<bool> CancelRequest(Guid id)
         {
-            var request = await _unitOfWork.ReturnRequestRepository.GetAsync(r => r.Id == id);
+            var request = await _unitOfWork.ReturnRequestRepository
+                .GetAsync(r => !r.IsDeleted
+                            && r.Id == id
+                            && r.ReturnStatus != EnumReturnRequestStatus.Completed,
+                            r => r.Assignment);
+
             if (request == null)
             {
                 throw new ArgumentException("Request not found.");
             }
 
-            if (request.ReturnStatus == EnumReturnRequestStatus.Completed)
-            {
-                throw new ArgumentException("Can't cancel request already completed");
-            }
-
-            request.IsDeleted = true;
-            _unitOfWork.ReturnRequestRepository.Update(request);
+            _unitOfWork.ReturnRequestRepository.SoftDelete(request);
+            request.Assignment.Status = EnumAssignmentStatus.Accepted;
 
             var result = await _unitOfWork.CommitAsync();
             return result > 0;

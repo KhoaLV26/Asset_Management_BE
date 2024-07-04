@@ -1,5 +1,6 @@
 ﻿using AssetManagement.Application.Services;
 using AssetManagement.Domain.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 
@@ -17,6 +18,7 @@ namespace AssetManagement.WebAPI.Controllers
         }
 
         [HttpGet]
+        [Authorize]
         public async Task<IActionResult> GetAllRoles()
         {
             var roles = await _roleService.GetAllAsync();

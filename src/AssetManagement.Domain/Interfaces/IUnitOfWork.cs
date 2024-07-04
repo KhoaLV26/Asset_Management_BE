@@ -12,6 +12,8 @@ namespace AssetManagement.Domain.Interfaces
         IReturnRequestRepository ReturnRequestRepository { get; }
         IRoleRepository RoleRepository { get; }
         IUserRepository UserRepository { get; }
+        IBlackListTokenRepository BlackListTokenRepository { get; }
+        ITokenRepository TokenRepository { get; }
 
         Task<int> CommitAsync();
 

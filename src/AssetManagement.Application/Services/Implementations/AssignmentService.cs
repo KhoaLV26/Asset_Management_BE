@@ -32,9 +32,22 @@ namespace AssetManagement.Application.Services.Implementations
         public async Task<AssignmentResponse> AddAssignmentAsync(AssignmentRequest request)
         {
             var asset = await _unitOfWork.AssetRepository.GetAsync(a => a.Id == request.AssetId);
+            var assignTo = await _unitOfWork.UserRepository.GetAsync(u => u.Id == request.AssignedTo);
+            var assignBy = await _unitOfWork.UserRepository.GetAsync(u => u.Id == request.AssignedBy);
+
             if (asset == null || asset.Status != EnumAssetStatus.Available)
             {
                 throw new ArgumentException("The asset is not available for assignment.");
+            }
+
+            if (asset.IsDeleted != false)
+            {
+                throw new ArgumentException("The asset is deleted.");
+            }
+
+            if (assignTo.IsDeleted != false || assignBy.IsDeleted != false)
+            {
+                throw new ArgumentException("The user is disabled.");
             }
 
             var assignment = new Assignment
@@ -96,9 +109,12 @@ namespace AssetManagement.Application.Services.Implementations
                 prioritizeCondition = u => u.Id == newAssignmentId;
             }
 
+            //var filter = new ;
+
+            //var returnRequest = _requestReturnService.Get
             var assignments = await _unitOfWork.AssignmentRepository.GetAllAsync(pageNumber, filter, orderBy, includeProperties, prioritizeCondition);
 
-            return (assignments.items.Select(a => new AssignmentResponse
+            var assignmentResponses = assignments.items.Select(a => new AssignmentResponse
             {
                 Id = a.Id,
                 AssignedTo = a.AssignedTo,
@@ -112,8 +128,22 @@ namespace AssetManagement.Application.Services.Implementations
                 Specification = a.Asset.Specification,
                 Note = a.Note,
                 Status = a.Status,
-                ReturnRequests = _mapper.Map<ReturnRequestResponse>(_requestReturnService.GetReturnRequestResponses(locationId,))
-        }), assignments.totalCount);
+                ReturnRequests = new ReturnRequestResponse()
+            }).ToList();
+
+            foreach (var assignmentResponse in assignmentResponses)
+            {
+                var returnRequestsResult = await _unitOfWork.ReturnRequestRepository.GetAllAsync(
+                    page: 1,
+                    filter: x => !x.IsDeleted && x.AssignmentId == assignmentResponse.Id,
+                    orderBy: null,
+                    "",
+                    null);
+
+                assignmentResponse.ReturnRequests = _mapper.Map<ReturnRequestResponse>(returnRequestsResult.items.FirstOrDefault());
+            }
+
+            return (assignmentResponses, assignments.totalCount);
         }
 
         public async Task<AssignmentResponse> GetAssignmentDetailAsync(Guid id)
@@ -126,15 +156,21 @@ namespace AssetManagement.Application.Services.Implementations
             {
                 return null;
             }
-            return new AssignmentResponse
+            var returnRequestsResult = await _unitOfWork.ReturnRequestRepository.GetAllAsync(
+                    page: 1,
+                    filter: x => !x.IsDeleted && x.AssignmentId == id,
+                    orderBy: null,
+                    "",
+                    null);
+
+            var assignmentResponses = new AssignmentResponse
             {
                 Id = assignment.Id,
                 AssignedTo = assignment.AssignedTo,
                 AssignedToName = assignment.UserTo.Username,
-                StaffCode = assignment.UserTo.StaffCode,
-                FullName = assignment.UserTo.FirstName + " " + assignment.UserTo.LastName,
                 AssignedBy = assignment.AssignedBy,
                 AssignedByName = assignment.UserBy.Username,
+                FullName = assignment.UserTo.FirstName + " " + assignment.UserTo.LastName,
                 AssignedDate = assignment.AssignedDate,
                 AssetId = assignment.AssetId,
                 AssetCode = assignment.Asset.AssetCode,
@@ -142,8 +178,10 @@ namespace AssetManagement.Application.Services.Implementations
                 Specification = assignment.Asset.Specification,
                 Note = assignment.Note,
                 Status = assignment.Status,
-                ReturnRequests = _mapper.Map<ReturnRequestResponse>(assignment.ReturnRequest)
+                ReturnRequests = _mapper.Map<ReturnRequestResponse>(returnRequestsResult.items.FirstOrDefault())
             };
+
+            return (assignmentResponses);
         }
 
         public async Task<AssignmentResponse> UpdateAssignment(Guid id, AssignmentRequest assignmentRequest)
@@ -156,42 +194,77 @@ namespace AssetManagement.Application.Services.Implementations
                 throw new ArgumentException("Assignment not exist");
             }
 
-            currentAssignment.AssignedTo = assignmentRequest.AssignedTo == Guid.Empty ? currentAssignment.AssignedTo : assignmentRequest.AssignedTo;
-            currentAssignment.AssignedBy = assignmentRequest.AssignedBy == Guid.Empty ? currentAssignment.AssignedBy : assignmentRequest.AssignedBy;
-            currentAssignment.AssignedDate = assignmentRequest.AssignedDate == DateTime.MinValue ? currentAssignment.AssignedDate : assignmentRequest.AssignedDate;
+            if (assignmentRequest.AssignedTo != Guid.Empty)
+            {
+                var assignedTo = await _unitOfWork.UserRepository.GetAsync(a => a.Id == assignmentRequest.AssignedTo);
+                if (assignedTo == null)
+                {
+                    throw new ArgumentException("User does not exist!");
+                }
+                if (assignedTo.IsDeleted == true)
+                {
+                    throw new ArgumentException("User is not available!");
+                }
+                currentAssignment.AssignedTo = assignmentRequest.AssignedTo;
+            }
+            else
+            {
+                currentAssignment.AssignedTo = currentAssignment.AssignedTo;
+            }
+
+            var oldAssignmentAsset = await _unitOfWork.AssetRepository.GetAsync(a => a.Id == currentAssignment.AssetId);
 
             if (assignmentRequest.AssetId != Guid.Empty)
             {
                 var asset = await _unitOfWork.AssetRepository.GetAsync(a => a.Id == assignmentRequest.AssetId);
                 if (asset == null)
                 {
-                    throw new ArgumentException("The asset does not exist");
+                    throw new ArgumentException("Asset does not exist!");
                 }
-                await _assetService.UpdateAsset(currentAssignment.AssetId, new AssetUpdateRequest { Status = EnumAssetStatus.Available });
+                if (asset.IsDeleted == true)
+                {
+                    throw new ArgumentException("Asset is not available!");
+                }
+                if (asset.Id != assignmentRequest.AssetId && asset.Status != EnumAssetStatus.Available)
+                {
+                    throw new ArgumentException("Asset is not available!");
+                }
+
                 currentAssignment.AssetId = assignmentRequest.AssetId;
-                await _assetService.UpdateAsset(assignmentRequest.AssetId, new AssetUpdateRequest { Status = EnumAssetStatus.Assigned });
+            }
+            else
+            {
+                currentAssignment.AssetId = currentAssignment.AssetId;
             }
 
+            currentAssignment.AssignedBy = assignmentRequest.AssignedBy == Guid.Empty ? currentAssignment.AssignedBy : assignmentRequest.AssignedBy;
+            currentAssignment.AssignedDate = assignmentRequest.AssignedDate == DateTime.MinValue ? currentAssignment.AssignedDate : assignmentRequest.AssignedDate;
             currentAssignment.Status = Enum.IsDefined(typeof(EnumAssignmentStatus), assignmentRequest.Status) ? assignmentRequest.Status : currentAssignment.Status;
             currentAssignment.Note = assignmentRequest.Note;
-            
-            //Fix: Validate update fields 
-            var isDeletedAsset = await _unitOfWork.AssetRepository.GetAsync(a => a.Id == currentAssignment.AssetId);
-            var isDeletedUser = await _unitOfWork.UserRepository.GetAsync(a => a.Id == currentAssignment.AssignedTo);
-            if (isDeletedAsset != null)
+
+            _unitOfWork.AssignmentRepository.Update(currentAssignment);
+            if (await _unitOfWork.CommitAsync() < 1)
             {
-                if (isDeletedUser != null)
-                {
-                    await _unitOfWork.CommitAsync();
-                }
-                else
-                {
-                    throw new ArgumentException("User does not exist");
-                }
-            } else
-            {
-                throw new ArgumentException("Asset does not exist");
+                throw new ArgumentException("An error occurred while updating assignment.");
             }
+            
+            //Update asset status
+            oldAssignmentAsset.Status = EnumAssetStatus.Available;
+            _unitOfWork.AssetRepository.Update(oldAssignmentAsset);
+
+            if (await _unitOfWork.CommitAsync() < 1)
+            {
+                throw new ArgumentException("The assignment was updated but failed to update old asset status.");
+            }
+
+            var currentAsset = await _unitOfWork.AssetRepository.GetAsync(a => a.Id == currentAssignment.AssetId);
+            currentAsset.Status = EnumAssetStatus.Assigned;
+            _unitOfWork.AssetRepository.Update(currentAsset);
+            if (await _unitOfWork.CommitAsync() < 1)
+            {
+                throw new ArgumentException("The assignment was updated but failed to update new asset status.");
+            }
+
             return new AssignmentResponse
             {
                 Id = currentAssignment.Id
@@ -246,7 +319,7 @@ namespace AssetManagement.Application.Services.Implementations
             var locationProperty = Expression.Property(Expression.Property(parameter, nameof(Assignment.Asset)), nameof(Asset.LocationId));
             var locationCondition = Expression.Equal(
                 locationProperty,
-                Expression.Constant(locationId,typeof(Guid?))
+                Expression.Constant(locationId, typeof(Guid?))
             );
             conditions.Add(locationCondition);
 
@@ -396,7 +469,7 @@ namespace AssetManagement.Application.Services.Implementations
 
             var assignments = await _unitOfWork.AssignmentRepository.GetAllAsync(pageNumber, filter, orderBy, "UserTo,UserBy,Asset,ReturnRequest", prioritizeCondition);
 
-            return (assignments.items.Select(a => new AssignmentResponse
+            var assignmentResponses = assignments.items.Select(a => new AssignmentResponse
             {
                 Id = a.Id,
                 AssignedTo = a.AssignedTo,
@@ -410,8 +483,22 @@ namespace AssetManagement.Application.Services.Implementations
                 Specification = a.Asset.Specification,
                 Note = a.Note,
                 Status = a.Status,
-                ReturnRequests = _mapper.Map<ReturnRequestResponse>(a.ReturnRequest)
-            }), assignments.totalCount);
+                ReturnRequests = new ReturnRequestResponse()
+            }).ToList();
+
+            foreach (var assignmentResponse in assignmentResponses)
+            {
+                var returnRequestsResult = await _unitOfWork.ReturnRequestRepository.GetAllAsync(
+                    page: 1,
+                    filter: x => !x.IsDeleted && x.AssignmentId == assignmentResponse.Id,
+                    orderBy: null,
+                    "",
+                    null);
+
+                assignmentResponse.ReturnRequests = _mapper.Map<ReturnRequestResponse>(returnRequestsResult.items.FirstOrDefault());
+            }
+
+            return (assignmentResponses, assignments.totalCount);
         }
     }
 }

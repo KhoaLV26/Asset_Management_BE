@@ -210,9 +210,8 @@ namespace AssetManagement.WebAPI.Controllers
             }
         }
 
-
         [HttpPut("{id}")]
-        //[Authorize(Roles = RoleConstant.ADMIN)]
+        [Authorize]
         public async Task<IActionResult> UpdateAssignment(Guid id, [FromBody] AssignmentRequest assignmentRequest)
         {
             var response = new GeneralBoolResponse();
@@ -243,7 +242,8 @@ namespace AssetManagement.WebAPI.Controllers
                 {
                     Status = EnumAssignmentStatus.Accepted
                 };
-            } else
+            }
+            else
             {
                 assignmentRequest = new AssignmentRequest
                 {

@@ -124,6 +124,7 @@ namespace AssetManagement.WebAPI.Controllers
         }
 
         [HttpGet("{id}")]
+        [Authorize]
         public async Task<IActionResult> Get(Guid id)
         {
             try
@@ -169,7 +170,6 @@ namespace AssetManagement.WebAPI.Controllers
                 });
             }
         }
-
 
         [HttpDelete("{id}")]
         [Authorize(Roles = RoleConstant.ADMIN)]
