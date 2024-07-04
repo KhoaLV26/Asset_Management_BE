@@ -1,4 +1,4 @@
-﻿using AssetManagement.Application.Models.Requests;
+using AssetManagement.Application.Models.Requests;
 using AssetManagement.Application.Services.Implementations;
 using AssetManagement.Domain.Entities;
 using AssetManagement.Domain.Enums;
@@ -6,6 +6,7 @@ using AssetManagement.Domain.Interfaces;
 using AutoMapper;
 using Moq;
 using System;
+using System.Linq.Expressions;
 using System.Threading.Tasks;
 using Xunit;
 
