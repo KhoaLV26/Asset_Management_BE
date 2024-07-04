@@ -102,7 +102,7 @@ namespace AssetManagement.Application.Services.Implementations
                 Specification = asset.Specification,
                 InstallDate = asset.InstallDate,
                 Status = asset.Status,
-                LocationId = asset.LocationId.HasValue ? asset.LocationId.Value : Guid.Empty,
+                LocationId = asset.LocationId.Value,
                 AssignmentResponses = asset.Assignments.Select(a => new AssignmentResponse
                 {
                     Id = a.Id,
@@ -321,7 +321,7 @@ namespace AssetManagement.Application.Services.Implementations
 
         public async Task<AssetResponse> UpdateAsset(Guid id, AssetUpdateRequest assetRequest)
         {
-            var currentAsset = await _unitOfWork.AssetRepository.GetAsync(x => x.Id == id);
+            var currentAsset = await _unitOfWork.AssetRepository.GetAsync(x => x.Id == id && !x.IsDeleted);
             if (currentAsset == null)
             {
                 throw new ArgumentException("Asset not exist");

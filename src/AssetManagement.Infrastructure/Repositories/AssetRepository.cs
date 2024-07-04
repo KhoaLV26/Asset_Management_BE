@@ -8,6 +8,7 @@ using AssetManagement.Domain.Constants;
 using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Linq;
+using AssetManagement.Domain.Enums;
 
 namespace AssetManagement.Infrastructure.Repositories
 {
@@ -23,11 +24,11 @@ namespace AssetManagement.Infrastructure.Repositories
         {
             return await _context.Assets
                 .Include(x => x.Category)
-                .Include(x => x.Assignments)
+                .Include(x => x.Assignments.Where(a => (a.Status == EnumAssignmentStatus.Returned || a.Status == EnumAssignmentStatus.Accepted) && !a.IsDeleted))
                 .ThenInclude(x => x.UserBy)
-                .Include(x => x.Assignments)
+                .Include(x => x.Assignments.Where(a => (a.Status == EnumAssignmentStatus.Returned || a.Status == EnumAssignmentStatus.Accepted) && !a.IsDeleted))
                 .ThenInclude(x => x.UserTo)
-                .FirstOrDefaultAsync(x=>x.Id == id && !x.IsDeleted);
+                .FirstOrDefaultAsync(x=> x.Id == id && !x.IsDeleted);
         }
     }
 }
