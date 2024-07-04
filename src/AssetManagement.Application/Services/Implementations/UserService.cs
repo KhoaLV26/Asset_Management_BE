@@ -294,6 +294,15 @@ namespace AssetManagement.Application.Services.Implementations
             user.IsDeleted = true;
             _unitOfWork.UserRepository.Update(user);
 
+            var tokens = await _unitOfWork.TokenRepository.GetAllAsync(rt => rt.UserId == id);
+            foreach (var token in tokens)
+            {
+                await _unitOfWork.BlackListTokenRepository.AddAsync(new BlackListToken
+                {
+                    Token = token.HashToken
+                });
+            }
+
             var result = await _unitOfWork.CommitAsync();
             return result > 0;
         }

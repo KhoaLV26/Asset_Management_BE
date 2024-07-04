@@ -17,6 +17,6 @@ namespace AssetManagement.Application.Services
 
         Task<int> ResetPasswordAsync(string userName, string newPassword, string refreshToken);
 
-        Task<int> ChangePasswordAsync(string userName, string oldPassword, string newPassword, string refreshToken);
+        Task<int> ChangePasswordAsync(string userName, string oldPassword, string newPassword, string refreshToken, string currentToken);
     }
 }

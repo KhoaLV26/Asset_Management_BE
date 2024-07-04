@@ -78,7 +78,7 @@ namespace AssetManagement.WebAPI.Controllers
         {
             try
             {
-                await _authService.ChangePasswordAsync(request.Username, request.OldPassword, request.NewPassword, request.RefreshToken);
+                await _authService.ChangePasswordAsync(request.Username, request.OldPassword, request.NewPassword, request.RefreshToken, CurrentToken);
                 var response = new GeneralBoolResponse
                 {
                     Message = "Password changed successfully",

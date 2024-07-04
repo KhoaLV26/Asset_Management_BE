@@ -2,6 +2,7 @@ using AssetManagement.Application;
 using AssetManagement.Infrastructure;
 using AssetManagement.Infrastructure.DataAccess;
 using AssetManagement.Infrastructure.Services.Core;
+using AssetManagement.WebAPI.Middlewares;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
@@ -92,10 +93,12 @@ var app = builder.Build();
 // Configure the HTTP request pipeline.
 // if (app.Environment.IsDevelopment())
 // {
-    app.UseSwagger();
-    app.UseSwaggerUI();
+app.UseSwagger();
+app.UseSwaggerUI();
 // }
 app.UseCors();
+
+app.UseMiddleware<UserStatusMiddleware>();
 
 app.UseAuthentication();
 app.UseAuthorization();
