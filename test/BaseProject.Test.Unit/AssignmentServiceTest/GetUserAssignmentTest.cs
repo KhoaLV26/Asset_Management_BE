@@ -1,4 +1,5 @@
-﻿using AssetManagement.Application.Services;
+﻿using AssetManagement.Application.Models.Responses;
+using AssetManagement.Application.Services;
 using AssetManagement.Application.Services.Implementations;
 using AssetManagement.Domain.Entities;
 using AssetManagement.Domain.Enums;
@@ -21,6 +22,7 @@ namespace AssetManagement.Test.Unit.AssignmentServiceTest
         private readonly Mock<IAssetRepository> _mockAssetRepository;
         private readonly Mock<IAssignmentRepository> _mockAssignmentRepository;
         private readonly Mock<IAssetService> _mockAssetService;
+        private readonly AssignmentService _assignmentService;
 
         public GetUserAssignmentTest()
         {
@@ -31,6 +33,7 @@ namespace AssetManagement.Test.Unit.AssignmentServiceTest
             _mockAssetService = new Mock<IAssetService>();
             _mockUnitOfWork.Setup(uow => uow.AssetRepository).Returns(_mockAssetRepository.Object);
             _mockUnitOfWork.Setup(uow => uow.AssignmentRepository).Returns(_mockAssignmentRepository.Object);
+            _assignmentService = new AssignmentService(_mockUnitOfWork.Object, _mockMapper.Object, _mockAssetService.Object);
         }
 
         [Fact]
@@ -206,7 +209,6 @@ namespace AssetManagement.Test.Unit.AssignmentServiceTest
         public async Task GetUserAssignmentAsync_ValidInput_ReturnsCorrectAssignments()
         {
             // Arrange
-            var assignmentService = new AssignmentService(_mockUnitOfWork.Object, _mockMapper.Object, _mockAssetService.Object);
             var userId = Guid.NewGuid();
             var today = DateTime.Today;
             var assignments = new List<Assignment>
@@ -239,35 +241,70 @@ namespace AssetManagement.Test.Unit.AssignmentServiceTest
                 }
             };
 
-            //_mockUnitOfWork.Setup(u => u.AssignmentRepository.GetAllAsync(It.IsAny<int>(), It.IsAny<Expression<Func<Assignment, bool>>>(), It.IsAny<Func<IQueryable<Assignment>, IOrderedQueryable<Assignment>>>(), It.IsAny<string>()))
-            //    .ReturnsAsync((assignments.AsQueryable(), assignments.Count));
+            var returnRequests = new List<ReturnRequest>
+            {
+                new ReturnRequest
+                {
+                    Id = Guid.NewGuid(),
+                    AssignmentId = assignments[0].Id,
+                    IsDeleted = false
+                },
+                new ReturnRequest
+                {
+                    Id = Guid.NewGuid(),
+                    AssignmentId = assignments[1].Id,
+                    IsDeleted = false
+                }
+            };
 
             _mockUnitOfWork.Setup(u => u.AssignmentRepository.GetAllAsync(
                 It.IsAny<int>(),
                 It.IsAny<Expression<Func<Assignment, bool>>>(),
                 It.IsAny<Func<IQueryable<Assignment>, IOrderedQueryable<Assignment>>>(),
                 It.IsAny<string>(),
-                It.IsAny<Expression<Func<Assignment, bool>>>()))
-                .ReturnsAsync((int page, Expression<Func<Assignment, bool>> filter, Func<IQueryable<Assignment>, IOrderedQueryable<Assignment>>? orderBy, string includeProperties, Expression<Func<Assignment, bool>>? prioritizeCondition) =>
+                It.IsAny<Expression<Func<Assignment, bool>>?>()
+            )).ReturnsAsync((int page, Expression<Func<Assignment, bool>> filter, Func<IQueryable<Assignment>, IOrderedQueryable<Assignment>>? orderBy, string includeProperties, Expression<Func<Assignment, bool>>? prioritizeCondition) =>
+            {
+                var filteredAssignments = assignments.AsQueryable().Where(filter);
+                if (orderBy != null)
                 {
-                    var filteredAssignments = assignments.AsQueryable().Where(filter);
-                    if (orderBy != null)
-                    {
-                        filteredAssignments = orderBy(filteredAssignments);
-                    }
-                    return (filteredAssignments.ToList(), filteredAssignments.Count());
+                    filteredAssignments = orderBy(filteredAssignments);
+                }
+                return (filteredAssignments.ToList(), filteredAssignments.Count());
+            });
+
+            _mockUnitOfWork.Setup(u => u.ReturnRequestRepository.GetAllAsync(
+                It.IsAny<int>(),
+                It.IsAny<Expression<Func<ReturnRequest, bool>>>(),
+                It.IsAny<Func<IQueryable<ReturnRequest>, IOrderedQueryable<ReturnRequest>>>(),
+                It.IsAny<string>(),
+                It.IsAny<Expression<Func<ReturnRequest, bool>>?>()
+            )).ReturnsAsync((int page, Expression<Func<ReturnRequest, bool>> filter, Func<IQueryable<ReturnRequest>, IOrderedQueryable<ReturnRequest>>? orderBy, string includeProperties, Expression<Func<ReturnRequest, bool>>? prioritizeCondition) =>
+            {
+                var filteredReturnRequests = returnRequests.AsQueryable().Where(filter);
+                return (filteredReturnRequests.ToList(), filteredReturnRequests.Count());
+            });
+
+            _mockMapper.Setup(m => m.Map<ReturnRequestResponse>(It.IsAny<ReturnRequest>()))
+                .Returns((ReturnRequest request) => new ReturnRequestResponse
+                {
+                    Id = request.Id
                 });
 
             // Act
-            var result = await assignmentService.GetUserAssignmentAsync(1, null, userId);
-
+            var result = await _assignmentService.GetUserAssignmentAsync(1, null, userId);
 
             // Assert
             Assert.NotNull(result.data);
             Assert.Equal(2, result.data.Count());
             Assert.Equal(assignments[0].Id, result.data.ElementAt(0).Id);
             Assert.Equal(assignments[1].Id, result.data.ElementAt(1).Id);
+
+            Assert.NotNull(result.data.ElementAt(0).ReturnRequests);
+            Assert.Equal(returnRequests[0].Id, result.data.ElementAt(0).ReturnRequests.Id);
+
+            Assert.NotNull(result.data.ElementAt(1).ReturnRequests);
+            Assert.Equal(returnRequests[1].Id, result.data.ElementAt(1).ReturnRequests.Id);
         }
     }
 }
-
