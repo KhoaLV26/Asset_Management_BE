@@ -16,11 +16,14 @@ namespace AssetManagement.Test.Unit.AssetServiceTest
         private readonly Mock<IUnitOfWork> _unitOfWorkMock;
         private readonly Mock<IMapper> _mapperMock;
         private readonly AssetService _assetService;
+        private readonly Mock<IAssetRepository> _assetRepositoryMock;
 
         public EditAssetTest()
         {
             _unitOfWorkMock = new Mock<IUnitOfWork>();
             _mapperMock = new Mock<IMapper>();
+            _assetRepositoryMock = new Mock<IAssetRepository>();
+            _unitOfWorkMock.Setup(u => u.AssetRepository).Returns(_assetRepositoryMock.Object);
             _assetService = new AssetService(_unitOfWorkMock.Object, _mapperMock.Object);
         }
 
