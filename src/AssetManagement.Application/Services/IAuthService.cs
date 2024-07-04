@@ -7,8 +7,6 @@ namespace AssetManagement.Application.Services
 {
     public interface IAuthService
     {
-        //Task<User> RegisterAsync(string email, string password, int roleId);
-
         Task<(string token, string refreshToken, GetUserResponse userResponse)> LoginAsync(string email, string password);
 
         Task<(string token, string refreshToken, GetUserResponse userResponse)> RefreshTokenAsync(string refreshToken);

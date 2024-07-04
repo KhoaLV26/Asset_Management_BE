@@ -7,6 +7,7 @@ using AssetManagement.Domain.Interfaces;
 using AssetManagement.Infrastructure.Helpers;
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.VisualBasic;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -106,7 +107,8 @@ namespace AssetManagement.Application.Services.Implementations
         {
             var lastUser = await _unitOfWork.UserRepository.GetAllAsync(u => true);
             var lastStaffCode = lastUser.OrderByDescending(u => u.StaffCode).FirstOrDefault()?.StaffCode ?? StaffCode.DEFAULT_STAFF_CODE;
-            var newStaffCode = $"SD{(int.Parse(lastStaffCode.Substring(2)) + 1):D4}";
+            var newStaffCodeNumber = int.Parse(lastStaffCode.Substring(StaffCode.STAFF_CODE_PREFIX.Length)) + 1;
+            var newStaffCode = string.Format(StaffCode.STAFF_CODE_FORMAT, newStaffCodeNumber);
             return newStaffCode;
         }
 
@@ -137,19 +139,19 @@ namespace AssetManagement.Application.Services.Implementations
 
             switch (sortBy)
             {
-                case "StaffCode":
+                case SortConstants.User.SORT_BY_STAFF_CODE:
                     orderBy = q => ascending ? q.OrderBy(u => u.StaffCode) : q.OrderByDescending(u => u.StaffCode);
                     break;
 
-                case "JoinedDate":
+                case SortConstants.User.SORT_BY_JOINED_DATE:
                     orderBy = q => ascending ? q.OrderBy(u => u.DateJoined) : q.OrderByDescending(u => u.DateJoined);
                     break;
 
-                case "Role":
+                case SortConstants.User.SORT_BY_ROLE:
                     orderBy = q => ascending ? q.OrderBy(u => u.Role.Name) : q.OrderByDescending(u => u.Role.Name);
                     break;
 
-                case "Username":
+                case SortConstants.User.SORT_BY_USERNAME:
                     orderBy = q => ascending ? q.OrderBy(u => u.Username) : q.OrderByDescending(u => u.Username);
                     break;
 

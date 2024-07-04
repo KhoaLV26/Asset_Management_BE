@@ -1,5 +1,6 @@
 ﻿using AssetManagement.Application.Models.Requests;
 using AssetManagement.Application.Models.Responses;
+using AssetManagement.Domain.Constants;
 using AssetManagement.Domain.Entities;
 using AssetManagement.Domain.Enums;
 using AssetManagement.Domain.Interfaces;
@@ -365,27 +366,27 @@ namespace AssetManagement.Application.Services.Implementations
             Func<IQueryable<Assignment>, IOrderedQueryable<Assignment>>? orderBy;
             switch (sortBy?.ToLower())
             {
-                case "assetcode":
+                case SortConstants.Assignment.SORT_BY_ASSET_CODE:
                     orderBy = x => sortOrder != "desc" ? x.OrderBy(a => a.Asset.AssetCode) : x.OrderByDescending(a => a.Asset.AssetCode);
                     break;
 
-                case "assetname":
+                case SortConstants.Assignment.SORT_BY_ASSET_NAME:
                     orderBy = x => sortOrder != "desc" ? x.OrderBy(a => a.Asset.AssetName) : x.OrderByDescending(a => a.Asset.AssetName);
                     break;
 
-                case "assignedto":
+                case SortConstants.Assignment.SORT_BY_ASSIGNED_TO:
                     orderBy = x => sortOrder != "desc" ? x.OrderBy(a => a.UserTo.Username) : x.OrderByDescending(a => a.UserTo.Username);
                     break;
 
-                case "assignedby":
+                case SortConstants.Assignment.SORT_BY_ASSIGNED_BY:
                     orderBy = x => sortOrder != "desc" ? x.OrderBy(a => a.UserBy.Username) : x.OrderByDescending(a => a.UserBy.Username);
                     break;
 
-                case "assigneddate":
+                case SortConstants.Assignment.SORT_BY_ASSIGNED_DATE:
                     orderBy = x => sortOrder != "desc" ? x.OrderBy(a => a.AssignedDate) : x.OrderByDescending(a => a.AssignedDate);
                     break;
 
-                case "state":
+                case SortConstants.Assignment.SORT_BY_STATE:
                     orderBy = x => sortOrder != "desc" ? x.OrderBy(a => a.Status) : x.OrderByDescending(a => a.Status);
                     break;
 

@@ -296,19 +296,19 @@ namespace AssetManagement.Application.Services.Implementations
             Func<IQueryable<Asset>, IOrderedQueryable<Asset>>? orderBy;
             switch (sortBy?.ToLower())
             {
-                case "assetcode":
+                case SortConstants.Asset.SORT_BY_ASSET_CODE:
                     orderBy = x => sortOrder != "desc" ? x.OrderBy(a => a.AssetCode) : x.OrderByDescending(a => a.AssetCode);
                     break;
 
-                case "assetname":
+                case SortConstants.Asset.SORT_BY_ASSET_NAME:
                     orderBy = x => sortOrder != "desc" ? x.OrderBy(a => a.AssetName) : x.OrderByDescending(a => a.AssetName);
                     break;
 
-                case "category":
+                case SortConstants.Asset.SORT_BY_CATEGORY:
                     orderBy = x => sortOrder != "desc" ? x.OrderBy(a => a.Category.Name) : x.OrderByDescending(a => a.Category.Name);
                     break;
 
-                case "state":
+                case SortConstants.Asset.SORT_BY_STATE:
                     orderBy = x => sortOrder != "desc" ? x.OrderBy(a => a.Status) : x.OrderByDescending(a => a.Status);
                     break;
 
@@ -386,31 +386,31 @@ namespace AssetManagement.Application.Services.Implementations
             Func<IQueryable<ReportResponse>, IOrderedQueryable<ReportResponse>>? orderBy;
             switch (sortBy?.ToLower())
             {
-                case "total":
+                case SortConstants.Report.SORT_BY_TOTAL:
                     orderBy = x => sortOrder != "desc" ? x.OrderBy(a => a.Total) : x.OrderByDescending(a => a.Total);
                     break;
 
-                case "assigned":
+                case SortConstants.Report.SORT_BY_ASSIGNED:
                     orderBy = x => sortOrder != "desc" ? x.OrderBy(a => a.Assigned) : x.OrderByDescending(a => a.Assigned);
                     break;
 
-                case "available":
+                case SortConstants.Report.SORT_BY_AVAILABLE:
                     orderBy = x => sortOrder != "desc" ? x.OrderBy(a => a.Available) : x.OrderByDescending(a => a.Available);
                     break;
 
-                case "notavailable":
+                case SortConstants.Report.SORT_BY_NOT_AVAILABLE:
                     orderBy = x => sortOrder != "desc" ? x.OrderBy(a => a.NotAvailable) : x.OrderByDescending(a => a.NotAvailable);
                     break;
 
-                case "waitingforrecycling":
+                case SortConstants.Report.SORT_BY_WAITING_FOR_RECYCLING:
                     orderBy = x => sortOrder != "desc" ? x.OrderBy(a => a.WaitingForRecycling) : x.OrderByDescending(a => a.WaitingForRecycling);
                     break;
 
-                case "recycled":
+                case SortConstants.Report.SORT_BY_RECYCLED:
                     orderBy = x => sortOrder != "desc" ? x.OrderBy(a => a.Recycled) : x.OrderByDescending(a => a.Recycled);
                     break;
 
-                case "category":
+                case SortConstants.Report.SORT_BY_CATEGORY:
                     orderBy = x => sortOrder != "desc" ? x.OrderBy(a => a.Category) : x.OrderByDescending(a => a.Category);
                     break;
 
