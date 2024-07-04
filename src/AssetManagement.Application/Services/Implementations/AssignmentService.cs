@@ -171,7 +171,6 @@ namespace AssetManagement.Application.Services.Implementations
                 FullName = assignment.UserTo.FirstName + " " + assignment.UserTo.LastName,
                 AssignedBy = assignment.AssignedBy,
                 AssignedByName = assignment.UserBy.Username,
-                FullName = assignment.UserTo.FirstName + " " + assignment.UserTo.LastName,
                 AssignedDate = assignment.AssignedDate,
                 AssetId = assignment.AssetId,
                 AssetCode = assignment.Asset.AssetCode,
