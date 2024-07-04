@@ -26,6 +26,7 @@ namespace AssetManagement.WebAPI.Controllers
         }
 
         [HttpGet]
+        [Authorize]
         public async Task<IActionResult> GetAllCategoriesAsync()
         {
             try
