@@ -1,6 +1,7 @@
 ﻿using AssetManagement.Application.Models.Requests;
 using AssetManagement.Application.Services.Implementations;
 using AssetManagement.Domain.Entities;
+using AssetManagement.Domain.Enums;
 using AssetManagement.Domain.Interfaces;
 using AutoMapper;
 using Moq;
@@ -35,26 +36,35 @@ namespace AssetManagement.Test.Unit.AssetServiceTest
                 AssetName = "Old Asset",
                 Specification = "Old Specification",
                 InstallDate = DateOnly.FromDateTime(DateTime.Now.AddDays(-10)),
-                Status = Domain.Enums.EnumAssetStatus.Available
+                Status = EnumAssetStatus.Available
             };
             var updateRequest = new AssetUpdateRequest
             {
                 AssetName = "Updated Asset",
                 Specification = "Updated Specification",
                 InstallDate = DateOnly.FromDateTime(DateTime.Now),
-                Status = Domain.Enums.EnumAssetStatus.WaitingForRecycling
+                Status = EnumAssetStatus.WaitingForRecycling
             };
 
-            _unitOfWorkMock.Setup(r => r.AssetRepository.GetAsync(x => x.Id == assetId && !x.IsDeleted))
-                .ReturnsAsync(existingAsset);
+            _assetRepositoryMock.Setup(r => r.GetAsync(It.IsAny<Expression<Func<Asset, bool>>>()))
+                .ReturnsAsync((Expression<Func<Asset, bool>> expression) =>
+                {
+                    if (expression.Compile().Invoke(existingAsset))
+                    {
+                        return existingAsset;
+                    }
+                    return null;
+                });
 
             // Act
             var result = await _assetService.UpdateAsset(assetId, updateRequest);
 
             // Assert
+            _assetRepositoryMock.Verify(r => r.GetAsync(It.IsAny<Expression<Func<Asset, bool>>>()), Times.Once);
             _unitOfWorkMock.Verify(u => u.CommitAsync(), Times.Once);
 
             Assert.NotNull(result);
+            Assert.Equal(existingAsset.AssetCode, result.AssetCode);
         }
 
         [Fact]
@@ -67,7 +77,7 @@ namespace AssetManagement.Test.Unit.AssetServiceTest
                 AssetName = "Updated Asset",
                 Specification = "Updated Specification",
                 InstallDate = DateOnly.FromDateTime(DateTime.Now),
-                Status = Domain.Enums.EnumAssetStatus.WaitingForRecycling
+                Status = EnumAssetStatus.WaitingForRecycling
             };
 
             _unitOfWorkMock.Setup(r => r.AssetRepository.GetAsync(x => x.Id == assetId && !x.IsDeleted))
@@ -76,8 +86,7 @@ namespace AssetManagement.Test.Unit.AssetServiceTest
             // Act & Assert
             await Assert.ThrowsAsync<ArgumentException>(() => _assetService.UpdateAsset(assetId, updateRequest));
 
-            _unitOfWorkMock.Verify(r => r.AssetRepository.GetAsync(x => x.Id == assetId && !x.IsDeleted), Times.Once);
-            _unitOfWorkMock.Verify(r => r.AssetRepository.Update(It.IsAny<Asset>()), Times.Never);
+            _assetRepositoryMock.Verify(r => r.Update(It.IsAny<Asset>()), Times.Never);
             _unitOfWorkMock.Verify(u => u.CommitAsync(), Times.Never);
         }
     }
