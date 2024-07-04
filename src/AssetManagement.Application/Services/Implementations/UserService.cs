@@ -305,6 +305,9 @@ namespace AssetManagement.Application.Services.Implementations
                 });
             }
 
+            var refreshTokens = await _unitOfWork.RefreshTokenRepository.GetAllAsync(rt => rt.UserId == id);
+            _unitOfWork.RefreshTokenRepository.RemoveRange(refreshTokens);
+
             var result = await _unitOfWork.CommitAsync();
             return result > 0;
         }
@@ -352,6 +355,8 @@ namespace AssetManagement.Application.Services.Implementations
                     Token = token.HashToken
                 });
             }
+            var refreshTokens = await _unitOfWork.RefreshTokenRepository.GetAllAsync(rt => rt.UserId == id);
+            _unitOfWork.RefreshTokenRepository.RemoveRange(refreshTokens);
             user.DateJoined = request.DateJoined;
             user.Gender = request.Gender;
             user.DateOfBirth = request.DateOfBirth;
