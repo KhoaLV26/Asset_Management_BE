@@ -89,7 +89,6 @@ namespace AssetManagement.Application.Services.Implementations
             {
                 asset.Status = EnumAssetStatus.Assigned;
                 _unitOfWork.AssetRepository.Update(asset);
-                // Commit the asset status change
                 if (await _unitOfWork.CommitAsync() < 1)
                 {
                     throw new ArgumentException("Assignment created but failed to update asset status.");
@@ -110,9 +109,6 @@ namespace AssetManagement.Application.Services.Implementations
                 prioritizeCondition = u => u.Id == newAssignmentId;
             }
 
-            //var filter = new ;
-
-            //var returnRequest = _requestReturnService.Get
             var assignments = await _unitOfWork.AssignmentRepository.GetAllAsync(pageNumber, filter, orderBy, includeProperties, prioritizeCondition);
 
             var assignmentResponses = assignments.items.Select(a => new AssignmentResponse
@@ -238,52 +234,52 @@ namespace AssetManagement.Application.Services.Implementations
                 {
                     currentAssignment.AssetId = currentAssignment.AssetId;
                 }
-            } else
+            }
+            else
             {
                 throw new ArgumentException("Invalid assignment");
             }
 
-                currentAssignment.AssignedBy = assignmentRequest.AssignedBy == Guid.Empty ? currentAssignment.AssignedBy : assignmentRequest.AssignedBy;
-                currentAssignment.AssignedDate = assignmentRequest.AssignedDate == DateTime.MinValue ? currentAssignment.AssignedDate : assignmentRequest.AssignedDate;
-                currentAssignment.Status = Enum.IsDefined(typeof(EnumAssignmentStatus), assignmentRequest.Status) ? assignmentRequest.Status : currentAssignment.Status;
-                currentAssignment.Note = assignmentRequest.Note;
+            currentAssignment.AssignedBy = assignmentRequest.AssignedBy == Guid.Empty ? currentAssignment.AssignedBy : assignmentRequest.AssignedBy;
+            currentAssignment.AssignedDate = assignmentRequest.AssignedDate == DateTime.MinValue ? currentAssignment.AssignedDate : assignmentRequest.AssignedDate;
+            currentAssignment.Status = Enum.IsDefined(typeof(EnumAssignmentStatus), assignmentRequest.Status) ? assignmentRequest.Status : currentAssignment.Status;
+            currentAssignment.Note = assignmentRequest.Note;
 
-                _unitOfWork.AssignmentRepository.Update(currentAssignment);
-                if (await _unitOfWork.CommitAsync() < 1)
-                {
-                    throw new ArgumentException("An error occurred while updating assignment.");
-                }
-
-                //Update asset status
-                oldAssignmentAsset.Status = EnumAssetStatus.Available;
-                _unitOfWork.AssetRepository.Update(oldAssignmentAsset);
-
-                if (await _unitOfWork.CommitAsync() < 1)
-                {
-                    throw new ArgumentException("The assignment was updated but failed to update old asset status.");
-                }
-
-                var currentAsset = await _unitOfWork.AssetRepository.GetAsync(a => a.Id == currentAssignment.AssetId);
-                currentAsset.Status = EnumAssetStatus.Assigned;
-                _unitOfWork.AssetRepository.Update(currentAsset);
-                if (await _unitOfWork.CommitAsync() < 1)
-                {
-                    throw new ArgumentException("The assignment was updated but failed to update new asset status.");
-                }
-
-                return new AssignmentResponse
-                {
-                    Id = currentAssignment.Id
-                };
+            _unitOfWork.AssignmentRepository.Update(currentAssignment);
+            if (await _unitOfWork.CommitAsync() < 1)
+            {
+                throw new ArgumentException("An error occurred while updating assignment.");
             }
 
-            public async Task<Expression<Func<Assignment, bool>>>? GetFilterQuery(DateTime? assignedDate, string? state, string? search, Guid locationId)
+            //Update asset status
+            oldAssignmentAsset.Status = EnumAssetStatus.Available;
+            _unitOfWork.AssetRepository.Update(oldAssignmentAsset);
+
+            if (await _unitOfWork.CommitAsync() < 1)
+            {
+                throw new ArgumentException("The assignment was updated but failed to update old asset status.");
+            }
+
+            var currentAsset = await _unitOfWork.AssetRepository.GetAsync(a => a.Id == currentAssignment.AssetId);
+            currentAsset.Status = EnumAssetStatus.Assigned;
+            _unitOfWork.AssetRepository.Update(currentAsset);
+            if (await _unitOfWork.CommitAsync() < 1)
+            {
+                throw new ArgumentException("The assignment was updated but failed to update new asset status.");
+            }
+
+            return new AssignmentResponse
+            {
+                Id = currentAssignment.Id
+            };
+        }
+
+        public async Task<Expression<Func<Assignment, bool>>>? GetFilterQuery(DateTime? assignedDate, string? state, string? search, Guid locationId)
             {
                 Expression<Func<Assignment, bool>>? filter = null;
                 var parameter = Expression.Parameter(typeof(Assignment), "x");
                 var conditions = new List<Expression>();
 
-                // Parse state parameter to enum
                 if (!string.IsNullOrEmpty(state))
                 {
                     if (state.ToLower() != "all")
@@ -304,7 +300,6 @@ namespace AssetManagement.Application.Services.Implementations
                 }
                 else
                 {
-                    // Default states: Accepted, Waiting for acceptance
                     var acceptedCondition = Expression.Equal(
                         Expression.Property(parameter, nameof(Assignment.Status)),
                         Expression.Constant(EnumAssignmentStatus.Accepted)
@@ -329,7 +324,6 @@ namespace AssetManagement.Application.Services.Implementations
                 );
                 conditions.Add(locationCondition);
 
-                // Add search conditions
                 if (!string.IsNullOrEmpty(search))
                 {
                     var assetCodeProperty = Expression.Property(Expression.Property(parameter, nameof(Assignment.Asset)), nameof(Asset.AssetCode));
@@ -346,7 +340,6 @@ namespace AssetManagement.Application.Services.Implementations
                     conditions.Add(Expression.OrElse(searchCondition, userNameCondition));
                 }
 
-                // Add date conditions
                 if (assignedDate.HasValue)
                 {
                     var assignedDateValue = assignedDate.Value.Date;
@@ -356,7 +349,6 @@ namespace AssetManagement.Application.Services.Implementations
                     conditions.Add(dateCondition);
                 }
 
-                // Combine all conditions with AndAlso
                 if (conditions.Any())
                 {
                     var combinedCondition = conditions.Aggregate((left, right) => Expression.AndAlso(left, right));
