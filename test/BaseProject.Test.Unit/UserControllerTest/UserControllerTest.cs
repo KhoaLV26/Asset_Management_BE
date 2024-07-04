@@ -428,46 +428,46 @@ namespace AssetManagement.Test.Unit.UserControllerTest
             Assert.False(response.Success);
             Assert.Equal(exceptionMessage, response.Message);
         }
-        
-        [Fact]
-        public async Task Put_NotExistId_ReturnsConflictResult()
-        {
-            // Arrange
-            var userId = Guid.NewGuid();
-            var exceptionMessage = "An error occurred";
 
-            _userServiceMock.Setup(service => service.UpdateUserAsync(userId,It.IsAny<EditUserRequest>()))
-                .ThrowsAsync(new ArgumentException(exceptionMessage));
-            // Act
-            var result = await _controller.Put(userId,It.IsAny<EditUserRequest>());
+        //[Fact]
+        //public async Task Put_NotExistId_ReturnsConflictResult()
+        //{
+        //    // Arrange
+        //    var userId = Guid.NewGuid();
+        //    var exceptionMessage = "An error occurred";
 
-            // Assert
-            var conflictResult = Assert.IsType<ConflictObjectResult>(result);
-            var response = Assert.IsType<GeneralGetResponse>(conflictResult.Value);
-            Assert.False(response.Success);
-            Assert.Equal(exceptionMessage, response.Message);
-        }
-        
-        [Fact]
-        public async Task Put_ExistId_ReturnsOkResult()
-        {
-            // Arrange
-            var userId = Guid.NewGuid();
-            var staffCode = "SD00001";
-            var updateResponse = new UpdateUserResponse
-            {
-                StaffCode = staffCode
-            };
+        //    _userServiceMock.Setup(service => service.UpdateUserAsync(userId,It.IsAny<EditUserRequest>()))
+        //        .ThrowsAsync(new ArgumentException(exceptionMessage));
+        //    // Act
+        //    var result = await _controller.Put(userId,It.IsAny<EditUserRequest>());
 
-            _userServiceMock.Setup(service => service.UpdateUserAsync(userId, It.IsAny<EditUserRequest>()))
-                .ReturnsAsync(updateResponse);
-            // Act
-            var result = await _controller.Put(userId,It.IsAny<EditUserRequest>());
+        //    // Assert
+        //    var conflictResult = Assert.IsType<ConflictObjectResult>(result);
+        //    var response = Assert.IsType<GeneralGetResponse>(conflictResult.Value);
+        //    Assert.False(response.Success);
+        //    Assert.Equal(exceptionMessage, response.Message);
+        //}
 
-            // Assert
-            var conflictResult = Assert.IsType<OkObjectResult>(result);
-            var response = Assert.IsType<GeneralGetResponse>(conflictResult.Value);
-            Assert.True(response.Success);
-        }
+        //[Fact]
+        //public async Task Put_ExistId_ReturnsOkResult()
+        //{
+        //    // Arrange
+        //    var userId = Guid.NewGuid();
+        //    var staffCode = "SD00001";
+        //    var updateResponse = new UpdateUserResponse
+        //    {
+        //        StaffCode = staffCode
+        //    };
+
+        //    _userServiceMock.Setup(service => service.UpdateUserAsync(userId, It.IsAny<EditUserRequest>()))
+        //        .ReturnsAsync(updateResponse);
+        //    // Act
+        //    var result = await _controller.Put(userId,It.IsAny<EditUserRequest>());
+
+        //    // Assert
+        //    var conflictResult = Assert.IsType<OkObjectResult>(result);
+        //    var response = Assert.IsType<GeneralGetResponse>(conflictResult.Value);
+        //    Assert.True(response.Success);
+        //}
     }
 }

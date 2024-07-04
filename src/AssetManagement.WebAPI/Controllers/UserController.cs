@@ -153,7 +153,7 @@ namespace AssetManagement.WebAPI.Controllers
         {
             try
             {
-                var staffCode = await _userService.UpdateUserAsync(id, request);
+                var staffCode = await _userService.UpdateUserAsync(id, request, UserID);
                 return Ok(new GeneralGetResponse
                 {
                     Data = staffCode,

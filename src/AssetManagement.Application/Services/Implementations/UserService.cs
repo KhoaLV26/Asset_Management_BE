@@ -326,8 +326,12 @@ namespace AssetManagement.Application.Services.Implementations
             };
         }
 
-        public async Task<UpdateUserResponse> UpdateUserAsync(Guid id, EditUserRequest request)
+        public async Task<UpdateUserResponse> UpdateUserAsync(Guid id, EditUserRequest request, Guid currentUserId)
         {
+            if (currentUserId == id)
+            {
+                throw new ArgumentException("Can't edit yourself");
+            }
             var user = await _unitOfWork.UserRepository.GetAsync(x => x.IsDeleted == false && x.Id == id, includeProperties: x => x.Role);
             if (user == null)
             {
@@ -338,9 +342,13 @@ namespace AssetManagement.Application.Services.Implementations
             {
                 throw new ArgumentException("Role not found.");
             }
-            if (user.Role.Name == RoleConstant.ADMIN && role.Name == RoleConstant.STAFF)
+            var tokens = await _unitOfWork.TokenRepository.GetAllAsync(rt => rt.UserId == id);
+            foreach (var token in tokens)
             {
-                throw new ArgumentException("Cannot edit role from admin to staff.");
+                await _unitOfWork.BlackListTokenRepository.AddAsync(new BlackListToken
+                {
+                    Token = token.HashToken
+                });
             }
             user.DateJoined = request.DateJoined;
             user.Gender = request.Gender;

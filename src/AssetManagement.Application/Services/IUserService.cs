@@ -12,7 +12,9 @@ namespace AssetManagement.Application.Services
     public interface IUserService
     {
         Task<UserRegisterResponse> AddUserAsync(UserRegisterRequest userRegisterRequest);
+
         Task<Guid> GetLocation(Guid id);
+
         Task<(IEnumerable<GetUserResponse> Items, int TotalCount)> GetFilteredUsersAsync(
         string adminId,
         string? searchTerm,
@@ -23,8 +25,9 @@ namespace AssetManagement.Application.Services
         string? newStaffCode = "");
 
         Task<bool> DisableUser(Guid id);
-        Task<UserDetailResponse> GetUserDetailAsync(Guid id);
-        Task<UpdateUserResponse> UpdateUserAsync(Guid id,EditUserRequest request);
 
+        Task<UserDetailResponse> GetUserDetailAsync(Guid id);
+
+        Task<UpdateUserResponse> UpdateUserAsync(Guid id, EditUserRequest request, Guid currentUser);
     }
 }

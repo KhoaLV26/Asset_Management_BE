@@ -146,6 +146,7 @@ namespace AssetManagement.Application.Services.Implementations
                 Id = assignment.Id,
                 AssignedTo = assignment.AssignedTo,
                 AssignedToName = assignment.UserTo.Username,
+                FullName = assignment.UserTo.FirstName + " " + assignment.UserTo.LastName,
                 AssignedBy = assignment.AssignedBy,
                 AssignedByName = assignment.UserBy.Username,
                 AssignedDate = assignment.AssignedDate,
