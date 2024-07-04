@@ -16,6 +16,8 @@ namespace AssetManagement.Infrastructure.UnitOfWork
         private IReturnRequestRepository _returnRequestRepository;
         private IRoleRepository _roleRepository;
         private IUserRepository _userRepository;
+        private IBlackListTokenRepository _blackListTokenRepository;
+        private ITokenRepository _tokenRepository;
 
         public UnitOfWork(DBContext context)
         {
@@ -46,10 +48,17 @@ namespace AssetManagement.Infrastructure.UnitOfWork
         public IRefreshTokenRepository RefreshTokenRepository
             => _refreshTokenRepository ??= new RefreshTokenRepository(_context);
 
+        public IBlackListTokenRepository BlackListTokenRepository
+            => _blackListTokenRepository ??= new BlackListTokenRepository(_context);
+
+        public ITokenRepository TokenRepository
+            => _tokenRepository ??= new TokenRepository(_context);
+
         public async Task<int> CommitAsync()
         {
             return await _context.SaveChangesAsync();
         }
+
         public int Commit()
         {
             return _context.SaveChanges();

@@ -7,6 +7,7 @@ using AssetManagement.Domain.Interfaces;
 using AssetManagement.Infrastructure.Helpers;
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.VisualBasic;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -33,7 +34,7 @@ namespace AssetManagement.Application.Services.Implementations
 
         public async Task<UserRegisterResponse> AddUserAsync(UserRegisterRequest userRegisterRequest)
         {
-            if (userRegisterRequest.DateOfBirth >= DateOnly.FromDateTime(DateTime.Now.AddYears(-18)))
+            if (userRegisterRequest.DateJoined.AddYears(AgeConstants.REQUIRED_AGE) <= userRegisterRequest.DateOfBirth)
             {
                 throw new ArgumentException("User must be at least 18 years old");
             }
@@ -106,7 +107,8 @@ namespace AssetManagement.Application.Services.Implementations
         {
             var lastUser = await _unitOfWork.UserRepository.GetAllAsync(u => true);
             var lastStaffCode = lastUser.OrderByDescending(u => u.StaffCode).FirstOrDefault()?.StaffCode ?? StaffCode.DEFAULT_STAFF_CODE;
-            var newStaffCode = $"SD{(int.Parse(lastStaffCode.Substring(2)) + 1):D4}";
+            var newStaffCodeNumber = int.Parse(lastStaffCode.Substring(StaffCode.STAFF_CODE_PREFIX.Length)) + 1;
+            var newStaffCode = string.Format(StaffCode.STAFF_CODE_FORMAT, newStaffCodeNumber);
             return newStaffCode;
         }
 
@@ -137,19 +139,19 @@ namespace AssetManagement.Application.Services.Implementations
 
             switch (sortBy)
             {
-                case "StaffCode":
+                case SortConstants.User.SORT_BY_STAFF_CODE:
                     orderBy = q => ascending ? q.OrderBy(u => u.StaffCode) : q.OrderByDescending(u => u.StaffCode);
                     break;
 
-                case "JoinedDate":
+                case SortConstants.User.SORT_BY_JOINED_DATE:
                     orderBy = q => ascending ? q.OrderBy(u => u.DateJoined) : q.OrderByDescending(u => u.DateJoined);
                     break;
 
-                case "Role":
+                case SortConstants.User.SORT_BY_ROLE:
                     orderBy = q => ascending ? q.OrderBy(u => u.Role.Name) : q.OrderByDescending(u => u.Role.Name);
                     break;
 
-                case "Username":
+                case SortConstants.User.SORT_BY_USERNAME:
                     orderBy = q => ascending ? q.OrderBy(u => u.Username) : q.OrderByDescending(u => u.Username);
                     break;
 
@@ -294,6 +296,18 @@ namespace AssetManagement.Application.Services.Implementations
             user.IsDeleted = true;
             _unitOfWork.UserRepository.Update(user);
 
+            var tokens = await _unitOfWork.TokenRepository.GetAllAsync(rt => rt.UserId == id);
+            foreach (var token in tokens)
+            {
+                await _unitOfWork.BlackListTokenRepository.AddAsync(new BlackListToken
+                {
+                    Token = token.HashToken
+                });
+            }
+
+            var refreshTokens = await _unitOfWork.RefreshTokenRepository.GetAllAsync(rt => rt.UserId == id);
+            _unitOfWork.RefreshTokenRepository.RemoveRange(refreshTokens);
+
             var result = await _unitOfWork.CommitAsync();
             return result > 0;
         }
@@ -317,8 +331,12 @@ namespace AssetManagement.Application.Services.Implementations
             };
         }
 
-        public async Task<UpdateUserResponse> UpdateUserAsync(Guid id, EditUserRequest request)
+        public async Task<UpdateUserResponse> UpdateUserAsync(Guid id, EditUserRequest request, Guid currentUserId)
         {
+            if (currentUserId == id)
+            {
+                throw new ArgumentException("Can't edit yourself");
+            }
             var user = await _unitOfWork.UserRepository.GetAsync(x => x.IsDeleted == false && x.Id == id, includeProperties: x => x.Role);
             if (user == null)
             {
@@ -329,10 +347,16 @@ namespace AssetManagement.Application.Services.Implementations
             {
                 throw new ArgumentException("Role not found.");
             }
-            if (user.Role.Name == RoleConstant.ADMIN && role.Name == RoleConstant.STAFF)
+            var tokens = await _unitOfWork.TokenRepository.GetAllAsync(rt => rt.UserId == id);
+            foreach (var token in tokens)
             {
-                throw new ArgumentException("Cannot edit role from admin to staff.");
+                await _unitOfWork.BlackListTokenRepository.AddAsync(new BlackListToken
+                {
+                    Token = token.HashToken
+                });
             }
+            var refreshTokens = await _unitOfWork.RefreshTokenRepository.GetAllAsync(rt => rt.UserId == id);
+            _unitOfWork.RefreshTokenRepository.RemoveRange(refreshTokens);
             user.DateJoined = request.DateJoined;
             user.Gender = request.Gender;
             user.DateOfBirth = request.DateOfBirth;

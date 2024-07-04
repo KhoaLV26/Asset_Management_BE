@@ -1,5 +1,6 @@
 ﻿using AssetManagement.Application.Models.Requests;
 using AssetManagement.Application.Models.Responses;
+using AssetManagement.Domain.Constants;
 using AssetManagement.Domain.Entities;
 using AssetManagement.Domain.Enums;
 using AssetManagement.Domain.Interfaces;
@@ -25,10 +26,8 @@ namespace AssetManagement.Application.Services.Implementations
 
         public async Task<ReturnRequestResponse> UserCreateReturnRequestAsync(Guid assignmentId, Guid userId)
         {
-            var assignment = await _unitOfWork.AssignmentRepository.GetAsync(a => a.Id == assignmentId,
-                                 a => a.UserTo,
-                                 a => a.UserBy,
-                                 a => a.Asset);
+            //Fix: Add a check for assignment.IsDeleted
+            var assignment = await _unitOfWork.AssignmentRepository.GetAsync(a => a.Id == assignmentId && a.IsDeleted == false); 
 
             if (assignment == null || assignment.IsDeleted == true)
             {
@@ -63,7 +62,15 @@ namespace AssetManagement.Application.Services.Implementations
                 ReturnStatus = EnumReturnRequestStatus.WaitingForReturning,
                 CreatedBy = userId
             };
-            _unitOfWork.ReturnRequestRepository.AddAsync(returnRequest);
+
+            var existedReturnRequest = await _unitOfWork.ReturnRequestRepository.GetAsync(a => a.AssignmentId == assignmentId);
+            if (existedReturnRequest == null)
+            {
+                _unitOfWork.ReturnRequestRepository.AddAsync(returnRequest);
+            } else
+            {
+                throw new Exception("Return request already existed!");
+            }
             if (await _unitOfWork.CommitAsync() < 1)
             {
                 throw new ArgumentException("An error occurred while create return request.");
@@ -116,27 +123,27 @@ namespace AssetManagement.Application.Services.Implementations
 
             switch (requestFilter.SortBy)
             {
-                case "AssetName":
+                case SortConstants.RequestReturn.SORT_BY_ASSET_NAME:
                     orderBy = q => ascending ? q.OrderBy(u => u.Assignment.Asset.AssetName) : q.OrderByDescending(u => u.Assignment.Asset.AssetName);
                     break;
 
-                case "RequestedBy":
+                case SortConstants.RequestReturn.SORT_BY_REQUESTED_BY:
                     orderBy = q => ascending ? q.OrderBy(u => u.Assignment.UserTo.Username) : q.OrderByDescending(u => u.Assignment.UserTo.Username);
                     break;
 
-                case "AssignedDate":
+                case SortConstants.RequestReturn.SORT_BY_ASSIGNED_DATE:
                     orderBy = q => ascending ? q.OrderBy(u => u.Assignment.AssignedDate) : q.OrderByDescending(u => u.Assignment.AssignedDate);
                     break;
 
-                case "AcceptedBy":
+                case SortConstants.RequestReturn.SORT_BY_ACCEPTED_BY:
                     orderBy = q => ascending ? q.OrderBy(u => u.UserAccept.Username) : q.OrderByDescending(u => u.UserAccept.Username);
                     break;
 
-                case "ReturnedDate":
+                case SortConstants.RequestReturn.SORT_BY_RETURNED_DATE:
                     orderBy = q => ascending ? q.OrderBy(u => u.ReturnDate) : q.OrderByDescending(u => u.ReturnDate);
                     break;
 
-                case "State":
+                case SortConstants.RequestReturn.SORT_BY_STATE:
                     orderBy = q => ascending ? q.OrderBy(u => u.ReturnStatus) : q.OrderByDescending(u => u.ReturnStatus);
                     break;
 

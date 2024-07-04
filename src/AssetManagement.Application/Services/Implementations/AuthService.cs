@@ -52,6 +52,11 @@ namespace AssetManagement.Application.Services.Implementations
             refreshToken.UserId = user.Id;
 
             await _unitOfWork.RefreshTokenRepository.AddAsync(refreshToken);
+            await _unitOfWork.TokenRepository.AddAsync(new Token
+            {
+                UserId = user.Id,
+                HashToken = token,
+            });
             await _unitOfWork.CommitAsync();
 
             return (token, refreshToken.TokenHash, _mapper.Map<GetUserResponse>(user));
@@ -78,12 +83,17 @@ namespace AssetManagement.Application.Services.Implementations
 
             _unitOfWork.RefreshTokenRepository.Delete(token);
             await _unitOfWork.RefreshTokenRepository.AddAsync(newRefreshToken);
+            await _unitOfWork.TokenRepository.AddAsync(new Token
+            {
+                UserId = user.Id,
+                HashToken = newJwtToken,
+            });
             await _unitOfWork.CommitAsync();
 
             return (newJwtToken, newRefreshToken.TokenHash, _mapper.Map<GetUserResponse>(user));
         }
 
-        public async Task<int> ResetPasswordAsync(string userName, string newPassword)
+        public async Task<int> ResetPasswordAsync(string userName, string newPassword, string refreshToken)
         {
             var user = await _unitOfWork.UserRepository.GetAsync(u => u.Username == userName);
             if (user == null)
@@ -98,10 +108,12 @@ namespace AssetManagement.Application.Services.Implementations
             user.SaltPassword = passwordSalt;
             user.IsFirstLogin = false;
             _unitOfWork.UserRepository.Update(user);
+            var tokens = await _unitOfWork.RefreshTokenRepository.GetAllAsync(rt => rt.TokenHash != refreshToken);
+            _unitOfWork.RefreshTokenRepository.RemoveRange(tokens);
             return await _unitOfWork.CommitAsync();
         }
 
-        public async Task<int> ChangePasswordAsync(string userName, string oldPassword, string newPasswrod)
+        public async Task<int> ChangePasswordAsync(string userName, string oldPassword, string newPasswrod, string refreshToken, string currentToken)
         {
             var user = await _unitOfWork.UserRepository.GetAsync(u => u.Username == userName);
             if (user == null)
@@ -121,6 +133,17 @@ namespace AssetManagement.Application.Services.Implementations
             user.SaltPassword = passwordSalt;
             user.IsFirstLogin = false;
             _unitOfWork.UserRepository.Update(user);
+            var tokens = await _unitOfWork.RefreshTokenRepository.GetAllAsync(rt => rt.TokenHash != refreshToken);
+            _unitOfWork.RefreshTokenRepository.RemoveRange(tokens);
+            var otherTokens = await _unitOfWork.TokenRepository.GetAllAsync(t => t.HashToken != currentToken);
+            //add otherTokens to blacklist
+            foreach (var t in otherTokens)
+            {
+                await _unitOfWork.BlackListTokenRepository.AddAsync(new BlackListToken
+                {
+                    Token = t.HashToken,
+                });
+            }
             return await _unitOfWork.CommitAsync();
         }
 

@@ -6,7 +6,6 @@ using AssetManagement.Domain.Interfaces;
 using AutoMapper;
 using Moq;
 using System;
-using System.Linq.Expressions;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -17,14 +16,11 @@ namespace AssetManagement.Test.Unit.AssetServiceTest
         private readonly Mock<IUnitOfWork> _unitOfWorkMock;
         private readonly Mock<IMapper> _mapperMock;
         private readonly AssetService _assetService;
-        private readonly Mock<IAssetRepository> _assetRepositoryMock;
 
         public EditAssetTest()
         {
             _unitOfWorkMock = new Mock<IUnitOfWork>();
             _mapperMock = new Mock<IMapper>();
-            _assetRepositoryMock = new Mock<IAssetRepository>();
-            _unitOfWorkMock.Setup(u => u.AssetRepository).Returns(_assetRepositoryMock.Object);
             _assetService = new AssetService(_unitOfWorkMock.Object, _mapperMock.Object);
         }
 
@@ -84,8 +80,7 @@ namespace AssetManagement.Test.Unit.AssetServiceTest
                 Status = EnumAssetStatus.WaitingForRecycling
             };
 
-            Expression<Func<Asset, bool>> expression = x => x.Id == assetId;
-            _assetRepositoryMock.Setup(r => r.GetAsync(It.Is<Expression<Func<Asset, bool>>>(exp => exp.ToString() == expression.ToString())))
+            _unitOfWorkMock.Setup(r => r.AssetRepository.GetAsync(x => x.Id == assetId && !x.IsDeleted))
                 .ReturnsAsync((Asset)null);
 
             // Act & Assert

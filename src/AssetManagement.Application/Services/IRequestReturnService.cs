@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace AssetManagement.Application.Services
 {
-    public interface IRequestReturnService
+    public interface IRequestReturnService 
     {
         Task<ReturnRequestResponse> AddReturnRequestAsync(Guid adminId, Guid assignmentId);
         Task<(IEnumerable<ReturnRequestResponse>, int totalCount)> GetReturnRequestResponses(Guid locationId, ReturnFilterRequest requestFilter);

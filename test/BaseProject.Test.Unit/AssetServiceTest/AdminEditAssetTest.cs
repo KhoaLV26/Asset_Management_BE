@@ -4,6 +4,7 @@ using AssetManagement.Domain.Entities;
 using AssetManagement.Domain.Enums;
 using AssetManagement.Domain.Interfaces;
 using AutoMapper;
+using DocumentFormat.OpenXml.Office2010.Excel;
 using Moq;
 using System;
 using System.Collections.Generic;
@@ -42,7 +43,7 @@ namespace AssetManagement.Test.Unit.AssetServiceTest
             };
 
             var currentAsset = new Asset { Id = assetId, AssetCode = assetCode };
-            _unitOfWorkMock.Setup(u => u.AssetRepository.GetAsync(x => x.Id == assetId)).ReturnsAsync(currentAsset);
+            _unitOfWorkMock.Setup(u => u.AssetRepository.GetAsync(x => x.Id == assetId && !x.IsDeleted)).ReturnsAsync(currentAsset);
             _unitOfWorkMock.Setup(u => u.CommitAsync()).ReturnsAsync(1);
 
             // Act
