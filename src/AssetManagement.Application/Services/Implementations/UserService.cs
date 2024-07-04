@@ -33,7 +33,7 @@ namespace AssetManagement.Application.Services.Implementations
 
         public async Task<UserRegisterResponse> AddUserAsync(UserRegisterRequest userRegisterRequest)
         {
-            if (userRegisterRequest.DateJoined.AddYears(-18) <= userRegisterRequest.DateOfBirth)
+            if (userRegisterRequest.DateJoined.AddYears(AgeConstants.REQUIRED_AGE) <= userRegisterRequest.DateOfBirth)
             {
                 throw new ArgumentException("User must be at least 18 years old");
             }
