@@ -2,12 +2,9 @@
 using AssetManagement.Domain.Entities;
 using AssetManagement.Domain.Enums;
 using AssetManagement.Domain.Interfaces;
-using AutoMapper;
 using Moq;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -59,29 +56,34 @@ namespace AssetManagement.Test.Unit.UserServiceTest
             _mockUnitOfWork.Verify(uow => uow.CommitAsync(), Times.Never);
         }
 
-        //[Fact]
-        //public async Task DisableUserAsync_UserHasOnlyReturnedAssignments_ReturnsTrue()
-        //{
-        //    // Arrange
-        //    var userId = Guid.NewGuid();
-        //    var user = new User { Id = userId };
-        //    var returnedAssignment = new Assignment { Status = EnumAssignmentStatus.Returned };
+        [Fact]
+        public async Task DisableUserAsync_UserHasOnlyReturnedAssignments_ReturnsTrue()
+        {
+            // Arrange
+            var userId = Guid.NewGuid();
+            var user = new User { Id = userId };
+            var returnedAssignment = new Assignment { Status = EnumAssignmentStatus.Returned };
 
-        //    _mockUnitOfWork.Setup(uow => uow.UserRepository.GetAsync(It.IsAny<System.Linq.Expressions.Expression<Func<User, bool>>>()))
-        //        .ReturnsAsync(user);
-        //    _mockUnitOfWork.Setup(uow => uow.AssignmentRepository.GetAllAsync(It.IsAny<System.Linq.Expressions.Expression<Func<Assignment, bool>>>()))
-        //        .ReturnsAsync(new List<Assignment> { returnedAssignment });
-        //    _mockUnitOfWork.Setup(uow => uow.CommitAsync()).ReturnsAsync(1);
+            _mockUnitOfWork.Setup(uow => uow.UserRepository.GetAsync(It.IsAny<System.Linq.Expressions.Expression<Func<User, bool>>>()))
+                .ReturnsAsync(user);
+            _mockUnitOfWork.Setup(uow => uow.AssignmentRepository.GetAllAsync(It.IsAny<System.Linq.Expressions.Expression<Func<Assignment, bool>>>()))
+                .ReturnsAsync(new List<Assignment> { returnedAssignment });
+            _mockUnitOfWork.Setup(uow => uow.CommitAsync()).ReturnsAsync(1);
+            _mockUnitOfWork.Setup(uow => uow.RefreshTokenRepository.GetAllAsync(rt => rt.UserId == userId))
+                .ReturnsAsync(new List<RefreshToken>());
+            _mockUnitOfWork.Setup(uow => uow.BlackListTokenRepository.AddAsync(It.IsAny<BlackListToken>()))
+                .Returns(Task.CompletedTask);
+            _mockUnitOfWork.Setup(uow => uow.TokenRepository.GetAllAsync(rt => rt.UserId == userId))
+                .ReturnsAsync(new List<Token>());
+            // Act
+            var result = await _userService.DisableUser(userId);
 
-        //    // Act
-        //    var result = await _userService.DisableUser(userId);
-
-        //    // Assert
-        //    Assert.True(result);
-        //    Assert.True(user.IsDeleted);
-        //    _mockUnitOfWork.Verify(uow => uow.UserRepository.Update(user), Times.Once);
-        //    _mockUnitOfWork.Verify(uow => uow.CommitAsync(), Times.Once);
-        //}
+            // Assert
+            Assert.True(result);
+            Assert.True(user.IsDeleted);
+            _mockUnitOfWork.Verify(uow => uow.UserRepository.Update(user), Times.Once);
+            _mockUnitOfWork.Verify(uow => uow.CommitAsync(), Times.Once);
+        }
 
         [Fact]
         public async Task DisableUserAsync_UserHasNoAssignments_ReturnsTrue()
@@ -92,6 +94,12 @@ namespace AssetManagement.Test.Unit.UserServiceTest
 
             _mockUnitOfWork.Setup(uow => uow.UserRepository.GetAsync(It.IsAny<System.Linq.Expressions.Expression<Func<User, bool>>>()))
                 .ReturnsAsync(user);
+            _mockUnitOfWork.Setup(uow => uow.TokenRepository.GetAllAsync(rt => rt.UserId == userId))
+                .ReturnsAsync(new List<Token>());
+            _mockUnitOfWork.Setup(uow => uow.RefreshTokenRepository.GetAllAsync(rt => rt.UserId == userId))
+                .ReturnsAsync(new List<RefreshToken>());
+            _mockUnitOfWork.Setup(uow => uow.BlackListTokenRepository.AddAsync(It.IsAny<BlackListToken>()))
+                .Returns(Task.CompletedTask);
             _mockUnitOfWork.Setup(uow => uow.AssignmentRepository.GetAllAsync(It.IsAny<System.Linq.Expressions.Expression<Func<Assignment, bool>>>()))
                 .ReturnsAsync(new List<Assignment>());
             _mockUnitOfWork.Setup(uow => uow.CommitAsync()).ReturnsAsync(1);
@@ -115,10 +123,13 @@ namespace AssetManagement.Test.Unit.UserServiceTest
 
             _mockUnitOfWork.Setup(uow => uow.UserRepository.GetAsync(It.IsAny<System.Linq.Expressions.Expression<Func<User, bool>>>()))
                 .ReturnsAsync(user);
+            _mockUnitOfWork.Setup(uow => uow.RefreshTokenRepository.GetAllAsync(It.IsAny<System.Linq.Expressions.Expression<Func<RefreshToken, bool>>>()))
+                .ReturnsAsync(new List<RefreshToken>());
+            _mockUnitOfWork.Setup(uow => uow.TokenRepository.GetAllAsync(It.IsAny<System.Linq.Expressions.Expression<Func<Token, bool>>>()))
+                .ReturnsAsync(new List<Token>());
+            _mockUnitOfWork.Setup(uow => uow.CommitAsync()).ReturnsAsync(0);
             _mockUnitOfWork.Setup(uow => uow.AssignmentRepository.GetAllAsync(It.IsAny<System.Linq.Expressions.Expression<Func<Assignment, bool>>>()))
                 .ReturnsAsync(new List<Assignment>());
-            _mockUnitOfWork.Setup(uow => uow.CommitAsync()).ReturnsAsync(0);
-
             // Act
             var result = await _userService.DisableUser(userId);
 

@@ -6,13 +6,11 @@ using AssetManagement.Domain.Enums;
 using AssetManagement.Domain.Interfaces;
 using AutoMapper;
 using ClosedXML.Excel;
-using DocumentFormat.OpenXml.Office2013.Word;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace AssetManagement.Application.Services.Implementations
 {
@@ -273,7 +271,7 @@ namespace AssetManagement.Application.Services.Implementations
             }
 
             var detail = await GetAssetByIdAsync(id);
-            if (detail.AssignmentResponses != null && detail.AssignmentResponses.Count() > 0)
+            if (detail.AssignmentResponses != null && detail.AssignmentResponses.Any())
             {
                 throw new Exception("This asset have historical assignment");
             }

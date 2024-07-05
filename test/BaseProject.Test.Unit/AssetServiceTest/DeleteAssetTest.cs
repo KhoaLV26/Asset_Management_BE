@@ -71,6 +71,7 @@ namespace AssetManagement.Test.Unit.AssetServiceTest
                 AssetCode = "ABC123",
                 CategoryId = categoryId,
                 Category = category,
+                LocationId = Guid.NewGuid(),
                 Status = EnumAssetStatus.Available,
                 Assignments = new List<Assignment>
                     {
@@ -146,7 +147,21 @@ namespace AssetManagement.Test.Unit.AssetServiceTest
                 CategoryId = categoryId,
                 Category = category,
                 Status = EnumAssetStatus.Available,
-                Assignments = new List<Assignment>()       
+                LocationId = Guid.NewGuid(),
+                Assignments = new List<Assignment>
+                {
+                    new Assignment
+                    {
+                        UserBy = new User
+                        {
+                            Username = "A"
+                        },
+                        UserTo = new User
+                        {
+                            Username = "B"
+                        }
+                    }
+                }       
             };
 
             var assetDetailResponse = new AssetDetailResponse
