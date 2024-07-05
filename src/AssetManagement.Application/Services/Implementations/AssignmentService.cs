@@ -12,6 +12,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
+using static AssetManagement.Domain.Constants.SortConstants;
 
 namespace AssetManagement.Application.Services.Implementations
 {
@@ -181,7 +182,7 @@ namespace AssetManagement.Application.Services.Implementations
 
         public async Task<AssignmentResponse> UpdateAssignment(Guid id, AssignmentRequest assignmentRequest)
         {
-            var currentAssignment = await _unitOfWork.AssignmentRepository.GetAsync(a => a.Id == id, a => a.UserTo,
+            var currentAssignment = await _unitOfWork.AssignmentRepository.GetAsync(a => a.Id == id && !a.IsDeleted, a => a.UserTo,
                      a => a.UserBy,
                      a => a.Asset);
             if (currentAssignment == null)
@@ -191,27 +192,19 @@ namespace AssetManagement.Application.Services.Implementations
 
             if (assignmentRequest.AssignedTo != Guid.Empty)
             {
-                var assignedTo = await _unitOfWork.UserRepository.GetAsync(a => a.Id == assignmentRequest.AssignedTo);
+                var assignedTo = await _unitOfWork.UserRepository.GetAsync(a => a.Id == assignmentRequest.AssignedTo && !a.IsDeleted);
                 if (assignedTo == null)
                 {
                     throw new ArgumentException("User does not exist!");
                 }
-                if (assignedTo.IsDeleted == true)
-                {
-                    throw new ArgumentException("User is not available!");
-                }
                 currentAssignment.AssignedTo = assignmentRequest.AssignedTo;
             }
-            else
-            {
-                currentAssignment.AssignedTo = currentAssignment.AssignedTo;
-            }
 
-            var oldAssignmentAsset = await _unitOfWork.AssetRepository.GetAsync(a => a.Id == currentAssignment.AssetId);
+            var oldAssignmentAsset = await _unitOfWork.AssetRepository.GetAsync(a => a.Id == currentAssignment.AssetId && !a.IsDeleted);
 
-            if (assignmentRequest.AssetId != null)
+            if (assignmentRequest.AssetId != Guid.Empty)
             {
-                var asset = await _unitOfWork.AssetRepository.GetAsync(a => a.Id == assignmentRequest.AssetId);
+                var asset = await _unitOfWork.AssetRepository.GetAsync(a => a.Id == assignmentRequest.AssetId && !a.IsDeleted);
                 if (asset == null)
                 {
                     throw new ArgumentException("Asset does not exist!");
@@ -219,7 +212,7 @@ namespace AssetManagement.Application.Services.Implementations
 
                 if (oldAssignmentAsset.Id != assignmentRequest.AssetId)
                 {
-                    if (asset.IsDeleted == true || asset.Status != EnumAssetStatus.Available)
+                    if (asset.Status != EnumAssetStatus.Available)
                     {
                         throw new ArgumentException("Asset is not available!");
                     }
@@ -228,14 +221,6 @@ namespace AssetManagement.Application.Services.Implementations
                         currentAssignment.AssetId = assignmentRequest.AssetId;
                     }
                 }
-                else
-                {
-                    currentAssignment.AssetId = currentAssignment.AssetId;
-                }
-            }
-            else
-            {
-                throw new ArgumentException("Invalid assignment");
             }
 
             currentAssignment.AssignedBy = assignmentRequest.AssignedBy == Guid.Empty ? currentAssignment.AssignedBy : assignmentRequest.AssignedBy;
@@ -258,7 +243,7 @@ namespace AssetManagement.Application.Services.Implementations
                 throw new ArgumentException("The assignment was updated but failed to update old asset status.");
             }
 
-            var currentAsset = await _unitOfWork.AssetRepository.GetAsync(a => a.Id == currentAssignment.AssetId);
+            var currentAsset = await _unitOfWork.AssetRepository.GetAsync(a => a.Id == currentAssignment.AssetId && !a.IsDeleted);
             currentAsset.Status = EnumAssetStatus.Assigned;
             _unitOfWork.AssetRepository.Update(currentAsset);
             if (await _unitOfWork.CommitAsync() < 1)
