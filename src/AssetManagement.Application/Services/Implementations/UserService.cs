@@ -39,11 +39,6 @@ namespace AssetManagement.Application.Services.Implementations
                 throw new ArgumentException("User must be at least 18 years old");
             }
 
-            if (userRegisterRequest.DateJoined < userRegisterRequest.DateOfBirth)
-            {
-                throw new ArgumentException("Joined date must be later than date of birth");
-            }
-
             if (userRegisterRequest.DateJoined.DayOfWeek == DayOfWeek.Saturday || userRegisterRequest.DateJoined.DayOfWeek == DayOfWeek.Sunday)
             {
                 throw new ArgumentException("Joined date cannot be Saturday or Sunday");

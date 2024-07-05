@@ -48,8 +48,7 @@ namespace AssetManagement.Test.Unit.ReturnRequestServiceTest
             var returnRequestResponse = new ReturnRequestResponse();
 
             _unitOfWorkMock.Setup(u => u.AssignmentRepository.GetAsync(
-                It.IsAny<Expression<Func<Assignment, bool>>>(),
-                It.IsAny<Expression<Func<Assignment, object>>[]>()
+                It.IsAny<Expression<Func<Assignment, bool>>>()
             )).ReturnsAsync(assignment);
             _unitOfWorkMock.Setup(u => u.ReturnRequestRepository.AddAsync(It.IsAny<ReturnRequest>())).Returns(Task.CompletedTask);
             _unitOfWorkMock.Setup(u => u.CommitAsync()).ReturnsAsync(1);
@@ -63,8 +62,7 @@ namespace AssetManagement.Test.Unit.ReturnRequestServiceTest
             Assert.NotNull(result);
             Assert.Equal(returnRequestResponse, result);
             _unitOfWorkMock.Verify(u => u.AssignmentRepository.GetAsync(
-                It.IsAny<Expression<Func<Assignment, bool>>>(),
-                It.IsAny<Expression<Func<Assignment, object>>[]>()
+                It.IsAny<Expression<Func<Assignment, bool>>>()
             ), Times.Once);
             _unitOfWorkMock.Verify(u => u.ReturnRequestRepository.AddAsync(It.IsAny<ReturnRequest>()), Times.Once);
             _unitOfWorkMock.Verify(u => u.CommitAsync(), Times.Once);
@@ -194,9 +192,12 @@ namespace AssetManagement.Test.Unit.ReturnRequestServiceTest
         {
             // Arrange
             var id = Guid.NewGuid();
-            var request = new ReturnRequest { Id = id };
+            var request = new ReturnRequest { Id = id , Assignment = new Assignment
+            {
+                Status = EnumAssignmentStatus.Returned
+            }};
 
-            _unitOfWorkMock.Setup(u => u.ReturnRequestRepository.GetAsync(It.IsAny<Expression<Func<ReturnRequest, bool>>>()))
+            _unitOfWorkMock.Setup(u => u.ReturnRequestRepository.GetAsync(It.IsAny<Expression<Func<ReturnRequest, bool>>>(), It.IsAny<Expression<Func<ReturnRequest,object>>>()))
                 .ReturnsAsync(request);
             _unitOfWorkMock.Setup(u => u.CommitAsync()).ReturnsAsync(1);
 
@@ -205,8 +206,7 @@ namespace AssetManagement.Test.Unit.ReturnRequestServiceTest
 
             // Assert
             Assert.True(result);
-            _unitOfWorkMock.Verify(u => u.ReturnRequestRepository.GetAsync(It.IsAny<Expression<Func<ReturnRequest, bool>>>()), Times.Once);
-            _unitOfWorkMock.Verify(u => u.ReturnRequestRepository.Update(It.IsAny<ReturnRequest>()), Times.Once);
+            _unitOfWorkMock.Verify(u => u.ReturnRequestRepository.GetAsync(It.IsAny<Expression<Func<ReturnRequest, bool>>>(), It.IsAny<Expression<Func<ReturnRequest, object>>>()), Times.Once);
             _unitOfWorkMock.Verify(u => u.CommitAsync(), Times.Once);
         }
 
@@ -278,8 +278,7 @@ namespace AssetManagement.Test.Unit.ReturnRequestServiceTest
             };
 
             _unitOfWorkMock.Setup(u => u.AssignmentRepository.GetAsync(
-                It.IsAny<Expression<Func<Assignment, bool>>>(),
-                It.IsAny<Expression<Func<Assignment, object>>[]>()
+                It.IsAny<Expression<Func<Assignment, bool>>>()
             )).ReturnsAsync(assignment);
             _unitOfWorkMock.Setup(u => u.ReturnRequestRepository.AddAsync(It.IsAny<ReturnRequest>())).Returns(Task.CompletedTask);
             _unitOfWorkMock.Setup(u => u.CommitAsync()).ReturnsAsync(0); // Simulating a failed commit
@@ -306,6 +305,24 @@ namespace AssetManagement.Test.Unit.ReturnRequestServiceTest
             var exception = await Assert.ThrowsAsync<ArgumentException>(() => _requestReturnService.AddReturnRequestAsync(adminId, assignmentId));
             Assert.Equal("An error occurred while create return request.", exception.Message);
         }
+        
+        [Fact]
+        public async Task AddReturnRequestAsync_AlreadyExistRequest_ThrowsArgumentException()
+        {
+            // Arrange
+            var adminId = Guid.NewGuid();
+            var assignmentId = Guid.NewGuid();
+            var assignment = new Assignment { Id = assignmentId, Status = EnumAssignmentStatus.Accepted };
+            var x = (new List<ReturnRequest>(), 3);
+            _unitOfWorkMock.Setup(u => u.AssignmentRepository.GetAsync(It.IsAny<Expression<Func<Assignment, bool>>>()))
+                .ReturnsAsync(assignment);
+            _unitOfWorkMock.Setup(u => u.ReturnRequestRepository.AddAsync(It.IsAny<ReturnRequest>())).Returns(Task.CompletedTask);
+            _unitOfWorkMock.Setup(u => u.CommitAsync()).ReturnsAsync(0); // Simulating a failed commit
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<ArgumentException>(() => _requestReturnService.AddReturnRequestAsync(adminId, assignmentId));
+            Assert.Equal("An error occurred while create return request.", exception.Message);
+        }
 
         [Fact]
         public async Task AddReturnRequestAsync_AssignmentNotAvailable_ThrowsArgumentException()
@@ -319,7 +336,23 @@ namespace AssetManagement.Test.Unit.ReturnRequestServiceTest
                 .ReturnsAsync(assignment);
 
             // Act & Assert
-            await Assert.ThrowsAsync<ArgumentException>(() => _requestReturnService.AddReturnRequestAsync(adminId, assignmentId));
+            var exception = await Assert.ThrowsAsync<ArgumentException>(() => _requestReturnService.AddReturnRequestAsync(adminId, assignmentId));
+            Assert.Equal(exception.Message, "The assignment is not available for return request.");
+        }
+        
+        [Fact]
+        public async Task AddReturnRequestAsync_NullAssignment_ThrowsArgumentException()
+        {
+            // Arrange
+            var adminId = Guid.NewGuid();
+            var assignmentId = Guid.NewGuid();
+
+            _unitOfWorkMock.Setup(u => u.AssignmentRepository.GetAsync(It.IsAny<Expression<Func<Assignment, bool>>>()))!
+                .ReturnsAsync((Assignment?)null);
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<ArgumentException>(() => _requestReturnService.AddReturnRequestAsync(adminId, assignmentId));
+            Assert.Equal(exception.Message, "The assignment is not available for return request.");
         }
 
         [Theory]
