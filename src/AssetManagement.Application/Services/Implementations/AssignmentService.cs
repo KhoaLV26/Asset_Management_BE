@@ -57,7 +57,7 @@ namespace AssetManagement.Application.Services.Implementations
                 AssignedDate = request.AssignedDate,
                 AssetId = asset.Id,
                 Status = EnumAssignmentStatus.WaitingForAcceptance,
-                CreatedAt = DateTime.UtcNow,
+                CreatedAt = DateTime.Now,
                 CreatedBy = request.AssignedBy,
                 Note = request.Note,
             };

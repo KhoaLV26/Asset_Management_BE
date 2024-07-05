@@ -66,7 +66,7 @@ namespace AssetManagement.Application.Services.Implementations
         {
             var token = await _unitOfWork.RefreshTokenRepository.GetAsync(rt => rt.TokenHash == refreshToken)
                 .ConfigureAwait(false);
-            if (token == null || token.ExpiredAt <= DateTime.UtcNow)
+            if (token == null || token.ExpiredAt <= DateTime.Now)
             {
                 throw new SecurityTokenException("Invalid refresh token");
             }

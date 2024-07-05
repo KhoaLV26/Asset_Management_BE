@@ -87,8 +87,8 @@ namespace AssetManagement.Application.Services.Implementations
                 LocationId = adminUser.LocationId,
                 RoleId = userRegisterRequest.RoleId,
                 IsFirstLogin = true,
-                CreatedAt = DateTime.UtcNow,
-                CreatedBy = createByAdmin,
+                CreatedAt = DateTime.Now,
+                CreatedBy = createByAdmin,  
                 Role = role
             };
 
