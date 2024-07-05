@@ -61,11 +61,11 @@ namespace AssetManagement.WebAPI.Controllers
 
         [HttpGet]
         [Authorize(Roles = RoleConstant.ADMIN)]
-        public async Task<IActionResult> GetAllAssetAsync(int pageNumber, string? state, Guid? category, string? search, string? sortOrder, string? sortBy = "assetCode", string? newAssetCode = "")
+        public async Task<IActionResult> GetAllAssetAsync(int pageNumber, string? state, Guid? category, string? search, string? sortOrder, string? sortBy = "assetCode", string? newAssetCode = "", int pageSize = 10)
         {
             try
             {
-                var assets = await _assetService.GetAllAssetAsync(UserID, pageNumber == 0 ? 1 : pageNumber, state: state, category, search, sortOrder, sortBy, "Category", newAssetCode);
+                var assets = await _assetService.GetAllAssetAsync(UserID, pageNumber == 0 ? 1 : pageNumber, state: state, category, search, sortOrder, sortBy, "Category", newAssetCode, pageSize);
                 if (assets.data.Any())
                 {
                     return Ok(new GeneralGetsResponse
@@ -197,11 +197,11 @@ namespace AssetManagement.WebAPI.Controllers
 
         [HttpGet("reports")]
         [Authorize(Roles = RoleConstant.ADMIN)]
-        public async Task<IActionResult> GetReports(int pageNumber, string? sortOrder, string? sortBy)
+        public async Task<IActionResult> GetReports(int pageNumber, string? sortOrder, string? sortBy, int pageSize = 10)
         {
             try
             {
-                var (reports, count) = await _assetService.GetReports(sortOrder, sortBy, LocationID, pageNumber);
+                var (reports, count) = await _assetService.GetReports(sortOrder, sortBy, LocationID, pageNumber, pageSize);
                 if (reports.Any())
                 {
                     return Ok(new GeneralGetsResponse
