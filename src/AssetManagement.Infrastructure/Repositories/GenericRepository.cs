@@ -61,7 +61,7 @@ namespace AssetManagement.Infrastructure.Repositories
         }
 
         public async Task<(IEnumerable<T> items, int totalCount)> GetAllAsync(int page = 1, Expression<Func<T, bool>> filter = null,
-            Func<IQueryable<T>, IOrderedQueryable<T>>? orderBy = null, string includeProperties = "", Expression<Func<T, bool>>? prioritizeCondition = null)
+            Func<IQueryable<T>, IOrderedQueryable<T>>? orderBy = null, string includeProperties = "", Expression<Func<T, bool>>? prioritizeCondition = null, int pageSize = 10)
         {
             IQueryable<T> query = _context.Set<T>();
 
@@ -116,7 +116,7 @@ namespace AssetManagement.Infrastructure.Repositories
             var items = prioritizedItems.Concat(nonPrioritizedItems).ToList();
             var totalCount = items.Count();
 
-            var paginatedItems = items.Skip((page - 1) * PageSizeConstant.PAGE_SIZE).Take(PageSizeConstant.PAGE_SIZE).ToList();
+            var paginatedItems = items.Skip((page - 1) * pageSize).Take(pageSize).ToList();
             return (paginatedItems, totalCount);
         }
 

@@ -96,7 +96,7 @@ namespace AssetManagement.Application.Services.Implementations
         }
 
         public async Task<(IEnumerable<AssignmentResponse> data, int totalCount)> GetAllAssignmentAsync(int pageNumber, string? state, DateTime? assignedDate, string? search, string? sortOrder, Guid locationId,
-         string? sortBy = "assetCode", string includeProperties = "", Guid? newAssignmentId = null)
+         string? sortBy = "assetCode", string includeProperties = "", Guid? newAssignmentId = null, int pageSize = 10)
         {
             Func<IQueryable<Assignment>, IOrderedQueryable<Assignment>>? orderBy = GetOrderQuery(sortOrder, sortBy);
             Expression<Func<Assignment, bool>> filter = await GetFilterQuery(assignedDate, state, search, locationId);
@@ -107,7 +107,7 @@ namespace AssetManagement.Application.Services.Implementations
                 prioritizeCondition = u => u.Id == newAssignmentId;
             }
 
-            var assignments = await _unitOfWork.AssignmentRepository.GetAllAsync(pageNumber, filter, orderBy, includeProperties, prioritizeCondition);
+            var assignments = await _unitOfWork.AssignmentRepository.GetAllAsync(pageNumber, filter, orderBy, includeProperties, prioritizeCondition, pageSize);
 
             var assignmentResponses = assignments.items.Select(a => new AssignmentResponse
             {
@@ -436,7 +436,7 @@ namespace AssetManagement.Application.Services.Implementations
             }
 
             public async Task<(IEnumerable<AssignmentResponse> data, int totalCount)> GetUserAssignmentAsync(int pageNumber, Guid? newAssignmentId, Guid userId, string? sortOrder = "desc",
-             string? sortBy = "assigneddate")
+             string? sortBy = "assigneddate", int pageSize = 10)
             {
                 Func<IQueryable<Assignment>, IOrderedQueryable<Assignment>>? orderBy = GetOrderQuery(sortOrder, sortBy);
                 Expression<Func<Assignment, bool>> filter = await GetUserFilterQuery(userId);
@@ -447,7 +447,7 @@ namespace AssetManagement.Application.Services.Implementations
                     prioritizeCondition = u => u.Id == newAssignmentId;
                 }
 
-                var assignments = await _unitOfWork.AssignmentRepository.GetAllAsync(pageNumber, filter, orderBy, "UserTo,UserBy,Asset,ReturnRequest", prioritizeCondition);
+                var assignments = await _unitOfWork.AssignmentRepository.GetAllAsync(pageNumber, filter, orderBy, "UserTo,UserBy,Asset,ReturnRequest", prioritizeCondition, pageSize);
 
                 var assignmentResponses = assignments.items.Select(a => new AssignmentResponse
                 {

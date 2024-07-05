@@ -119,7 +119,8 @@ namespace AssetManagement.Application.Services.Implementations
             string sortBy = "StaffCode",
             string sortDirection = "asc",
             int pageNumber = 1,
-            string? newStaffCode = "")
+            string? newStaffCode = "",
+            int pageSize = 10)
         {
             Expression<Func<User, bool>> filter = null;
             Guid adminGuid = Guid.Parse(adminId);
@@ -162,7 +163,7 @@ namespace AssetManagement.Application.Services.Implementations
                     break;
             }
 
-            var getUsers = await _unitOfWork.UserRepository.GetAllAsync(pageNumber, filter, orderBy, "Role,Location", prioritizeCondition);
+            var getUsers = await _unitOfWork.UserRepository.GetAllAsync(pageNumber, filter, orderBy, "Role,Location", prioritizeCondition, pageSize);
 
             var userResponses = _mapper.Map<IEnumerable<GetUserResponse>>(getUsers.items);
             var totalCount = getUsers.totalCount;

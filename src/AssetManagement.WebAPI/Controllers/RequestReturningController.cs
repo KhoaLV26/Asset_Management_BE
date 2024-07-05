@@ -102,11 +102,11 @@ namespace AssetManagement.WebAPI.Controllers
 
         [HttpGet]
         [Authorize]
-        public async Task<IActionResult> GetReturnRequests([FromQuery] ReturnFilterRequest requestFilter)
+        public async Task<IActionResult> GetReturnRequests([FromQuery] ReturnFilterRequest requestFilter, int pageSize = 10)
         {
             try
             {
-                var (returnRequests, totalCount) = await _requestReturnService.GetReturnRequestResponses(LocationID, requestFilter);
+                var (returnRequests, totalCount) = await _requestReturnService.GetReturnRequestResponses(LocationID, requestFilter, pageSize);
                 return Ok(new GeneralGetsResponse
                 {
                     Success = true,

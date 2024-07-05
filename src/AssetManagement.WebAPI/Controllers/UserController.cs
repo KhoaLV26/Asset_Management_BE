@@ -83,12 +83,13 @@ namespace AssetManagement.WebAPI.Controllers
             [FromQuery] string sortBy = "StaffCode",
             [FromQuery] string sortOrder = "asc",
             [FromQuery] int pageNumber = 1,
-            [FromQuery] string? newStaffCode = "")
+            [FromQuery] string? newStaffCode = "",
+            [FromQuery] int pageSize = 10)
         {
             try
             {
                 var adminId = UserID.ToString();
-                var users = await _userService.GetFilteredUsersAsync(adminId, search, role, sortBy, sortOrder, pageNumber, newStaffCode);
+                var users = await _userService.GetFilteredUsersAsync(adminId, search, role, sortBy, sortOrder, pageNumber, newStaffCode, pageSize);
                 return Ok(new GeneralGetsResponse
                 {
                     Success = true,
