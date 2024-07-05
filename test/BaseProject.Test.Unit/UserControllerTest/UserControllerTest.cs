@@ -4,6 +4,7 @@ using AssetManagement.Application.Services;
 using AssetManagement.Domain.Enums;
 using AssetManagement.Domain.Models;
 using AssetManagement.WebAPI.Controllers;
+using DocumentFormat.OpenXml.Math;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
@@ -195,6 +196,7 @@ namespace AssetManagement.Test.Unit.UserControllerTest
             var sortOrder = "asc";
             var pageNumber = 1;
             var newStaffCode = "";
+            var pageSize = 10;
 
             var exceptionMessage = "Invalid argument.";
 
@@ -213,7 +215,7 @@ namespace AssetManagement.Test.Unit.UserControllerTest
                 }
             };
 
-            _userServiceMock.Setup(s => s.GetFilteredUsersAsync(adminId, search, role, sortBy, sortOrder, pageNumber, newStaffCode))
+            _userServiceMock.Setup(s => s.GetFilteredUsersAsync(adminId, search, role, sortBy, sortOrder, pageNumber, newStaffCode, pageSize))
                 .ThrowsAsync(new ArgumentException(exceptionMessage));
 
             // Act
@@ -236,6 +238,7 @@ namespace AssetManagement.Test.Unit.UserControllerTest
             var sortOrder = "asc";
             var pageNumber = 1;
             var newStaffCode = "";
+            var pageSize = 100;
 
             var exceptionMessage = "Invalid operation.";
 
@@ -254,7 +257,7 @@ namespace AssetManagement.Test.Unit.UserControllerTest
                 }
             };
 
-            _userServiceMock.Setup(s => s.GetFilteredUsersAsync(adminId, search, role, sortBy, sortOrder, pageNumber, newStaffCode))
+            _userServiceMock.Setup(s => s.GetFilteredUsersAsync(adminId, search, role, sortBy, sortOrder, pageNumber, newStaffCode, pageSize))
                 .ThrowsAsync(new InvalidOperationException(exceptionMessage));
 
             // Act

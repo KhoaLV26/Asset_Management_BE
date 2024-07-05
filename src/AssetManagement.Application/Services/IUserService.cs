@@ -22,7 +22,8 @@ namespace AssetManagement.Application.Services
         string sortBy = "StaffCode",
         string sortDirection = "asc",
         int pageNumber = 1,
-        string? newStaffCode = "");
+        string? newStaffCode = "",
+        int pageSize = 10);
 
         Task<bool> DisableUser(Guid id);
 

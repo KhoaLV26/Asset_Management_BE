@@ -168,11 +168,11 @@ namespace AssetManagement.Test.Unit.AssetControlletTest
             var assets = new List<AssetResponse>();
             var assetResult = (assets, assets.Count);
 
-            _assetServiceMock.Setup(s => s.GetAllAssetAsync(adminId, It.IsAny<int>(), It.IsAny<string>(), It.IsAny<Guid?>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), "Category", It.IsAny<string>()))
+            _assetServiceMock.Setup(s => s.GetAllAssetAsync(adminId, It.IsAny<int>(), It.IsAny<string>(), It.IsAny<Guid?>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), "Category", It.IsAny<string>(), It.IsAny<int>()))
                 .ReturnsAsync(assetResult);
 
             // Act
-            var result = await _controller.GetAllAssetAsync(1, null, null, null, null);
+            var result = await _controller.GetAllAssetAsync(1, null, null, null, null, null);
 
             // Assert
             var conflictResult = Assert.IsType<ConflictObjectResult>(result);
@@ -203,11 +203,11 @@ namespace AssetManagement.Test.Unit.AssetControlletTest
             var controllerContext = new ControllerContext { HttpContext = httpContext };
             _controller.ControllerContext = controllerContext;
 
-            _assetServiceMock.Setup(s => s.GetAllAssetAsync(adminId, It.IsAny<int>(), It.IsAny<string>(), It.IsAny<Guid?>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), "Category", It.IsAny<string>()))
+            _assetServiceMock.Setup(s => s.GetAllAssetAsync(adminId, It.IsAny<int>(), It.IsAny<string>(), It.IsAny<Guid?>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), "Category", It.IsAny<string>(), It.IsAny<int>()))
                 .ReturnsAsync(assetResult);
 
             // Act
-            var result = await _controller.GetAllAssetAsync(1, null, null, null, null);
+            var result = await _controller.GetAllAssetAsync(1, null, null, null, null, null);
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
@@ -304,11 +304,11 @@ namespace AssetManagement.Test.Unit.AssetControlletTest
             var controllerContext = new ControllerContext { HttpContext = httpContext };
             _controller.ControllerContext = controllerContext;
 
-            _assetServiceMock.Setup(s => s.GetAllAssetAsync(adminId, It.IsAny<int>(), It.IsAny<string>(), It.IsAny<Guid?>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), "Category", It.IsAny<string>()))
+            _assetServiceMock.Setup(s => s.GetAllAssetAsync(adminId, It.IsAny<int>(), It.IsAny<string>(), It.IsAny<Guid?>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), "Category", It.IsAny<string>(), It.IsAny<int>()))
                 .ThrowsAsync(new Exception(exceptionMessage));
 
             // Act
-            var result = await _controller.GetAllAssetAsync(1, null, null, null, null);
+            var result = await _controller.GetAllAssetAsync(1, null, null, null, null, null);
 
             // Assert
             var conflictResult = Assert.IsType<ConflictObjectResult>(result);
@@ -459,7 +459,7 @@ namespace AssetManagement.Test.Unit.AssetControlletTest
             var controllerContext = new ControllerContext { HttpContext = httpContext };
             _controller.ControllerContext = controllerContext;
 
-            _assetServiceMock.Setup(s => s.GetReports(It.IsAny<string>(), It.IsAny<string>(), locationId, It.IsAny<int>()))
+            _assetServiceMock.Setup(s => s.GetReports(It.IsAny<string>(), It.IsAny<string>(), locationId, It.IsAny<int>(), It.IsAny<int>()))
                 .ThrowsAsync(new ArgumentNullException("input"));
 
             // Act
@@ -490,7 +490,7 @@ namespace AssetManagement.Test.Unit.AssetControlletTest
             var controllerContext = new ControllerContext { HttpContext = httpContext };
             _controller.ControllerContext = controllerContext;
 
-            _assetServiceMock.Setup(s => s.GetReports(It.IsAny<string>(), It.IsAny<string>(), locationId, It.IsAny<int>()))
+            _assetServiceMock.Setup(s => s.GetReports(It.IsAny<string>(), It.IsAny<string>(), locationId, It.IsAny<int>(), It.IsAny<int>()))
                 .ThrowsAsync(new ArgumentNullException("input"));
 
             // Act

@@ -115,7 +115,7 @@ namespace AssetManagement.Application.Services.Implementations
             }
         }
 
-        public async Task<(IEnumerable<ReturnRequestResponse>, int totalCount)> GetReturnRequestResponses(Guid locationId, ReturnFilterRequest requestFilter)
+        public async Task<(IEnumerable<ReturnRequestResponse>, int totalCount)> GetReturnRequestResponses(Guid locationId, ReturnFilterRequest requestFilter, int pageSize = 10)
         {
             Func<IQueryable<ReturnRequest>, IOrderedQueryable<ReturnRequest>> orderBy = null;
 
@@ -160,7 +160,8 @@ namespace AssetManagement.Application.Services.Implementations
                             x.Assignment.Asset.AssetName.Contains(requestFilter.SearchTerm) || x.Assignment.UserTo.Username.Contains(requestFilter.SearchTerm)),
                             orderBy,
                             "Assignment,Assignment.Asset,UserAccept,Assignment.UserTo",
-                            null);
+                            null,
+                            pageSize);
 
             return (_mapper.Map<IEnumerable<ReturnRequestResponse>>(returnRequests.items), returnRequests.totalCount);
         }

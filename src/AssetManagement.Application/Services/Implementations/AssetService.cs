@@ -115,7 +115,7 @@ namespace AssetManagement.Application.Services.Implementations
             };
         }
 
-        public async Task<(IEnumerable<AssetResponse> data, int totalCount)> GetAllAssetAsync(int page = 1, Expression<Func<Asset, bool>>? filter = null, Func<IQueryable<Asset>, IOrderedQueryable<Asset>>? orderBy = null, string includeProperties = "", string? newAssetCode = "")
+        public async Task<(IEnumerable<AssetResponse> data, int totalCount)> GetAllAssetAsync(int page = 1, Expression<Func<Asset, bool>>? filter = null, Func<IQueryable<Asset>, IOrderedQueryable<Asset>>? orderBy = null, string includeProperties = "", string? newAssetCode = "", int pageSize = 10)
         {
             var assets = await _unitOfWork.AssetRepository.GetAllAsync(page, filter, orderBy, includeProperties);
 
@@ -133,7 +133,7 @@ namespace AssetManagement.Application.Services.Implementations
         }
 
         public async Task<(IEnumerable<AssetResponse> data, int totalCount)> GetAllAssetAsync(Guid adminId, int pageNumber, string? state, Guid? category, string? search, string? sortOrder,
-            string? sortBy = "assetCode", string includeProperties = "", string? newAssetCode = "")
+            string? sortBy = "assetCode", string includeProperties = "", string? newAssetCode = "", int pageSize = 10)
         {
             Func<IQueryable<Asset>, IOrderedQueryable<Asset>>? orderBy = GetOrderQuery(sortOrder, sortBy);
             Expression<Func<Asset, bool>> filter = await GetFilterQuery(adminId, category, state, search);
@@ -145,7 +145,7 @@ namespace AssetManagement.Application.Services.Implementations
             }
 
             var assets = await _unitOfWork.AssetRepository.GetAllAsync(pageNumber, filter, orderBy, includeProperties,
-                prioritizeCondition);
+                prioritizeCondition, pageSize);
 
             return (assets.items.Select(a => new AssetResponse
             {
@@ -339,7 +339,7 @@ namespace AssetManagement.Application.Services.Implementations
         }
 
 
-        public async Task<(IEnumerable<ReportResponse>, int count)> GetReports(string? sortOrder, string? sortBy, Guid locationId, int pageNumber = 1)
+        public async Task<(IEnumerable<ReportResponse>, int count)> GetReports(string? sortOrder, string? sortBy, Guid locationId, int pageNumber = 1, int pageSize = 10)
         {
             var categories = await _unitOfWork.CategoryRepository.GetAllAsync(c => !c.IsDeleted);
             var assets = await _unitOfWork.AssetRepository.GetAllAsync(a => a.LocationId == locationId && !a.IsDeleted);
@@ -360,7 +360,7 @@ namespace AssetManagement.Application.Services.Implementations
             {
                 reports = orderBy(reports);
             }
-            reports = reports.Skip((pageNumber - 1) * PageSizeConstant.PAGE_SIZE).Take(PageSizeConstant.PAGE_SIZE);
+            reports = reports.Skip((pageNumber - 1) * pageSize).Take(pageSize);
             return (reports, categories.Count());
         }
 

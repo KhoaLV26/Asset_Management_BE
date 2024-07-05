@@ -193,7 +193,7 @@ namespace AssetManagement.Test.Unit.AssignmentControllerTest.cs
             // Arrange
             var id = Guid.NewGuid();
             var request = new AssignmentRequest();
-            _assignmentServiceMock.Setup(x => x.UpdateAssignment(id, request)).ReturnsAsync(new AssignmentResponse{Id = id});
+            _assignmentServiceMock.Setup(x => x.UpdateAssignment(id, request)).ReturnsAsync(new AssignmentResponse { Id = id });
 
             // Act
             var result = await _assignmentController.UpdateAssignment(id, request);
@@ -231,7 +231,7 @@ namespace AssetManagement.Test.Unit.AssignmentControllerTest.cs
             int pageNumber = 1;
             var userId = Guid.NewGuid();
             var assignments = new List<AssignmentResponse> { new AssignmentResponse() };
-            _assignmentServiceMock.Setup(x => x.GetUserAssignmentAsync(pageNumber, Guid.Empty, userId,  "", ""))
+            _assignmentServiceMock.Setup(x => x.GetUserAssignmentAsync(pageNumber, Guid.Empty, userId, "", "", It.IsAny<int>()))
                 .ReturnsAsync((assignments, 1));
 
             // Act
@@ -252,7 +252,7 @@ namespace AssetManagement.Test.Unit.AssignmentControllerTest.cs
             // Arrange
             int pageNumber = 1;
             var userId = Guid.NewGuid();
-            _assignmentServiceMock.Setup(x => x.GetUserAssignmentAsync(pageNumber, Guid.Empty, userId, "", ""))
+            _assignmentServiceMock.Setup(x => x.GetUserAssignmentAsync(pageNumber, Guid.Empty, userId, "", "", It.IsAny<int>()))
                 .ReturnsAsync((new List<AssignmentResponse>(), 0));
 
             // Act

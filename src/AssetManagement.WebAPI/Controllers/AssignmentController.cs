@@ -73,13 +73,13 @@ namespace AssetManagement.WebAPI.Controllers
 
         [HttpGet]
         [Authorize(Roles = RoleConstant.ADMIN)]
-        public async Task<IActionResult> GetAllAssignmentAsync(int pageNumber, DateTime? assignedDate, string? state, string? search, string? sortOrder, string? sortBy = "assetCode", Guid? newAssignmentId = null)
+        public async Task<IActionResult> GetAllAssignmentAsync(int pageNumber, DateTime? assignedDate, string? state, string? search, string? sortOrder, string? sortBy = "assetCode", Guid? newAssignmentId = null, int pageSize = 10)
         {
             try
             {
                 Guid locationId = LocationID;
 
-                var assignments = await _assignmentService.GetAllAssignmentAsync(pageNumber == 0 ? 1 : pageNumber, state: state, assignedDate, search, sortOrder, locationId, sortBy, "UserTo,UserBy,Asset,ReturnRequest", newAssignmentId);
+                var assignments = await _assignmentService.GetAllAssignmentAsync(pageNumber == 0 ? 1 : pageNumber, state: state, assignedDate, search, sortOrder, locationId, sortBy, "UserTo,UserBy,Asset,ReturnRequest", newAssignmentId, pageSize);
                 if (assignments.data.Any())
                 {
                     return Ok(new GeneralGetsResponse
@@ -177,13 +177,13 @@ namespace AssetManagement.WebAPI.Controllers
 
         [HttpGet("user")]
         [Authorize]
-        public async Task<IActionResult> GetUserAssignmentAsync(int pageNumber, string? sortOrder, Guid? newAssignmentId, string? sortBy = "assigneddate")
+        public async Task<IActionResult> GetUserAssignmentAsync(int pageNumber, string? sortOrder, Guid? newAssignmentId, string? sortBy = "assigneddate", int pageSize = 10)
         {
             try
             {
                 Guid userId = UserID;
 
-                var assignments = await _assignmentService.GetUserAssignmentAsync(pageNumber == 0 ? 1 : pageNumber, newAssignmentId, userId, sortOrder, sortBy);
+                var assignments = await _assignmentService.GetUserAssignmentAsync(pageNumber == 0 ? 1 : pageNumber, newAssignmentId, userId, sortOrder, sortBy, pageSize);
                 if (assignments.data.Any())
                 {
                     return Ok(new GeneralGetsResponse
@@ -267,11 +267,11 @@ namespace AssetManagement.WebAPI.Controllers
 
         [HttpGet("user/{userId}")]
         [Authorize(Roles = RoleConstant.ADMIN)]
-        public async Task<IActionResult> AdminGetUserAssignmentAsync(int pageNumber, Guid userId)
+        public async Task<IActionResult> AdminGetUserAssignmentAsync(int pageNumber, Guid userId, int pageSize = 10)
         {
             try
             {
-                var assignments = await _assignmentService.GetUserAssignmentAsync(pageNumber == 0 ? 1 : pageNumber, Guid.Empty, userId, "", "");
+                var assignments = await _assignmentService.GetUserAssignmentAsync(pageNumber == 0 ? 1 : pageNumber, Guid.Empty, userId, "", "", pageSize);
                 if (assignments.data.Any())
                 {
                     return Ok(new GeneralGetsResponse

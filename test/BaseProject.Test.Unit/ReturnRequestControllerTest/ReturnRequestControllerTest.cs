@@ -267,7 +267,7 @@ namespace AssetManagement.Test.Unit.RequestReturningControllerTest
             var returnRequests = new List<ReturnRequestResponse> { new ReturnRequestResponse() };
             var totalCount = 1;
 
-            _requestReturnServiceMock.Setup(service => service.GetReturnRequestResponses(It.IsAny<Guid>(), requestFilter))
+            _requestReturnServiceMock.Setup(service => service.GetReturnRequestResponses(It.IsAny<Guid>(), requestFilter, It.IsAny<int>()))
                 .ReturnsAsync((returnRequests, totalCount));
 
             _requestReturningController.ControllerContext = new ControllerContext
@@ -302,7 +302,7 @@ namespace AssetManagement.Test.Unit.RequestReturningControllerTest
             var requestFilter = new ReturnFilterRequest();
             var exceptionMessage = "An unexpected error occurred.";
 
-            _requestReturnServiceMock.Setup(service => service.GetReturnRequestResponses(It.IsAny<Guid>(), requestFilter))
+            _requestReturnServiceMock.Setup(service => service.GetReturnRequestResponses(It.IsAny<Guid>(), requestFilter, It.IsAny<int>()))
                 .ThrowsAsync(new Exception(exceptionMessage));
 
             _requestReturningController.ControllerContext = new ControllerContext
