@@ -1,18 +1,12 @@
 ﻿using AssetManagement.Application.Models.Requests;
 using AssetManagement.Application.Models.Responses;
 using AssetManagement.Application.Services;
-using AssetManagement.Application.Services.Implementations;
-using AssetManagement.Domain.Entities;
-using AssetManagement.Domain.Interfaces;
 using AssetManagement.Domain.Models;
 using AssetManagement.WebAPI.Controllers;
-using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using Xunit;
 

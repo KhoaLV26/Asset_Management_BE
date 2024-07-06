@@ -8,10 +8,7 @@ using AssetManagement.Infrastructure.Helpers;
 using AutoMapper;
 using Moq;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Linq.Expressions;
-using System.Text;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -42,8 +39,8 @@ namespace AssetManagement.Test.Unit.UserServiceTest
             {
                 FirstName = "John",
                 LastName = "Doe",
-                DateOfBirth = DateOnly.FromDateTime(DateTime.Now.AddYears(-20)),
-                DateJoined = DateOnly.FromDateTime(DateTime.Now),
+                DateOfBirth = DateOnly.FromDateTime(DateTime.Now.AddYears(-30)),
+                DateJoined = DateOnly.FromDateTime(DateTime.Parse("2021-07-12")),
                 Gender = EnumGender.Male,
                 RoleId = Guid.NewGuid(),
                 CreateBy = Guid.NewGuid()
@@ -155,8 +152,8 @@ namespace AssetManagement.Test.Unit.UserServiceTest
             {
                 FirstName = "John",
                 LastName = "Doe",
-                DateOfBirth = DateOnly.FromDateTime(DateTime.Now.AddYears(-20)),
-                DateJoined = DateOnly.FromDateTime(DateTime.Now),
+                DateOfBirth = DateOnly.FromDateTime(DateTime.Now.AddYears(-30)),
+                DateJoined = DateOnly.FromDateTime(DateTime.Parse("2021-07-12")),
                 Gender = EnumGender.Male,
                 RoleId = Guid.NewGuid(),
                 CreateBy = Guid.NewGuid()
@@ -187,8 +184,8 @@ namespace AssetManagement.Test.Unit.UserServiceTest
             {
                 FirstName = "John",
                 LastName = "Doe",
-                DateOfBirth = DateOnly.FromDateTime(DateTime.Now.AddYears(-20)),
-                DateJoined = DateOnly.FromDateTime(DateTime.Now),
+                DateOfBirth = DateOnly.FromDateTime(DateTime.Now.AddYears(-30)),
+                DateJoined = DateOnly.FromDateTime(DateTime.Parse("2021-07-12")),
                 Gender = EnumGender.Male,
                 RoleId = Guid.NewGuid(),
                 CreateBy = Guid.NewGuid()
