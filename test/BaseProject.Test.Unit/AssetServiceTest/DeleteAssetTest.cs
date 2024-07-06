@@ -1,4 +1,3 @@
-using AssetManagement.Application.Models.Requests;
 using AssetManagement.Application.Models.Responses;
 using AssetManagement.Application.Services.Implementations;
 using AssetManagement.Domain.Entities;
@@ -10,8 +9,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
-using System.Reflection;
-using System.Text;
 using System.Threading.Tasks;
 using Xunit;
 

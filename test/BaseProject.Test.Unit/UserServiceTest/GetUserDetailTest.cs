@@ -1,6 +1,4 @@
-﻿using System;
-using System.Threading.Tasks;
-using AssetManagement.Application.Models.Responses;
+﻿using AssetManagement.Application.Models.Responses;
 using AssetManagement.Application.Services.Implementations;
 using AssetManagement.Domain.Entities;
 using AssetManagement.Domain.Enums;
@@ -9,6 +7,8 @@ using AssetManagement.Infrastructure.Helpers;
 using AutoMapper;
 using Moq;
 using Newtonsoft.Json;
+using System;
+using System.Threading.Tasks;
 using Xunit;
 
 namespace AssetManagement.Test.Unit.UserServiceTest

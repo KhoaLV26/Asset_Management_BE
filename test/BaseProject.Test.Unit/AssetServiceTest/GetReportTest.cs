@@ -1,5 +1,4 @@
-﻿using AssetManagement.Application.Models.Responses;
-using AssetManagement.Application.Services.Implementations;
+﻿using AssetManagement.Application.Services.Implementations;
 using AssetManagement.Domain.Entities;
 using AssetManagement.Domain.Enums;
 using AssetManagement.Domain.Interfaces;
@@ -10,7 +9,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using Xunit;
 
