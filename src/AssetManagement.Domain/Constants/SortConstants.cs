@@ -55,5 +55,11 @@ namespace AssetManagement.Domain.Constants
             public const string SORT_BY_ROLE = "Role";
             public const string SORT_BY_USERNAME = "Username";
         }
+
+        public static class Location
+        {
+            public const string SORT_BY_NAME = "Name";
+            public const string SORT_BY_CODE = "Code";
+        }
     }
 }
