@@ -36,6 +36,8 @@ namespace AssetManagement.Application.Configurations
                 .ForMember(dest => dest.RequestedBy, opt => opt.MapFrom(src => src.Assignment.UserTo.Id))
                 .ForMember(dest => dest.RequestedByName, opt => opt.MapFrom(src => src.Assignment.UserTo.Username))
                 .ForMember(dest => dest.AssignedDate, opt => opt.MapFrom(src => DateOnly.FromDateTime(src.Assignment.AssignedDate)));
+
+            CreateMap<Location, LocationResponse>();
         }
     }
 }

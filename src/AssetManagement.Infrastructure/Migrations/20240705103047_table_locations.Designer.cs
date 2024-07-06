@@ -4,6 +4,7 @@ using AssetManagement.Infrastructure.DataAccess;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AssetManagement.Infrastructure.Migrations
 {
     [DbContext(typeof(DBContext))]
-    partial class DBContextModelSnapshot : ModelSnapshot
+    [Migration("20240705103047_table_locations")]
+    partial class table_locations
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -82,7 +85,7 @@ namespace AssetManagement.Infrastructure.Migrations
 
                     b.HasIndex("LocationId");
 
-                    b.ToTable("Assets", (string)null);
+                    b.ToTable("Assets");
                 });
 
             modelBuilder.Entity("AssetManagement.Domain.Entities.Assignment", b =>
@@ -135,7 +138,7 @@ namespace AssetManagement.Infrastructure.Migrations
 
                     b.HasIndex("AssignedTo");
 
-                    b.ToTable("Assignments", (string)null);
+                    b.ToTable("Assignments");
                 });
 
             modelBuilder.Entity("AssetManagement.Domain.Entities.BlackListToken", b =>
@@ -152,7 +155,7 @@ namespace AssetManagement.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("BlackListTokens", (string)null);
+                    b.ToTable("BlackListTokens");
                 });
 
             modelBuilder.Entity("AssetManagement.Domain.Entities.Category", b =>
@@ -194,7 +197,7 @@ namespace AssetManagement.Infrastructure.Migrations
                     b.HasIndex("Name")
                         .IsUnique();
 
-                    b.ToTable("Categories", (string)null);
+                    b.ToTable("Categories");
                 });
 
             modelBuilder.Entity("AssetManagement.Domain.Entities.Location", b =>
@@ -236,7 +239,7 @@ namespace AssetManagement.Infrastructure.Migrations
                     b.HasIndex("Name")
                         .IsUnique();
 
-                    b.ToTable("Locations", (string)null);
+                    b.ToTable("Locations");
                 });
 
             modelBuilder.Entity("AssetManagement.Domain.Entities.RefreshToken", b =>
@@ -268,7 +271,7 @@ namespace AssetManagement.Infrastructure.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("RefreshTokens", (string)null);
+                    b.ToTable("RefreshTokens");
                 });
 
             modelBuilder.Entity("AssetManagement.Domain.Entities.ReturnRequest", b =>
@@ -311,7 +314,7 @@ namespace AssetManagement.Infrastructure.Migrations
                     b.HasIndex("AssignmentId")
                         .IsUnique();
 
-                    b.ToTable("ReturnRequests", (string)null);
+                    b.ToTable("ReturnRequests");
                 });
 
             modelBuilder.Entity("AssetManagement.Domain.Entities.Role", b =>
@@ -342,7 +345,7 @@ namespace AssetManagement.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Roles", (string)null);
+                    b.ToTable("Roles");
                 });
 
             modelBuilder.Entity("AssetManagement.Domain.Entities.Token", b =>
@@ -364,7 +367,7 @@ namespace AssetManagement.Infrastructure.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Tokens", (string)null);
+                    b.ToTable("Tokens");
                 });
 
             modelBuilder.Entity("AssetManagement.Domain.Entities.User", b =>
@@ -451,7 +454,7 @@ namespace AssetManagement.Infrastructure.Migrations
                     b.HasIndex("Username")
                         .IsUnique();
 
-                    b.ToTable("Users", (string)null);
+                    b.ToTable("Users");
                 });
 
             modelBuilder.Entity("AssetManagement.Domain.Entities.Asset", b =>

@@ -107,10 +107,13 @@ namespace AssetManagement.Infrastructure.DataAccess
             modelBuilder.Entity<Location>()
                 .HasIndex(l => l.Name)
                 .IsUnique();
-
-            modelBuilder.Entity<Role>()
-                .HasIndex(r => r.Name)
+            modelBuilder.Entity<Location>()
+                .HasIndex(l => l.Code)
                 .IsUnique();
+
+            //modelBuilder.Entity<Role>()
+            //    .HasIndex(r => r.Name)
+            //    .IsUnique();
         }
     }
 }
