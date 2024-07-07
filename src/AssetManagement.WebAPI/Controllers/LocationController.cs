@@ -1,5 +1,6 @@
 ﻿using AssetManagement.Application.Models.Requests;
 using AssetManagement.Application.Services;
+using AssetManagement.Domain.Constants;
 using AssetManagement.Domain.Models;
 using DocumentFormat.OpenXml.Spreadsheet;
 using Microsoft.AspNetCore.Authorization;
@@ -22,7 +23,7 @@ namespace AssetManagement.WebAPI.Controllers
         }
 
         [HttpGet]
-        [Authorize]
+        [Authorize(Roles = RoleConstant.ADMIN)]
         public async Task<IActionResult> GetAllLocationAsync([FromQuery] int pageNumber, [FromQuery] string? search, [FromQuery] string? sortOrder, [FromQuery] string? sortBy = "Name", [FromQuery] string? newLocationCode = "", [FromQuery] int pageSize = 10)
         {
             try
@@ -47,7 +48,7 @@ namespace AssetManagement.WebAPI.Controllers
         }
 
         [HttpPost]
-        [Authorize]
+        [Authorize(Roles = RoleConstant.ADMIN)]
         public async Task<IActionResult> CreateLocationAsync([FromBody] LocationCreateRequest request)
         {
             try
@@ -72,7 +73,7 @@ namespace AssetManagement.WebAPI.Controllers
         }
 
         [HttpPut("{locationId}")]
-        [Authorize]
+        [Authorize(Roles = RoleConstant.ADMIN)]
         public async Task<IActionResult> UpdateLocationAsync(Guid locationId, [FromBody] LocationUpdateRequest request)
         {
             try
@@ -97,7 +98,7 @@ namespace AssetManagement.WebAPI.Controllers
         }
 
         [HttpGet("{locationId}")]
-        [Authorize]
+        [Authorize(Roles = RoleConstant.ADMIN)]
         public async Task<IActionResult> GetLocationByIdAsync(Guid locationId)
         {
             try
