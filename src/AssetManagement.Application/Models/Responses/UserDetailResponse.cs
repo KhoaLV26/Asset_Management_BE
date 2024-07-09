@@ -15,5 +15,9 @@ namespace AssetManagement.Application.Models.Responses
         public EnumGender Gender { get; set; }
         public DateOnly DateJoined { get; set; }
         public Guid RoleId { get; set; }
+        public string Username { get; set; }
+        public string StaffCode { get; set; }
+        public string RoleName { get; set; }
+        public string LocationName { get; set; }
     }
 }
