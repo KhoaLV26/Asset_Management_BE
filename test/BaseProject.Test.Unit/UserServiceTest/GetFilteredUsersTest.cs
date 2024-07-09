@@ -105,5 +105,33 @@ namespace AssetManagement.Test.Unit.UserServiceTest
             // Assert
             Assert.Equal(expectedLocationId, result);
         }
+
+        [Fact]
+        public async Task GetUserFilterQuery_ReturnsCorrectFilterExpression()
+        {
+            // Arrange
+            var adminId = Guid.NewGuid();
+            var role = "Admin";
+            var search = "john";
+
+            var locationId = Guid.NewGuid();
+
+            var userRepositoryMock = new Mock<IUserRepository>();
+            userRepositoryMock.Setup(r => r.GetAsync(It.IsAny<Expression<Func<User, bool>>>()))
+                .ReturnsAsync(new User { Id = adminId, LocationId = locationId });
+
+            _unitOfWorkMock.Setup(u => u.UserRepository).Returns(userRepositoryMock.Object);
+
+            // Act
+            var filterExpressionTask = _userService.GetType()
+                .GetMethod("GetUserFilterQuery", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+                .Invoke(_userService, new object[] { adminId, role, search }) as Task<Expression<Func<User, bool>>>;
+
+            var filterExpression = filterExpressionTask.Result;
+
+            // Assert
+            Assert.NotNull(filterExpression);
+
+        }
     }
 }
