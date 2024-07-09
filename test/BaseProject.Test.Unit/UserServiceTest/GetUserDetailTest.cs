@@ -37,6 +37,16 @@ namespace AssetManagement.Test.Unit.UserServiceTest
             // Arrange
             var userId = Guid.NewGuid();
             var roleId = Guid.NewGuid();
+            var role = new Role
+            {
+                Id = roleId,
+                Name = "Role"
+            };
+            var location = new Location
+            {
+                Id = Guid.NewGuid(),
+                Name = "Location"
+            };
             var user = new User
             {
                 Id = userId,
@@ -46,7 +56,11 @@ namespace AssetManagement.Test.Unit.UserServiceTest
                 Gender = EnumGender.Male,
                 DateJoined = DateOnly.FromDateTime(DateTime.Now),
                 RoleId = roleId,
-                IsDeleted = false
+                IsDeleted = false,
+                Role = role,
+                Location = location,
+                Username = "",
+                StaffCode = ""
             };
             var expected = new UserDetailResponse
             {
@@ -55,9 +69,13 @@ namespace AssetManagement.Test.Unit.UserServiceTest
                 LastName = "Phuc",
                 Gender = user.Gender,
                 DateJoined = DateOnly.FromDateTime(DateTime.Now),
-                RoleId = user.RoleId
+                RoleId = user.RoleId,
+                RoleName = "Role",
+                LocationName = "Location",
+                Username = "",
+                StaffCode = ""
             };
-            _unitOfWorkMock.Setup(u => u.UserRepository.GetAsync(x => x.Id == userId && x.IsDeleted == false))
+            _unitOfWorkMock.Setup(u => u.UserRepository.GetAsync(x => x.Id == userId && x.IsDeleted == false, x => x.Location, x => x.Role))
                 .ReturnsAsync(user);
             // Act
             var result = await _userService.GetUserDetailAsync(userId);
