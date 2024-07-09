@@ -127,6 +127,7 @@ namespace AssetManagement.Application.Services.Implementations
                 CategoryId = a.CategoryId,
                 Specification = a.Specification,
                 CategoryName = a.Category.Name,
+                InstallDate = a.InstallDate,
                 Status = a.Status,
                 LocationId = a.LocationId.HasValue ? a.LocationId.Value : Guid.Empty,
             }), assets.totalCount);
