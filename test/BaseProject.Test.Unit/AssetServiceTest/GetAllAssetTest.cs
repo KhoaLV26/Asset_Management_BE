@@ -1,5 +1,6 @@
 ﻿using AssetManagement.Application.Models.Responses;
 using AssetManagement.Application.Services.Implementations;
+using AssetManagement.Domain.Constants;
 using AssetManagement.Domain.Entities;
 using AssetManagement.Domain.Enums;
 using AssetManagement.Domain.Interfaces;
@@ -172,74 +173,92 @@ namespace AssetManagement.Test.Unit.AssetServiceTest
         }
 
         [Theory]
-        [InlineData("category", "asc")]
-        [InlineData("category", "desc")]
-        [InlineData("state", "asc")]
-        [InlineData("state", "desc")]
-        [InlineData("invalid_sort_by", "asc")]
-        [InlineData(null, "asc")]
-        public void GetOrderQuery_WithDifferentSortOptions_ReturnsExpectedOrderByFunction(string sortBy, string sortOrder)
+        [InlineData(SortConstants.Report.SORT_BY_TOTAL, "asc")]
+        [InlineData(SortConstants.Report.SORT_BY_TOTAL, "desc")]
+        [InlineData(SortConstants.Report.SORT_BY_ASSIGNED, "asc")]
+        [InlineData(SortConstants.Report.SORT_BY_ASSIGNED, "desc")]
+        [InlineData(SortConstants.Report.SORT_BY_AVAILABLE, "asc")]
+        [InlineData(SortConstants.Report.SORT_BY_AVAILABLE, "desc")]
+        [InlineData(SortConstants.Report.SORT_BY_NOT_AVAILABLE, "asc")]
+        [InlineData(SortConstants.Report.SORT_BY_NOT_AVAILABLE, "desc")]
+        [InlineData(SortConstants.Report.SORT_BY_WAITING_FOR_RECYCLING, "asc")]
+        [InlineData(SortConstants.Report.SORT_BY_WAITING_FOR_RECYCLING, "desc")]
+        [InlineData(SortConstants.Report.SORT_BY_RECYCLED, "asc")]
+        [InlineData(SortConstants.Report.SORT_BY_RECYCLED, "desc")]
+        [InlineData(SortConstants.Report.SORT_BY_CATEGORY, "asc")]
+        [InlineData(SortConstants.Report.SORT_BY_CATEGORY, "desc")]
+        public void GetOrderReportQuery_ShouldReturnCorrectOrderingFunction(string sortBy, string sortOrder)
         {
+            // Arrange
+            var reports = new[]
+            {
+                new ReportResponse { Category = "B", Total = 3, Assigned = 2, Available = 1, NotAvailable = 0, WaitingForRecycling = 0, Recycled = 0 },
+                new ReportResponse { Category = "A", Total = 1, Assigned = 0, Available = 1, NotAvailable = 0, WaitingForRecycling = 0, Recycled = 0 },
+                new ReportResponse { Category = "C", Total = 2, Assigned = 1, Available = 0, NotAvailable = 1, WaitingForRecycling = 0, Recycled = 0 }
+            }.AsQueryable();
+
             // Act
-            var getOrderQueryMethod = typeof(AssetService)
-                .GetMethod("GetOrderQuery", BindingFlags.NonPublic | BindingFlags.Instance);
-            var result = (Func<IQueryable<Asset>, IOrderedQueryable<Asset>>)getOrderQueryMethod.Invoke(
-                _assetService, new object[] { sortOrder, sortBy });
+            var orderFunc = _assetService.GetType()
+                .GetMethod("GetOrderReportQuery", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+                .Invoke(_assetService, new object[] { sortOrder, sortBy }) as Func<IQueryable<ReportResponse>, IOrderedQueryable<ReportResponse>>;
+
+            var result = orderFunc(reports).ToList();
 
             // Assert
-            switch (sortBy)
+            switch (sortBy.ToLower())
             {
-                case "category":
-                case "state":
-                    Assert.NotNull(result);
-                    Assert.IsType<Func<IQueryable<Asset>, IOrderedQueryable<Asset>>>(result);
+                case SortConstants.Report.SORT_BY_TOTAL:
+                    AssertOrder(result, r => r.Total, sortOrder);
                     break;
-                case "invalid_sort_by":
-                case null:
-                    Assert.Null(result);
+                case SortConstants.Report.SORT_BY_ASSIGNED:
+                    AssertOrder(result, r => r.Assigned, sortOrder);
                     break;
-                default:
-                    Assert.Null(result);
+                case SortConstants.Report.SORT_BY_AVAILABLE:
+                    AssertOrder(result, r => r.Available, sortOrder);
+                    break;
+                case SortConstants.Report.SORT_BY_NOT_AVAILABLE:
+                    AssertOrder(result, r => r.NotAvailable, sortOrder);
+                    break;
+                case SortConstants.Report.SORT_BY_WAITING_FOR_RECYCLING:
+                    AssertOrder(result, r => r.WaitingForRecycling, sortOrder);
+                    break;
+                case SortConstants.Report.SORT_BY_RECYCLED:
+                    AssertOrder(result, r => r.Recycled, sortOrder);
+                    break;
+                case SortConstants.Report.SORT_BY_CATEGORY:
+                    AssertOrder(result, r => r.Category, sortOrder);
                     break;
             }
         }
-        //[Fact]
-        //public async Task GetFilterQuery_WithValidParameters_ReturnsFilterExpression()
-        //{
-        //    // Arrange
-        //    var adminId = Guid.NewGuid();
-        //    var categoryId = Guid.NewGuid();
-        //    var user = new User { Id = adminId, LocationId = Guid.NewGuid() };
-        //    _unitOfWorkMock.Setup(uow => uow.UserRepository.GetAsync(It.IsAny<Expression<Func<User, bool>>>()))
-        //        .ReturnsAsync(user);
-
-        //    // Act
-        //    var getFilterQueryMethod = typeof(AssetService)
-        //        .GetMethod("GetFilterQuery", BindingFlags.NonPublic | BindingFlags.Instance);
-        //    var result = await (Task<Expression<Func<Asset, bool>>>)getFilterQueryMethod.Invoke(
-        //        _assetService, new object[] { adminId, categoryId, "available", "Asset" });
-
-        //    // Assert
-        //    Assert.NotNull(result);
-        //    Assert.IsType<Expression<Func<Asset, bool>>>(result);
-        //}
 
         [Fact]
-        public void GetOrderQuery_WithValidParameters_ReturnsOrderByFunction()
+        public void GetOrderReportQuery_ShouldReturnNull_WhenSortByIsInvalid()
         {
             // Arrange
-            var sortOrder = "asc";
-            var sortBy = "assetName";
+            string sortBy = "InvalidSortBy";
+            string sortOrder = "asc";
 
             // Act
-            var getOrderQueryMethod = typeof(AssetService)
-                .GetMethod("GetOrderQuery", BindingFlags.NonPublic | BindingFlags.Instance);
-            var result = (Func<IQueryable<Asset>, IOrderedQueryable<Asset>>)getOrderQueryMethod.Invoke(
-                _assetService, new object[] { sortOrder, sortBy });
+            var orderFunc = _assetService.GetType()
+                .GetMethod("GetOrderReportQuery", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+                .Invoke(_assetService, new object[] { sortOrder, sortBy }) as Func<IQueryable<ReportResponse>, IOrderedQueryable<ReportResponse>>;
 
             // Assert
-            Assert.NotNull(result);
-            Assert.IsType<Func<IQueryable<Asset>, IOrderedQueryable<Asset>>>(result);
+            Assert.Null(orderFunc);
+        }
+
+        private void AssertOrder<T>(System.Collections.Generic.List<ReportResponse> result, Func<ReportResponse, T> selector, string sortOrder)
+            where T : IComparable
+        {
+            if (sortOrder != "desc")
+            {
+                Assert.True(result.SequenceEqual(result.OrderBy(selector)));
+            }
+            else
+            {
+                Assert.True(result.SequenceEqual(result.OrderByDescending(selector)));
+            }
         }
     }
 }
+

@@ -1,5 +1,6 @@
 ﻿using AssetManagement.Application.Models.Responses;
 using AssetManagement.Application.Services.Implementations;
+using AssetManagement.Domain.Constants;
 using AssetManagement.Domain.Entities;
 using AssetManagement.Domain.Interfaces;
 using AssetManagement.Infrastructure.Helpers;
@@ -21,6 +22,7 @@ namespace AssetManagement.Test.Unit.UserServiceTest
         private readonly Mock<IHelper> _helperMock;
         private readonly Mock<IMapper> _mapperMock;
         private readonly UserService _userService;
+
 
         public GetFilteredUsersTest()
         {
