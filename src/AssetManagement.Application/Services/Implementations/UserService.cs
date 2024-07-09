@@ -310,7 +310,7 @@ namespace AssetManagement.Application.Services.Implementations
 
         public async Task<UserDetailResponse> GetUserDetailAsync(Guid id)
         {
-            var user = await _unitOfWork.UserRepository.GetAsync(u => u.Id == id && u.IsDeleted == false);
+            var user = await _unitOfWork.UserRepository.GetAsync(u => u.Id == id && u.IsDeleted == false, x => x.Location, x => x.Role);
             if (user == null)
             {
                 throw new ArgumentException("User not found.");
@@ -323,7 +323,11 @@ namespace AssetManagement.Application.Services.Implementations
                 LastName = user.LastName,
                 Gender = user.Gender,
                 DateJoined = user.DateJoined,
-                RoleId = user.RoleId
+                RoleId = user.RoleId,
+                StaffCode = user.StaffCode,
+                Username = user.Username,
+                LocationName = user.Location.Name,
+                RoleName = user.Role.Name
             };
         }
 
