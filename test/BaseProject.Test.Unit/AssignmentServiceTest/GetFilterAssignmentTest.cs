@@ -417,5 +417,57 @@ namespace AssetManagement.Test.Unit.AssignmentServiceTest
             // Assert
             Assert.Null(result);
         }
+
+        [Theory]
+        [InlineData("ABC123", true, false, false)]  // Matches asset code
+        [InlineData("Laptop", false, true, false)]  // Matches asset name
+        [InlineData("john", false, false, true)]    // Matches username
+        [InlineData("XYZ", false, false, false)]    // No match
+        public async Task GetFilterQuery_WithSearch_ReturnsCorrectExpression(string search, bool matchesAssetCode, bool matchesAssetName, bool matchesUsername)
+        {
+            // Arrange
+            var assignmentService = new AssignmentService(_mockUnitOfWork.Object, _mockMapper.Object, _mockAssetService.Object);
+            DateTime? assignedDate = null;
+            var locationId = Guid.NewGuid();
+            string state = null;
+
+            // Act
+            var filter = await assignmentService.GetFilterQuery(assignedDate, state, search, locationId);
+
+            // Assert
+            Assert.NotNull(filter);
+            var assignment = new Assignment
+            {
+                Asset = new Asset
+                {
+                    AssetCode = "ABC123",
+                    AssetName = "Laptop",
+                    LocationId = locationId
+                },
+                UserTo = new User { Username = "johnsmith" },
+                Status = EnumAssignmentStatus.Accepted,
+                IsDeleted = false
+            };
+
+            var result = filter.Compile()(assignment);
+            Assert.Equal(matchesAssetCode || matchesAssetName || matchesUsername, result);
+
+            // Test non-matching assignment
+            var nonMatchingAssignment = new Assignment
+            {
+                Asset = new Asset
+                {
+                    AssetCode = "DEF456",
+                    AssetName = "Desktop",
+                    LocationId = locationId
+                },
+                UserTo = new User { Username = "janesmith" },
+                Status = EnumAssignmentStatus.Accepted,
+                IsDeleted = false
+            };
+
+            var nonMatchingResult = filter.Compile()(nonMatchingAssignment);
+            Assert.False(nonMatchingResult);
+        }
     }
 }

@@ -141,5 +141,111 @@ namespace AssetManagement.Test.Unit.AssignmentServiceTest
             _unitOfWorkMock.Verify(u => u.CommitAsync(), Times.Exactly(2));
             Assert.Equal(assignmentResponse, result);
         }
+
+        [Fact]
+        public async Task AddAssignmentAsync_UserDoesNotExist_ThrowsNullReferenceException()
+        {
+            // Arrange
+            var request = new AssignmentRequest { AssetId = Guid.NewGuid(), AssignedTo = Guid.NewGuid(), AssignedBy = Guid.NewGuid() };
+            var asset = new Asset { Id = request.AssetId, Status = EnumAssetStatus.Available, IsDeleted = false };
+
+            _assetRepositoryMock.Setup(r => r.GetAsync(It.IsAny<Expression<Func<Asset, bool>>>()))
+                .ReturnsAsync(asset);
+            _userRepositoryMock.Setup(r => r.GetAsync(It.IsAny<Expression<Func<User, bool>>>()))
+                .ReturnsAsync((User)null);
+
+            // Act & Assert
+            await Assert.ThrowsAsync<NullReferenceException>(() => _assignmentService.AddAssignmentAsync(request));
+        }
+
+        [Fact]
+        public async Task AddAssignmentAsync_AssetDoesNotExist_ThrowsArgumentException()
+        {
+            // Arrange
+            var request = new AssignmentRequest { AssetId = Guid.NewGuid(), AssignedTo = Guid.NewGuid(), AssignedBy = Guid.NewGuid() };
+
+            _assetRepositoryMock.Setup(r => r.GetAsync(It.IsAny<Expression<Func<Asset, bool>>>()))
+                .ReturnsAsync((Asset)null);
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<ArgumentException>(() => _assignmentService.AddAssignmentAsync(request));
+            Assert.Equal("The asset is not available for assignment.", exception.Message);
+        }
+
+        [Fact]
+        public async Task AddAssignmentAsync_FailedToCreateAssignment_ThrowsNullReferenceException()
+        {
+            // Arrange
+            var request = new AssignmentRequest
+            {
+                AssetId = Guid.NewGuid(),
+                AssignedTo = Guid.NewGuid(),
+                AssignedBy = Guid.NewGuid(),
+                AssignedDate = DateTime.UtcNow,
+                Note = "Test note"
+            };
+            var asset = new Asset { Id = request.AssetId, Status = EnumAssetStatus.Available, IsDeleted = false };
+            var assignTo = new User { Id = request.AssignedTo, IsDeleted = false };
+            var assignBy = new User { Id = request.AssignedBy, IsDeleted = false };
+
+            _assetRepositoryMock.Setup(r => r.GetAsync(It.IsAny<Expression<Func<Asset, bool>>>()))
+                .ReturnsAsync(asset);
+            _userRepositoryMock.SetupSequence(r => r.GetAsync(It.IsAny<Expression<Func<User, bool>>>()))
+                .ReturnsAsync(assignTo)
+                .ReturnsAsync(assignBy);
+            _assignmentRepositoryMock.Setup(r => r.AddAsync(It.IsAny<Assignment>()))
+                .Returns(Task.CompletedTask);
+            _unitOfWorkMock.Setup(u => u.CommitAsync())
+                .ReturnsAsync(0);
+
+            // Act & Assert
+            await Assert.ThrowsAsync<NullReferenceException>(() => _assignmentService.AddAssignmentAsync(request));
+        }
+
+        [Fact]
+        public async Task AddAssignmentAsync_FailedToUpdateAssetStatus_ThrowsNullReferenceException()
+        {
+            // Arrange
+            var request = new AssignmentRequest
+            {
+                AssetId = Guid.NewGuid(),
+                AssignedTo = Guid.NewGuid(),
+                AssignedBy = Guid.NewGuid(),
+                AssignedDate = DateTime.UtcNow,
+                Note = "Test note"
+            };
+            var asset = new Asset { Id = request.AssetId, Status = EnumAssetStatus.Available, IsDeleted = false };
+            var assignTo = new User { Id = request.AssignedTo, IsDeleted = false };
+            var assignBy = new User { Id = request.AssignedBy, IsDeleted = false };
+
+            _assetRepositoryMock.Setup(r => r.GetAsync(It.IsAny<Expression<Func<Asset, bool>>>()))
+                .ReturnsAsync(asset);
+            _userRepositoryMock.SetupSequence(r => r.GetAsync(It.IsAny<Expression<Func<User, bool>>>()))
+                .ReturnsAsync(assignTo)
+                .ReturnsAsync(assignBy);
+            _assignmentRepositoryMock.Setup(r => r.AddAsync(It.IsAny<Assignment>()))
+                .Returns(Task.CompletedTask);
+            _unitOfWorkMock.SetupSequence(u => u.CommitAsync())
+                .ReturnsAsync(1)  // Successful assignment creation
+                .ReturnsAsync(0); // Failed asset status update
+
+            // Act & Assert
+            await Assert.ThrowsAsync<NullReferenceException>(() => _assignmentService.AddAssignmentAsync(request));
+        }
+
+        [Fact]
+        public async Task AddAssignmentAsync_AssetIsDeleted_ThrowsArgumentException()
+        {
+            // Arrange
+            var request = new AssignmentRequest { AssetId = Guid.NewGuid(), AssignedTo = Guid.NewGuid(), AssignedBy = Guid.NewGuid() };
+            var asset = new Asset { Id = request.AssetId, Status = EnumAssetStatus.Available, IsDeleted = true };
+
+            _assetRepositoryMock.Setup(r => r.GetAsync(It.IsAny<Expression<Func<Asset, bool>>>()))
+                .ReturnsAsync(asset);
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<ArgumentException>(() => _assignmentService.AddAssignmentAsync(request));
+            Assert.Equal("The asset is deleted.", exception.Message);
+        }
     }
 }

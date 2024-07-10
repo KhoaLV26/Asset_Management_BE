@@ -193,9 +193,9 @@ namespace AssetManagement.Test.Unit.ReturnRequestServiceTest
         {
             // Arrange
             var id = Guid.NewGuid();
-            var request = new ReturnRequest { Id = id, Assignment = new Assignment { Status = EnumAssignmentStatus.WaitingForAcceptance}};
+            var request = new ReturnRequest { Id = id, Assignment = new Assignment { Status = EnumAssignmentStatus.WaitingForAcceptance } };
 
-            _unitOfWorkMock.Setup(u => u.ReturnRequestRepository.GetAsync(It.IsAny<Expression<Func<ReturnRequest, bool>>>(),r => r.Assignment))
+            _unitOfWorkMock.Setup(u => u.ReturnRequestRepository.GetAsync(It.IsAny<Expression<Func<ReturnRequest, bool>>>(), r => r.Assignment))
                 .ReturnsAsync(request);
             _unitOfWorkMock.Setup(u => u.CommitAsync()).ReturnsAsync(1);
 
@@ -204,7 +204,7 @@ namespace AssetManagement.Test.Unit.ReturnRequestServiceTest
 
             // Assert
             Assert.True(result);
-            _unitOfWorkMock.Verify(u => u.ReturnRequestRepository.GetAsync(It.IsAny<Expression<Func<ReturnRequest, bool>>>(),r => r.Assignment), Times.Once);
+            _unitOfWorkMock.Verify(u => u.ReturnRequestRepository.GetAsync(It.IsAny<Expression<Func<ReturnRequest, bool>>>(), r => r.Assignment), Times.Once);
             _unitOfWorkMock.Verify(u => u.CommitAsync(), Times.Once);
         }
 
@@ -248,15 +248,22 @@ namespace AssetManagement.Test.Unit.ReturnRequestServiceTest
             // Arrange
             var assignmentId = Guid.NewGuid();
             var userId = Guid.NewGuid();
-            var assignment = new Assignment { Id = assignmentId, Status = EnumAssignmentStatus.Accepted, AssignedTo = Guid.NewGuid() };
+            var assignment = new Assignment
+            {
+                Id = assignmentId,
+                Status = EnumAssignmentStatus.Accepted,
+                AssignedTo = Guid.NewGuid() // Different user
+            };
 
             _unitOfWorkMock.Setup(u => u.AssignmentRepository.GetAsync(
-                It.IsAny<Expression<Func<Assignment, bool>>>(),
-                It.IsAny<Expression<Func<Assignment, object>>[]>()
+                It.IsAny<Expression<Func<Assignment, bool>>>()
             )).ReturnsAsync(assignment);
 
             // Act & Assert
-            await Assert.ThrowsAsync<ArgumentException>(() => _requestReturnService.UserCreateReturnRequestAsync(assignmentId, userId));
+            var exception = await Assert.ThrowsAsync<ArgumentException>(
+                () => _requestReturnService.UserCreateReturnRequestAsync(assignmentId, userId)
+            );
+            Assert.Equal("Not your assignment!", exception.Message);
         }
 
         [Fact]
@@ -479,5 +486,128 @@ namespace AssetManagement.Test.Unit.ReturnRequestServiceTest
             // Act & Assert
             await Assert.ThrowsAsync<ArgumentException>(() => _requestReturnService.CancelRequest(id));
         }
+
+        [Fact]
+        public async Task UserCreateReturnRequestAsync_InvalidAssignmentStatus_ThrowsArgumentException()
+        {
+            // Arrange
+            var assignmentId = Guid.NewGuid();
+            var userId = Guid.NewGuid();
+            var assignment = new Assignment
+            {
+                Id = assignmentId,
+                Status = EnumAssignmentStatus.WaitingForAcceptance,
+                AssignedTo = userId
+            };
+
+            _unitOfWorkMock.Setup(u => u.AssignmentRepository.GetAsync(
+                It.IsAny<Expression<Func<Assignment, bool>>>()
+            )).ReturnsAsync(assignment);
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<ArgumentException>(
+                () => _requestReturnService.UserCreateReturnRequestAsync(assignmentId, userId)
+            );
+            Assert.Equal("Invalid assignment!", exception.Message);
+        }
+
+        [Fact]
+        public async Task UserCreateReturnRequestAsync_ReturnRequestAlreadyExists_ThrowsArgumentException()
+        {
+            // Arrange
+            var assignmentId = Guid.NewGuid();
+            var userId = Guid.NewGuid();
+            var assignment = new Assignment
+            {
+                Id = assignmentId,
+                Status = EnumAssignmentStatus.Accepted,
+                AssignedTo = userId
+            };
+
+            _unitOfWorkMock.Setup(u => u.AssignmentRepository.GetAsync(
+                It.IsAny<Expression<Func<Assignment, bool>>>()
+            )).ReturnsAsync(assignment);
+
+            _unitOfWorkMock.Setup(u => u.ReturnRequestRepository.GetAllAsync(
+                It.IsAny<int>(),
+                It.IsAny<Expression<Func<ReturnRequest, bool>>>(),
+                It.IsAny<Func<IQueryable<ReturnRequest>, IOrderedQueryable<ReturnRequest>>>(),
+                It.IsAny<string>(),
+                It.IsAny<Expression<Func<ReturnRequest, bool>>>(),
+                It.IsAny<int>()  // Add this line to explicitly provide the pageSize parameter
+            )).ReturnsAsync((new List<ReturnRequest> { new ReturnRequest() }, 1));
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<ArgumentException>(
+                () => _requestReturnService.UserCreateReturnRequestAsync(assignmentId, userId)
+            );
+            Assert.Equal("A return request for this assignment already exists.", exception.Message);
+        }
+
+        [Fact]
+        public async Task UserCreateReturnRequestAsync_ReturnRequestAlreadyExisted_ThrowsException()
+        {
+            // Arrange
+            var assignmentId = Guid.NewGuid();
+            var userId = Guid.NewGuid();
+            var assignment = new Assignment
+            {
+                Id = assignmentId,
+                Status = EnumAssignmentStatus.Accepted,
+                AssignedTo = userId
+            };
+
+            _unitOfWorkMock.Setup(u => u.AssignmentRepository.GetAsync(
+                It.IsAny<Expression<Func<Assignment, bool>>>()
+            )).ReturnsAsync(assignment);
+
+            _unitOfWorkMock.Setup(u => u.ReturnRequestRepository.GetAllAsync(
+                It.IsAny<int>(),
+                It.IsAny<Expression<Func<ReturnRequest, bool>>>(),
+                It.IsAny<Func<IQueryable<ReturnRequest>, IOrderedQueryable<ReturnRequest>>>(),
+                It.IsAny<string>(),
+                It.IsAny<Expression<Func<ReturnRequest, bool>>>(),
+                It.IsAny<int>()  // Add this line to explicitly provide the pageSize parameter
+            )).ReturnsAsync((new List<ReturnRequest>(), 0));
+
+            _unitOfWorkMock.Setup(u => u.ReturnRequestRepository.GetAsync(
+                It.IsAny<Expression<Func<ReturnRequest, bool>>>()
+            )).ReturnsAsync(new ReturnRequest());
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<Exception>(
+                () => _requestReturnService.UserCreateReturnRequestAsync(assignmentId, userId)
+            );
+            Assert.Equal("Return request already existed!", exception.Message);
+        }
+
+        [Fact]
+        public async Task AddReturnRequestAsync_ReturnRequestAlreadyExists_ThrowsArgumentException()
+        {
+            // Arrange
+            var adminId = Guid.NewGuid();
+            var assignmentId = Guid.NewGuid();
+            var assignment = new Assignment { Id = assignmentId, Status = EnumAssignmentStatus.Accepted };
+
+            _unitOfWorkMock.Setup(u => u.AssignmentRepository.GetAsync(It.IsAny<Expression<Func<Assignment, bool>>>()))
+                .ReturnsAsync(assignment);
+
+            _unitOfWorkMock.Setup(u => u.ReturnRequestRepository.GetAllAsync(
+                It.IsAny<int>(),
+                It.IsAny<Expression<Func<ReturnRequest, bool>>>(),
+                It.IsAny<Func<IQueryable<ReturnRequest>, IOrderedQueryable<ReturnRequest>>>(),
+                It.IsAny<string>(),
+                It.IsAny<Expression<Func<ReturnRequest, bool>>>(),
+                It.IsAny<int>()  // Add this line to explicitly provide the pageSize parameter
+            )).ReturnsAsync((new List<ReturnRequest> { new ReturnRequest() }, 1));
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<ArgumentException>(
+                () => _requestReturnService.AddReturnRequestAsync(adminId, assignmentId)
+            );
+            Assert.Equal("A return request for this assignment already exists.", exception.Message);
+        }
+
+        
     }
 }

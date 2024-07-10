@@ -298,5 +298,44 @@ namespace AssetManagement.Test.Unit.LocationServiceTest
             var exception = await Assert.ThrowsAsync<Exception>(() => _locationService.UpdateLocationAsync(locationId, request));
             Assert.Equal("Location code already existed", exception.Message);
         }
+
+        [Fact]
+        public async Task UpdateLocationAsync_ThrowsException_WhenCommitFails()
+        {
+            // Arrange
+            var locationId = Guid.NewGuid();
+            var request = new LocationUpdateRequest { Name = "Updated Location", Code = "UL" };
+            var existingLocation = new Location { Id = locationId, Name = "Old Location", Code = "OL" };
+            _mockUnitOfWork.Setup(uow => uow.LocationRepository.GetAsync(It.IsAny<Expression<Func<Location, bool>>>()))
+                .ReturnsAsync(existingLocation);
+            _mockUnitOfWork.Setup(uow => uow.CommitAsync()).ReturnsAsync(0); // Simulate failed commit
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<Exception>(
+                () => _locationService.UpdateLocationAsync(locationId, request)
+            );
+            Assert.Equal("Failed to update location", exception.Message);
+        }
+
+        [Fact]
+        public async Task CreateLocationAsync_ThrowsException_WhenCommitFails()
+        {
+            // Arrange
+            var request = new LocationCreateRequest { Name = "Test Location", Code = "TL" };
+            _mockUnitOfWork.Setup(uow => uow.LocationRepository.GetAsync(It.IsAny<Expression<Func<Location, bool>>>()))
+                .ReturnsAsync((Location)null);
+            _mockUnitOfWork.Setup(uow => uow.UserRepository.GetAllAsync())
+                .ReturnsAsync(new List<User>());
+            _mockCryptographyHelper.Setup(ch => ch.GenerateSalt()).Returns("salt");
+            _mockCryptographyHelper.Setup(ch => ch.HashPassword(It.IsAny<string>(), It.IsAny<string>()))
+                .Returns("hashedPassword");
+            _mockUnitOfWork.Setup(uow => uow.CommitAsync()).ReturnsAsync(0); // Simulate failed commit
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<Exception>(
+                () => _locationService.CreateLocationAsync(request)
+            );
+            Assert.Equal("Failed to create location", exception.Message);
+        }
     }
 }
