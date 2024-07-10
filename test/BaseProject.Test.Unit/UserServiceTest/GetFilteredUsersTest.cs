@@ -152,8 +152,8 @@ namespace AssetManagement.Test.Unit.UserServiceTest
 
             var users = new List<User>
     {
-        new User { Id = Guid.NewGuid(), StaffCode = "NS002", FirstName = "Jane", LastName = "Doe", Username = "janesmith", DateJoined = DateOnly.FromDateTime(DateTime.Now.AddDays(1)), Role = new Role { Id = roleId, Name = "User" }, Location = new Location { Id = Guid.Parse(adminId) } },
-        new User { Id = Guid.NewGuid(), StaffCode = "NS001", FirstName = "John", LastName = "Smith", Username = "johndoe", DateJoined = DateOnly.FromDateTime(DateTime.Now), Role = new Role { Id = roleId, Name = "Admin" }, Location = new Location { Id = Guid.Parse(adminId) } }
+        new User { Id = Guid.NewGuid(), StaffCode = "NS001", FirstName = "John", LastName = "Doe", Username = "johndoe", DateJoined = DateOnly.FromDateTime(DateTime.Now), Role = new Role { Id = roleId, Name = "Admin" }, Location = new Location { Id = Guid.Parse(adminId) } },
+        new User { Id = Guid.NewGuid(), StaffCode = "NS001", FirstName = "John", LastName = "John", Username = "johndoe", DateJoined = DateOnly.FromDateTime(DateTime.Now), Role = new Role { Id = roleId, Name = "Admin" }, Location = new Location { Id = Guid.Parse(adminId) } }
     };
 
             var userResponses = users.Select(u => new GetUserResponse
@@ -209,7 +209,7 @@ namespace AssetManagement.Test.Unit.UserServiceTest
                 default:
                     Assert.Equal(ascending
                         ? userResponses.OrderBy(u => u.FirstName).ThenBy(u => u.LastName)
-                        : userResponses.OrderByDescending(u => u.FirstName).ThenByDescending(u => u.LastName),
+                        : userResponses.OrderBy(u => u.FirstName).ThenBy(u => u.LastName),
                         sortedResponses);
                     break;
             }
