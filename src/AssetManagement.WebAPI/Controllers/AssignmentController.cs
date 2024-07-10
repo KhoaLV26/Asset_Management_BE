@@ -234,25 +234,11 @@ namespace AssetManagement.WebAPI.Controllers
         [Authorize]
         public async Task<IActionResult> ResponseAssignment(Guid id, string accepted)
         {
+            Guid userId = UserID;
             var response = new GeneralBoolResponse();
-            AssignmentRequest assignmentRequest;
-            if (accepted.ToLower() == "true")
-            {
-                assignmentRequest = new AssignmentRequest
-                {
-                    Status = EnumAssignmentStatus.Accepted
-                };
-            }
-            else
-            {
-                assignmentRequest = new AssignmentRequest
-                {
-                    Status = EnumAssignmentStatus.Declined
-                };
-            }
             try
             {
-                var result = await _assignmentService.UpdateAssignment(id, assignmentRequest);
+                var result = await _assignmentService.ResponseAssignment(id, userId, accepted);
                 response.Success = true;
                 response.Message = "Update successfully";
                 return Ok(response);
