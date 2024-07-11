@@ -507,9 +507,9 @@ namespace AssetManagement.Application.Services.Implementations
                 throw new ArgumentException("Asset does not exist!");
             }
 
-            if (asset.Status != EnumAssetStatus.Available)
+            if (asset.Status != EnumAssetStatus.Assigned)
             {
-                throw new ArgumentException("Asset is not available!");
+                throw new ArgumentException("Asset is not assigned!");
             }
 
             currentAssignment.Status = (accepted.ToLower() == "true") ? EnumAssignmentStatus.Accepted : EnumAssignmentStatus.Declined;
