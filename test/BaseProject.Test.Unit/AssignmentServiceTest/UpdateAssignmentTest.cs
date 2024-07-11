@@ -213,11 +213,11 @@ namespace AssetManagement.Test.Unit.AssignmentServiceTest
             _mockUnitOfWork.Setup(uow => uow.UserRepository.GetAsync(It.IsAny<Expression<Func<User, bool>>>()))
                 .ReturnsAsync(new User());
             _mockUnitOfWork.Setup(uow => uow.AssetRepository.GetAsync(It.IsAny<Expression<Func<Asset, bool>>>()))
-                .ReturnsAsync(new Asset { Status = EnumAssetStatus.Assigned });
+                .ReturnsAsync(new Asset { Status = EnumAssetStatus.NotAvailable });
 
             // Act & Assert
             var ex = await Assert.ThrowsAsync<ArgumentException>(() => _assignmentService.ResponseAssignment(id, userId, accepted));
-            Assert.Equal("Asset is not available!", ex.Message);
+            Assert.Equal("Asset is not assigned!", ex.Message);
         }
 
         [Fact]
@@ -232,7 +232,7 @@ namespace AssetManagement.Test.Unit.AssignmentServiceTest
             _mockUnitOfWork.Setup(uow => uow.UserRepository.GetAsync(It.IsAny<Expression<Func<User, bool>>>()))
                 .ReturnsAsync(new User());
             _mockUnitOfWork.Setup(uow => uow.AssetRepository.GetAsync(It.IsAny<Expression<Func<Asset, bool>>>()))
-                .ReturnsAsync(new Asset { Status = EnumAssetStatus.Available });
+                .ReturnsAsync(new Asset { Status = EnumAssetStatus.Assigned });
             _mockUnitOfWork.Setup(uow => uow.CommitAsync()).ReturnsAsync(0);
 
             // Act & Assert
@@ -252,7 +252,7 @@ namespace AssetManagement.Test.Unit.AssignmentServiceTest
             _mockUnitOfWork.Setup(uow => uow.UserRepository.GetAsync(It.IsAny<Expression<Func<User, bool>>>()))
                 .ReturnsAsync(new User());
             _mockUnitOfWork.Setup(uow => uow.AssetRepository.GetAsync(It.IsAny<Expression<Func<Asset, bool>>>()))
-                .ReturnsAsync(new Asset { Status = EnumAssetStatus.Available });
+                .ReturnsAsync(new Asset { Status = EnumAssetStatus.Assigned });
             _mockUnitOfWork.Setup(uow => uow.CommitAsync()).ReturnsAsync(1);
 
             // Act
@@ -271,7 +271,7 @@ namespace AssetManagement.Test.Unit.AssignmentServiceTest
             var accepted = "true";
             var assignment = new Assignment { Id = id, AssignedTo = userId };
             var user = new User();
-            var asset = new Asset { Status = EnumAssetStatus.Available };
+            var asset = new Asset { Status = EnumAssetStatus.Assigned };
 
             _mockUnitOfWork.Setup(uow => uow.AssignmentRepository.GetAsync(It.IsAny<Expression<Func<Assignment, bool>>>(), It.IsAny<Expression<Func<Assignment, object>>[]>()))
                 .ReturnsAsync(assignment);
@@ -301,7 +301,7 @@ namespace AssetManagement.Test.Unit.AssignmentServiceTest
             var accepted = "false";
             var assignment = new Assignment { Id = id, AssignedTo = userId };
             var user = new User();
-            var asset = new Asset { Status = EnumAssetStatus.Available };
+            var asset = new Asset { Status = EnumAssetStatus.Assigned };
 
             _mockUnitOfWork.Setup(uow => uow.AssignmentRepository.GetAsync(It.IsAny<Expression<Func<Assignment, bool>>>(), It.IsAny<Expression<Func<Assignment, object>>[]>()))
                 .ReturnsAsync(assignment);
