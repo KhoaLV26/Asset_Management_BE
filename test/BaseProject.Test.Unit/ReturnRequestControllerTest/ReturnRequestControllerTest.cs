@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using AssetManagement.Application.Models.Requests;
@@ -14,6 +15,7 @@ using Xunit;
 
 namespace AssetManagement.Test.Unit.ReturnRequestControllerTest
 {
+    [ExcludeFromCodeCoverage]
     public class RequestReturningControllerTest
     {
         private readonly Mock<IRequestReturnService> _requestReturnServiceMock;

@@ -6,11 +6,13 @@ using Microsoft.AspNetCore.Mvc;
 using Moq;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
 using Xunit;
 
 namespace AssetManagement.Test.Unit.RoleControllerTest
 {
+    [ExcludeFromCodeCoverage]
     public class RoleControllerTest
     {
         private readonly Mock<IRoleService> _mockRoleService;

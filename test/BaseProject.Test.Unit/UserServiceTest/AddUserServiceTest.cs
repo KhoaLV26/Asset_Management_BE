@@ -8,12 +8,14 @@ using AssetManagement.Infrastructure.Helpers;
 using AutoMapper;
 using Moq;
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
 using Xunit;
 
 namespace AssetManagement.Test.Unit.UserServiceTest
 {
+    [ExcludeFromCodeCoverage]
     public class AddUserServiceTest
     {
         private readonly Mock<IUnitOfWork> _unitOfWorkMock;

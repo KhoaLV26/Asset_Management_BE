@@ -8,11 +8,13 @@ using AutoMapper;
 using Moq;
 using Newtonsoft.Json;
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
 using Xunit;
 
 namespace AssetManagement.Test.Unit.UserServiceTest
 {
+    [ExcludeFromCodeCoverage]
     public class GetUserDetailTest
     {
         private readonly Mock<IUnitOfWork> _unitOfWorkMock;

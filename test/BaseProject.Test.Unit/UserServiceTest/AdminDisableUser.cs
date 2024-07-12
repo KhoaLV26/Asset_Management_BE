@@ -5,11 +5,13 @@ using AssetManagement.Domain.Interfaces;
 using Moq;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
 using Xunit;
 
 namespace AssetManagement.Test.Unit.UserServiceTest
 {
+    [ExcludeFromCodeCoverage]
     public class AdminDisableUser
     {
         private readonly Mock<IUnitOfWork> _mockUnitOfWork;

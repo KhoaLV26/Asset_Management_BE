@@ -10,12 +10,14 @@ using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Moq;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using Xunit;
 
 namespace AssetManagement.Test.Unit.UserControllerTest
 {
+    [ExcludeFromCodeCoverage]
     public class UserControllerTest
     {
         private readonly Mock<IUserService> _userServiceMock;

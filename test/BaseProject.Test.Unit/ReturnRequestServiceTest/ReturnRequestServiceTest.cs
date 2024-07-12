@@ -8,6 +8,7 @@ using AutoMapper;
 using Moq;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
@@ -15,6 +16,7 @@ using Xunit;
 
 namespace AssetManagement.Test.Unit.ReturnRequestServiceTest
 {
+    [ExcludeFromCodeCoverage]
     public class ReturnRequestServiceTest
     {
         private readonly Mock<IUnitOfWork> _unitOfWorkMock;
